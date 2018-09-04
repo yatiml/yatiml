@@ -48,9 +48,10 @@ setup(
     tests_require=[
         'pytest',
         'pytest-cov',
+        'pytest-flake8',
         'pycodestyle',
     ],
     extras_require={
-        'dev':  ['mypy', 'prospector[with_pyroma]', 'yapf', 'isort'],
+        'dev':  ['mypy', 'yapf', 'isort'],
     }
 )

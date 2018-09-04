@@ -9,14 +9,15 @@ import yatiml
 
 
 def test_load_str():
-    Loader = yatiml.make_loader(str)
+    loader = yatiml.make_loader(str)
     text = 'test'
-    data = yaml.load(text, Loader=Loader)
+    data = yaml.load(text, Loader=loader)
     assert isinstance(data, str)
     assert data == 'test'
 
+
 def test_load_multiple_docs():
-    Loader = yatiml.make_loader(str)
+    loader = yatiml.make_loader(str)
     text = (
         '---\n'
         'test1\n'
@@ -24,11 +25,12 @@ def test_load_multiple_docs():
         '---\n'
         'test2\n'
         '...\n')
-    data = yaml.load_all(text, Loader=Loader)
+    data = yaml.load_all(text, Loader=loader)
     assert list(data) == ['test1', 'test2']
 
+
 def test_load_str_type_error():
-    Loader = yatiml.make_loader(str)
+    loader = yatiml.make_loader(str)
     text = '1'
     with pytest.raises(yatiml.RecognitionError):
-        data = yaml.load(text, Loader=Loader)
+        yaml.load(text, Loader=loader)

@@ -58,7 +58,8 @@ class Loader(yaml.Loader):
         Returns:
             A list of recognized types
         """
-        if isinstance(node, yaml.ScalarNode) and node.tag == 'tag:yaml.org,2002:str':
+        if (isinstance(node, yaml.ScalarNode) and
+                node.tag == 'tag:yaml.org,2002:str'):
             return [str]
         return []
 
@@ -83,7 +84,11 @@ class Loader(yaml.Loader):
 
         return recognized_types
 
-    def __process_node(self, node: yaml.Node, expected_type: Type) -> yaml.Node:
+    def __process_node(
+            self,
+            node: yaml.Node,
+            expected_type: Type
+            ) -> yaml.Node:
         """Processes a node.
 
         This is the main function that implements yatiml's \
@@ -105,8 +110,10 @@ class Loader(yaml.Loader):
             raise RecognitionError('{}{}Type mismatch, expected a {}'.format(
                 node.start_mark, os.linesep, expected_type.__name__))
         if len(recognized_types) > 1:
-            raise RecognitionError('{}{}Ambiguous value, could be any of {}'.format(
-                node.start_mark, os.linesep, [c.__name__ for c in recognized_types]))
+            raise RecognitionError(
+                    '{}{}Ambiguous value, could be any of {}'.format(
+                        node.start_mark, os.linesep,
+                        [c.__name__ for c in recognized_types]))
 
         recognized_type = recognized_types[0]
         node.tag = self.__type_to_tag(recognized_type)
