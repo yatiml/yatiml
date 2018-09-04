@@ -46,7 +46,7 @@ setup(
         'recommonmark'
     ],
     tests_require=[
-        'pytest',
+        'pytest>=3.5',
         'pytest-cov',
         'pytest-flake8',
         'pycodestyle',
