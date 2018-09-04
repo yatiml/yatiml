@@ -2,7 +2,45 @@
 YAtiML
 ################################################################################
 
-A library for making YAML-based file formats
+YAtiML is a small Python library that works with yaml or ruamel.yaml, adding
+functions for automatic type recognition to it. YAtiML is not a schema language
+like XSD and Relax-NG are for XML, or JSON Schema is for JSON. As YAML is not a
+document format, a schema language for it does not make much sense. YAtiML does
+solve the same kind of problems however, and more, so if you are looking for a
+schema language for YAML, YAtiML may actually be what you need.
+
+How it works
+************
+
+YAML-based file formats can be very handy, as YAML is easy to write by humans,
+and parsing support for it is widely available. Just read your YAML file into a
+document structure (a tree of nested dicts and lists), and manipulate that in
+your code.
+
+While this works fine for simple file formats, it does not scale very well to
+more complex file formats such as the Common Workflow Language or the Multiscale
+Computing Language (yMCL). Manual error-checking is lots of work and
+error-prone, defaults are not set automatically (which is especially tricky if
+you have multiple nested optional objects), and the file format often ends up
+somewhat underspecified.
+
+Furthermore, a small collection of nested dicts and lists may work fine, but for
+more complex file formats, this becomes unwieldy and a set of objects is a
+better choice. Although it is not often used this way, YAML is actually a fully
+fledged object-to-text serialisation protocol. The Python yaml and ruamel.yaml
+libraries will actually construct objects for you, but the class names need to
+be put in the YAML file for that to work, which makes those files harder to
+write for humans.
+
+With YAtiML, you describe your file format by defining a set of ordinary Python
+classes. You pass these classes to YAtiML, which constructs a Loader for you
+that you can then use with the normal yaml.load(). However, objects of the types
+you have defined will now be recognised automatically in the input YAML text,
+and the result will contain those objects. Also, with a few lines of extra code,
+you can add some syntactic sugar to the YAML text format, making it easier for
+your users to write files in your format by hand in a variety of ways, while you
+still get consistent objects. Of course, YAtiML supports the reverse as well,
+making a Dumper for you to user with yaml.dump().
 
 Project Setup
 *************
@@ -11,35 +49,6 @@ Here we provide some details about the project setup. Most of the choices are ex
 Feel free to remove this text when the development of the software package takes off.
 
 For a quick reference on software development, we refer to `the software guide checklist <https://guide.esciencecenter.nl/best_practices/checklist.html>`_.
-
-Version control
----------------
-
-Once your Python package is created, put it under
-`version control <https://guide.esciencecenter.nl/best_practices/version_control.html>`_!
-We recommend using `git <http://git-scm.com/>`_ and `github <https://github.com/>`_.
-
-.. code-block:: console
-
-  cd yatiml
-  git init
-  git add -A
-  git commit
-
-Python versions
----------------
-
-This repository is set up with Python versions: 2.7, 3.4, 3.5, and 3.6. Add or remove Python versions based on project requirements. `The guide <https://guide.esciencecenter.nl/best_practices/language_guides/python.html>`_ contains more information about Python versions and writing Python 2 and 3 compatible code.
-
-Package management
-------------------
-
-You can use either `pip` or `conda` for installing dependencies and package management. This repository does not force you to use one or the other, as project requirements differ. For advice on what to use, please check `the relevant section of the guide <https://guide.esciencecenter.nl/best_practices/language_guides/python.html#dependencies-and-package-management>`_.
-
-Packaging/One command install
------------------------------
-
-You can distribute your code using pipy or conda. Again, the project template does not enforce the use of either one. `The guide <https://guide.esciencecenter.nl/best_practices/language_guides/python.html#building-and-packaging-code>`_ can help you decide which tool to use for packaging.
 
 Testing and code coverage
 -------------------------
@@ -163,6 +172,7 @@ have a look at the `contribution guidelines <CONTRIBUTING.rst>`_.
 License
 *******
 
-Copyright (c) 2018, Netherlands eScience Center and University of Amsterdam
+Copyright 2018, Netherlands eScience Center, University of Amsterdam, and VU
+University Amsterdam
 
 Apache Software License 2.0
