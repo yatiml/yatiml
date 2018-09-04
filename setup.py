@@ -48,7 +48,7 @@ setup(
     tests_require=[
         'pytest>=3.5',
         'pytest-cov',
-        'pycodestyle',
+        'pycodestyle>=2.0.0,<2.4.0',
         'pytest-flake8',
     ],
     extras_require={
