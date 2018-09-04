@@ -48,8 +48,8 @@ setup(
     tests_require=[
         'pytest>=3.5',
         'pytest-cov',
-        'pytest-flake8',
         'pycodestyle',
+        'pytest-flake8',
     ],
     extras_require={
         'dev':  ['mypy', 'yapf', 'isort'],
