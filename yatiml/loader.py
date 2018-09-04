@@ -1,6 +1,6 @@
 import copy
 import os
-from typing import List, Type
+from typing import GenericMeta, List, Type
 
 import ruamel.yaml as yaml
 
@@ -36,6 +36,35 @@ class Loader(yaml.Loader):
         node = self.__process_node(node, type(self).document_type)
         return node
 
+    def __type_to_desc(self, type_: Type) -> str:
+        """Convert a type to a human-readable description.
+
+        This is used for generating nice error messages. We want users \
+        to see a nice readable text, rather than something like \
+        "typing.List<~T>[str]".
+
+        Args:
+            type_: The type to represent.
+
+        Returns:
+            A human-readable description.
+        """
+        scalar_type_to_str = {
+                str: 'string',
+                int: 'int',
+                float: 'float',
+                bool: 'boolean',
+                None: 'null value'
+                }
+
+        if type_ in scalar_type_to_str:
+            return scalar_type_to_str[type_]
+
+        if isinstance(type_, GenericMeta):
+            if type_.__origin__ == List:
+                return 'list of {}'.format(self.__type_to_desc(type_.__args__[0]))
+        return 'unknown type'
+
     def __type_to_tag(self, type_: Type) -> str:
         """Convert a type to the corresponding YAML tag.
 
@@ -55,6 +84,9 @@ class Loader(yaml.Loader):
 
         if type_ in scalar_type_to_tag:
             return scalar_type_to_tag[type_]
+        if (isinstance(type_, GenericMeta)
+                and type_.__origin__ == List):
+            return 'tag:yaml.org,2002:seq'
         return ''
 
     def __recognize_scalar(
@@ -76,6 +108,32 @@ class Loader(yaml.Loader):
             return [expected_type]
         return []
 
+    def __recognize_list(
+            self,
+            node: yaml.Node,
+            expected_type: Type
+            ) -> List[Type]:
+        """Recognize a node that we expect to be a list of some kind.
+
+        Args:
+            node: The node to recognize.
+            expected_type: List[...something...]
+
+        Returns
+            expected_type if it was recognized, [] otherwise.
+        """
+        if not isinstance(node, yaml.SequenceNode):
+            return []
+        item_type = expected_type.__args__[0]
+        for item in node.value:
+            recognized_types = self.__recognize(item, item_type)
+            if len(recognized_types) == 0:
+                return []
+            if len(recognized_types) > 1:
+                return [List[t] for t in recognized_types]      # type: ignore
+
+        return [expected_type]
+
     def __recognize(self, node: yaml.Node, expected_type: Type) -> List[Type]:
         """Figure out how to interpret this node.
 
@@ -83,6 +141,9 @@ class Loader(yaml.Loader):
         all types that match the expected type and also the node, and \
         returns that list. The goal here is not to test validity, but \
         to determine how to process this node further.
+
+        That said, it will recognize built-in types only in case of \
+        an exact match.
 
         Args:
             node: The YAML node to recognize.
@@ -94,6 +155,9 @@ class Loader(yaml.Loader):
         """
         if expected_type in [str, int, float, bool, None]:
             recognized_types = self.__recognize_scalar(node, expected_type)
+        if (isinstance(expected_type, GenericMeta)
+                and expected_type.__origin__ == List):
+            recognized_types = self.__recognize_list(node, expected_type)
 
         return recognized_types
 
@@ -121,12 +185,12 @@ class Loader(yaml.Loader):
 
         if len(recognized_types) == 0:
             raise RecognitionError('{}{}Type mismatch, expected a {}'.format(
-                node.start_mark, os.linesep, expected_type.__name__))
+                node.start_mark, os.linesep, self.__type_to_desc(expected_type)))
         if len(recognized_types) > 1:
             raise RecognitionError(
                     '{}{}Ambiguous value, could be any of {}'.format(
                         node.start_mark, os.linesep,
-                        [c.__name__ for c in recognized_types]))
+                        [self.__type_to_desc(t) for t in recognized_types]))
 
         recognized_type = recognized_types[0]
         node.tag = self.__type_to_tag(recognized_type)

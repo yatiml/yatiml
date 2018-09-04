@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """Tests for the yatiml module."""
-import ruamel.yaml as yaml
 import pytest
+import ruamel.yaml as yaml
+
+from typing import List
 
 import yatiml
 
@@ -65,3 +67,25 @@ def test_load_null():
     text = '!!null'
     data = yaml.load(text, Loader=loader)
     assert data is None
+
+
+def test_load_list():
+    loader = yatiml.make_loader(List[str])
+    text = '- test1\n- test2\n'
+    data = yaml.load(text, Loader=loader)
+    assert isinstance(data, list)
+    assert data == ['test1', 'test2']
+
+
+def test_load_list_item_type_mismatch():
+    loader = yatiml.make_loader(List[str])
+    text = '[test1, 2]'
+    with pytest.raises(yatiml.RecognitionError):
+        yaml.load(text, Loader=loader)
+
+
+def test_load_nested_list():
+    loader = yatiml.make_loader(List[List[int]])
+    text = '- [1, 2]\n- [3, 4]\n'
+    data = yaml.load(text, Loader=loader)
+    assert data == [[1, 2], [3, 4]]
