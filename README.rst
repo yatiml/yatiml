@@ -42,6 +42,9 @@ your users to write files in your format by hand in a variety of ways, while you
 still get consistent objects. Of course, YAtiML supports the reverse as well,
 making a Dumper for you to user with yaml.dump().
 
+Yatiml supports Python 3.4 and later.
+
+
 Project Setup
 *************
 
