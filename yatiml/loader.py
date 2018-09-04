@@ -45,22 +45,35 @@ class Loader(yaml.Loader):
         Returns:
             A string containing the YAML tag.
         """
-        if type_ == str:
-            return 'tag:yaml.org,2002:str'
+        scalar_type_to_tag = {
+                str: 'tag:yaml.org,2002:str',
+                int: 'tag:yaml.org,2002:int',
+                float: 'tag:yaml.org,2002:float',
+                bool: 'tag:yaml.org,2002:bool',
+                None: 'tag:yaml.org,2002:null'
+                }
+
+        if type_ in scalar_type_to_tag:
+            return scalar_type_to_tag[type_]
         return ''
 
-    def __recognize_str(self, node: yaml.Node) -> List[Type]:
-        """Recognize a node that we expect to be a str.
+    def __recognize_scalar(
+            self,
+            node: yaml.Node,
+            expected_type: Type
+            ) -> List[Type]:
+        """Recognize a node that we expect to be a scalar.
 
         Args:
-            node: The node to recognize
+            node: The node to recognize.
+            expected_type: The type it is expected to be.
 
         Returns:
             A list of recognized types
         """
         if (isinstance(node, yaml.ScalarNode) and
-                node.tag == 'tag:yaml.org,2002:str'):
-            return [str]
+                node.tag == self.__type_to_tag(expected_type)):
+            return [expected_type]
         return []
 
     def __recognize(self, node: yaml.Node, expected_type: Type) -> List[Type]:
@@ -79,8 +92,8 @@ class Loader(yaml.Loader):
         Returns:
             A list of matching types.
         """
-        if expected_type == str:
-            recognized_types = self.__recognize_str(node)
+        if expected_type in [str, int, float, bool, None]:
+            recognized_types = self.__recognize_scalar(node, expected_type)
 
         return recognized_types
 
