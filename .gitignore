@@ -4,9 +4,12 @@
 
 dist
 .cache
+.pytest_cache
+*.swp
 
 htmlcov
 .coverage
+coverage.xml
 
 docs/_build
-docs/apidoc
+docs/apidocs
