@@ -34,6 +34,9 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
+    install_requires=[
+        'ruamel.yaml'
+    ],
     test_suite='tests',
     setup_requires=[
         # dependency for `python setup.py test`
