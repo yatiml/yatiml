@@ -5,7 +5,7 @@
 import pytest
 import ruamel.yaml as yaml
 
-from typing import List
+from typing import Dict, List
 
 import yatiml
 
@@ -73,7 +73,6 @@ def test_load_list():
     loader = yatiml.make_loader(List[str])
     text = '- test1\n- test2\n'
     data = yaml.load(text, Loader=loader)
-    assert isinstance(data, list)
     assert data == ['test1', 'test2']
 
 
@@ -89,3 +88,32 @@ def test_load_nested_list():
     text = '- [1, 2]\n- [3, 4]\n'
     data = yaml.load(text, Loader=loader)
     assert data == [[1, 2], [3, 4]]
+
+
+def test_load_dict():
+    loader = yatiml.make_loader(Dict[str, str])
+    text = 'key1: test1\nkey2: test2\n'
+    data = yaml.load(text, Loader=loader)
+    assert isinstance(data, dict)
+    assert data == {'key1': 'test1', 'key2': 'test2'}
+
+
+def test_load_dict_item_type_mismatch():
+    loader = yatiml.make_loader(Dict[str, int])
+    text = 'key1: test1\nkey2: 2\n'
+    with pytest.raises(yatiml.RecognitionError):
+        yaml.load(text, Loader=loader)
+
+
+def test_load_nested_dict():
+    loader = yatiml.make_loader(Dict[str, Dict[str, bool]])
+    text = 'key1: { key2: True, key3: False }\nkey4: {}'
+    data = yaml.load(text, Loader=loader)
+    assert data == {'key1': {'key2': True, 'key3': False}, 'key4': {}}
+
+
+def test_load_mixed_dict_list():
+    loader = yatiml.make_loader(List[Dict[str, int]])
+    text = '[{key1: 10},{key2: 11, key3: 13}]'
+    data = yaml.load(text, Loader=loader)
+    assert data == [{'key1': 10}, {'key2': 11, 'key3': 13}]

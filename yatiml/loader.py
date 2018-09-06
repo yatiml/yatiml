@@ -1,6 +1,6 @@
 import copy
 import os
-from typing import GenericMeta, List, Type
+from typing import Dict, GenericMeta, List, Type
 
 import ruamel.yaml as yaml
 
@@ -84,10 +84,12 @@ class Loader(yaml.Loader):
 
         if type_ in scalar_type_to_tag:
             return scalar_type_to_tag[type_]
-        if (isinstance(type_, GenericMeta)
-                and type_.__origin__ == List):
-            return 'tag:yaml.org,2002:seq'
-        return ''
+        if isinstance(type_, GenericMeta):
+                if type_.__origin__ == List:
+                    return 'tag:yaml.org,2002:seq'
+                elif type_.__origin__ == Dict:
+                    return 'tag:yaml.org,2002:map'
+        raise RuntimeError('Unknown type in type_to_tag, please report a bug')
 
     def __recognize_scalar(
             self,
@@ -134,6 +136,34 @@ class Loader(yaml.Loader):
 
         return [expected_type]
 
+    def __recognize_dict(
+            self,
+            node: yaml.Node,
+            expected_type: Type
+            ) -> List[Type]:
+        """Recognize a node that we expect to be a dict of some kind.
+
+        Args:
+            node: The node to recognize.
+            expected_type: Dict[str, ...something...]
+
+        Returns
+            expected_type if it was recognized, [] otherwise.
+        """
+        if not issubclass(expected_type.__args__[0], str):
+            raise RuntimeError('YAtiML only supports dicts with strings as keys')
+        if not isinstance(node, yaml.MappingNode):
+            return []
+        value_type = expected_type.__args__[1]
+        for key, value in node.value:
+            recognized_value_types = self.__recognize(value, value_type)
+            if len(recognized_value_types) == 0:
+                return []
+            if len(recognized_value_types) > 1:
+                return [Dict[str, t] for t in recognized_value_types]      # type: ignore
+
+        return [expected_type]
+
     def __recognize(self, node: yaml.Node, expected_type: Type) -> List[Type]:
         """Figure out how to interpret this node.
 
@@ -155,10 +185,13 @@ class Loader(yaml.Loader):
         """
         if expected_type in [str, int, float, bool, None]:
             recognized_types = self.__recognize_scalar(node, expected_type)
-        if (isinstance(expected_type, GenericMeta)
-                and expected_type.__origin__ == List):
-            recognized_types = self.__recognize_list(node, expected_type)
+        if isinstance(expected_type, GenericMeta):
+                if expected_type.__origin__ == List:
+                    recognized_types = self.__recognize_list(node, expected_type)
+                elif expected_type.__origin__ == Dict:
+                    recognized_types = self.__recognize_dict(node, expected_type)
 
+        print('    Recognized {}, expected {}, got {}'.format(node, expected_type, recognized_types))
         return recognized_types
 
     def __process_node(
