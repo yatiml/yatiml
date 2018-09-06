@@ -117,3 +117,10 @@ def test_load_mixed_dict_list():
     text = '[{key1: 10},{key2: 11, key3: 13}]'
     data = yaml.load(text, Loader=loader)
     assert data == [{'key1': 10}, {'key2': 11, 'key3': 13}]
+
+
+def test_load_dict_error():
+    loader = yatiml.make_loader(Dict[str, int])
+    text = '10'
+    with pytest.raises(yatiml.RecognitionError):
+        yaml.load(text, Loader=loader)

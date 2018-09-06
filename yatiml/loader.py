@@ -62,8 +62,10 @@ class Loader(yaml.Loader):
 
         if isinstance(type_, GenericMeta):
             if type_.__origin__ == List:
-                return 'list of {}'.format(self.__type_to_desc(type_.__args__[0]))
-        return 'unknown type'
+                return 'list of ({})'.format(self.__type_to_desc(type_.__args__[0]))
+            if type_.__origin__ == Dict:
+                return 'dict of string to ({})'.format(self.__type_to_desc(type_.__args__[1]))
+        raise RuntimeError('Unknown type in type_to_tag, please report a YAtiML bug.')
 
     def __type_to_tag(self, type_: Type) -> str:
         """Convert a type to the corresponding YAML tag.
@@ -89,7 +91,7 @@ class Loader(yaml.Loader):
                     return 'tag:yaml.org,2002:seq'
                 elif type_.__origin__ == Dict:
                     return 'tag:yaml.org,2002:map'
-        raise RuntimeError('Unknown type in type_to_tag, please report a bug')
+        raise RuntimeError('Unknown type in type_to_tag, please report a YAtiML bug.')
 
     def __recognize_scalar(
             self,
