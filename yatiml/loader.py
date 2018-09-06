@@ -1,6 +1,6 @@
 import copy
 import os
-from typing import Dict, GenericMeta, List, Type
+from typing import Dict, GenericMeta, List, Type, Union, UnionMeta
 
 import ruamel.yaml as yaml
 
@@ -59,6 +59,10 @@ class Loader(yaml.Loader):
 
         if type_ in scalar_type_to_str:
             return scalar_type_to_str[type_]
+
+        if isinstance(type_, UnionMeta):
+            return 'union of {}'.format(
+                    [self.__type_to_desc(t) for t in type_.__union_params__])
 
         if isinstance(type_, GenericMeta):
             if type_.__origin__ == List:
@@ -149,7 +153,7 @@ class Loader(yaml.Loader):
             node: The node to recognize.
             expected_type: Dict[str, ...something...]
 
-        Returns
+        Returns:
             expected_type if it was recognized, [] otherwise.
         """
         if not issubclass(expected_type.__args__[0], str):
@@ -165,6 +169,26 @@ class Loader(yaml.Loader):
                 return [Dict[str, t] for t in recognized_value_types]      # type: ignore
 
         return [expected_type]
+
+    def __recognize_union(
+            self,
+            node: yaml.Node,
+            expected_type: Type
+            ) -> List[Type]:
+        """Recognize a node that we expect to be one of a union of types.
+
+        Args:
+            node: The node to recognize.
+            expected_type: Union[...something...]
+
+        Returns:
+            The specific type that was recognized, multiple, or none.
+        """
+        recognized_types = []
+        for possible_type in expected_type.__union_set_params__:
+            recognized_types.extend(self.__recognize(node, possible_type))
+        recognized_types = list(set(recognized_types))
+        return recognized_types
 
     def __recognize(self, node: yaml.Node, expected_type: Type) -> List[Type]:
         """Figure out how to interpret this node.
@@ -187,6 +211,8 @@ class Loader(yaml.Loader):
         """
         if expected_type in [str, int, float, bool, None]:
             recognized_types = self.__recognize_scalar(node, expected_type)
+        if isinstance(expected_type, UnionMeta):
+            recognized_types = self.__recognize_union(node, expected_type)
         if isinstance(expected_type, GenericMeta):
                 if expected_type.__origin__ == List:
                     recognized_types = self.__recognize_list(node, expected_type)

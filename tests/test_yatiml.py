@@ -5,7 +5,7 @@
 import pytest
 import ruamel.yaml as yaml
 
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import yatiml
 
@@ -122,5 +122,24 @@ def test_load_mixed_dict_list():
 def test_load_dict_error():
     loader = yatiml.make_loader(Dict[str, int])
     text = '10'
+    with pytest.raises(yatiml.RecognitionError):
+        yaml.load(text, Loader=loader)
+
+
+def test_load_union():
+    loader = yatiml.make_loader(Union[str, int])
+    text = '10'
+    data = yaml.load(text, Loader=loader)
+    assert isinstance(data, int)
+    assert data == 10
+    text = 'test'
+    data = yaml.load(text, Loader=loader)
+    assert isinstance(data, str)
+    assert data == 'test'
+
+
+def test_union_mismatch():
+    loader = yatiml.make_loader(Union[str, int])
+    text = '2.71'
     with pytest.raises(yatiml.RecognitionError):
         yaml.load(text, Loader=loader)
