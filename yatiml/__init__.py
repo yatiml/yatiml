@@ -14,6 +14,11 @@ __email__ = 'l.veen@esciencecenter.nl'
 
 
 from yatiml.exceptions import RecognitionError
-from yatiml.loader import make_loader
+from yatiml.loader import Loader, add_classes, set_document_type
+from yatiml.helpers import ClassNode
 
-__all__ = ['RecognitionError', 'make_loader']
+__all__ = [
+        'RecognitionError',
+        'ClassNode',
+        'Loader',
+        'add_classes', 'set_document_type']
