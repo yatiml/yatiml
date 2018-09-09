@@ -147,8 +147,11 @@ class Loader(yaml.Loader):
             return scalar_type_to_str[type_]
 
         if type(type_).__name__ in ['UnionMeta', '_Union']:
-            return 'union of {}'.format(
-                    [self.__type_to_desc(t) for t in type_.__union_params__])
+            if hasattr(type_, '__union_params__'):
+                types = type_.__union_params__
+            else:
+                types = type_.__args__
+            return 'union of {}'.format([self.__type_to_desc(t) for t in types])
 
         if isinstance(type_, GenericMeta):
             if type_.__origin__ == List:
