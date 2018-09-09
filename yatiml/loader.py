@@ -146,7 +146,6 @@ class Loader(yaml.Loader):
         if type_ in scalar_type_to_str:
             return scalar_type_to_str[type_]
 
-        print('{} {} {}'.format(type_, type(type_), type(type_).__name__))
         if type(type_).__name__ == 'UnionMeta':
             return 'union of {}'.format(
                     [self.__type_to_desc(t) for t in type_.__union_params__])
@@ -424,6 +423,7 @@ class Loader(yaml.Loader):
         elif expected_type in self.registered_classes:
             recognized_types = self.__recognize_user_classes(node, expected_type)
 
+        print('{} {} {}'.format(type_, type(type_), type(type_).__name__))
         if recognized_types is None:
             raise RecognitionError(('Could not recognize for type {},'
                     ' is it registered?').format(expected_type))
