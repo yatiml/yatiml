@@ -284,7 +284,12 @@ class Loader(yaml.Loader):
         """
         print('{} {} {}'.format(expected_type, type(expected_type), dir(expected_type)))
         recognized_types = []
-        for possible_type in expected_type.__union_set_params__:
+        if hasattr(expected_type, '__union_set_params__'):
+            union_types = expected_type.__union_set_params__
+        else:
+            union_types = expected_type.__args__
+        print('{}'.format(union_types))
+        for possible_type in union_types:
             recognized_types.extend(self.__recognize(node, possible_type))
         recognized_types = list(set(recognized_types))
         return recognized_types
