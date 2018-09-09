@@ -282,6 +282,7 @@ class Loader(yaml.Loader):
         Returns:
             The specific type that was recognized, multiple, or none.
         """
+        print('{} {} {}'.format(expected_type, type(expected_type), dir(expected_type)))
         recognized_types = []
         for possible_type in expected_type.__union_set_params__:
             recognized_types.extend(self.__recognize(node, possible_type))
