@@ -146,6 +146,7 @@ class Loader(yaml.Loader):
         if type_ in scalar_type_to_str:
             return scalar_type_to_str[type_]
 
+        print('{} {} {}'.format(type_, type(type_), type(type_).__name__))
         if type(type_).__name__ == 'UnionMeta':
             return 'union of {}'.format(
                     [self.__type_to_desc(t) for t in type_.__union_params__])
