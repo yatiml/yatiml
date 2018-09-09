@@ -169,3 +169,9 @@ def test_empty_document(optional_loader):
     text = ''
     data = yaml.load(text, Loader=optional_loader)
     assert data is None
+
+
+def test_dump_str(plain_dumper):
+    data = 'test'
+    text = yaml.dump(data, Dumper=plain_dumper)
+    assert text == 'test\n...\n'

@@ -78,6 +78,13 @@ def optional_loader():
     return OptionalLoader
 
 
+@pytest.fixture
+def plain_dumper():
+    class PlainDumper(yatiml.Dumper):
+        pass
+    return PlainDumper
+
+
 class Document1:
     def __init__(self, attr1: str) -> None:
         self.attr1 = attr1
@@ -94,7 +101,7 @@ class Shape:
         self.center = center
 
 
-class Square(Shape):
+class Rectangle(Shape):
     def __init__(self, center: Vector2D, width: float, height: float) -> None:
         super().__init__(center)
         self.width = width
@@ -164,27 +171,42 @@ class Universal:
         # recognizes anything as being of this type
         pass
 
+    def yatiml_attributes(self) -> None:    # type: ignore
+        # intentionally broken
+        pass
+
 
 class Extensible:
     def __init__(self, a: int, **kwargs: Any) -> None:
         self.a = a
         self.kwargs = kwargs
 
+    def yatiml_attributes(self) -> Dict[str, Any]:
+        return {'a': self.a, **self.kwargs}
+
 
 @pytest.fixture
 def document1_loader():
     class Document1Loader(yatiml.Loader):
         pass
-    yatiml.add_classes(Document1Loader, Document1)
+    yatiml.add_to_loader(Document1Loader, Document1)
     yatiml.set_document_type(Document1Loader, Document1)
     return Document1Loader
+
+
+@pytest.fixture
+def document1_dumper():
+    class Document1Dumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(Document1Dumper, Document1)
+    return Document1Dumper
 
 
 @pytest.fixture
 def vector_loader():
     class VectorLoader(yatiml.Loader):
         pass
-    yatiml.add_classes(VectorLoader, Vector2D)
+    yatiml.add_to_loader(VectorLoader, Vector2D)
     yatiml.set_document_type(VectorLoader, Vector2D)
     return VectorLoader
 
@@ -193,7 +215,8 @@ def vector_loader():
 def shape_loader():
     class ShapeLoader(yatiml.Loader):
         pass
-    yatiml.add_classes(ShapeLoader, [Shape, Square, Circle, Ellipse, Vector2D])
+    yatiml.add_to_loader(
+            ShapeLoader, [Shape, Rectangle, Circle, Ellipse, Vector2D])
     yatiml.set_document_type(ShapeLoader, Shape)
     return ShapeLoader
 
@@ -202,7 +225,8 @@ def shape_loader():
 def missing_circle_loader():
     class MissingCircleLoader(yatiml.Loader):
         pass
-    yatiml.add_classes(MissingCircleLoader, [Shape, Square, Ellipse, Vector2D])
+    yatiml.add_to_loader(
+            MissingCircleLoader, [Shape, Rectangle, Ellipse, Vector2D])
     yatiml.set_document_type(MissingCircleLoader, Shape)
     return MissingCircleLoader
 
@@ -211,18 +235,28 @@ def missing_circle_loader():
 def document2_loader():
     class Document2Loader(yatiml.Loader):
         pass
-    yatiml.add_classes(
+    yatiml.add_to_loader(
             Document2Loader,
-            [Document2, Shape, Square, Circle, Vector2D])
+            [Document2, Shape, Rectangle, Circle, Vector2D])
     yatiml.set_document_type(Document2Loader, Document2)
     return Document2Loader
+
+
+@pytest.fixture
+def document2_dumper():
+    class Document2Dumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(
+            Document2Dumper,
+            [Document2, Shape, Rectangle, Circle, Vector2D])
+    return Document2Dumper
 
 
 @pytest.fixture
 def super_loader():
     class SuperLoader(yatiml.Loader):
         pass
-    yatiml.add_classes(SuperLoader, [Super, SubA, SubB])
+    yatiml.add_to_loader(SuperLoader, [Super, SubA, SubB])
     yatiml.set_document_type(SuperLoader, Super)
     return SuperLoader
 
@@ -231,15 +265,31 @@ def super_loader():
 def universal_loader():
     class UniversalLoader(yatiml.Loader):
         pass
-    yatiml.add_classes(UniversalLoader, Universal)
+    yatiml.add_to_loader(UniversalLoader, Universal)
     yatiml.set_document_type(UniversalLoader, Universal)
     return UniversalLoader
+
+
+@pytest.fixture
+def universal_dumper():
+    class UniversalDumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(UniversalDumper, Universal)
+    return UniversalDumper
 
 
 @pytest.fixture
 def extensible_loader():
     class ExtensibleLoader(yatiml.Loader):
         pass
-    yatiml.add_classes(ExtensibleLoader, Extensible)
+    yatiml.add_to_loader(ExtensibleLoader, Extensible)
     yatiml.set_document_type(ExtensibleLoader, Extensible)
     return ExtensibleLoader
+
+
+@pytest.fixture
+def extensible_dumper():
+    class ExtensibleDumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(ExtensibleDumper, Extensible)
+    return ExtensibleDumper

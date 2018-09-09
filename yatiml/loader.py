@@ -501,10 +501,10 @@ def set_document_type(loader_cls: Type, type_: Type) -> None:
         loader_cls.registered_tags = []
 
 
-# Python crashes if we define classes as Union[List[Type], Type]
+# Python errors if we define classes as Union[List[Type], Type]
 # So List[Type] it is, and if the user ignores that and passes
 # a single class, it'll work anyway, with a little mypy override.
-def add_classes(loader_cls: Type, classes: List[Type]) -> None:
+def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
     """Registers one or more classes with a YAtiML loader.
 
     Once a class has been registered, it can be recognized and \

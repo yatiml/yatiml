@@ -7,7 +7,8 @@ import ruamel.yaml as yaml
 
 import yatiml
 
-from .conftest import Document1, Document2, Extensible, Shape, SubA, Super
+from .conftest import Circle, Document1, Document2, Extensible, Rectangle
+from .conftest import Shape, SubA, Super, Universal, Vector2D
 
 
 def test_load_class(document1_loader):
@@ -115,3 +116,38 @@ def test_user_class_override2(super_loader):
             'subclass: A\n')
     data = yaml.load(text, Loader=super_loader)
     assert isinstance(data, Super)
+
+
+def test_dump_document1(document1_dumper):
+    data = Document1('test')
+    text = yaml.dump(data, Dumper=document1_dumper)
+    assert text == '{attr1: test}\n'
+
+
+def test_dump_custom_attributes(extensible_dumper):
+    data = Extensible(10, b=5, c=3)
+    text = yaml.dump(data, Dumper=extensible_dumper)
+    assert text == '{a: 10, b: 5, c: 3}\n'
+
+
+def test_dump_complex_document(document2_dumper):
+    shape1 = Circle(Vector2D(5.0, 6.0), 12.0)
+    shape2 = Rectangle(Vector2D(-2.0, -5.0), 3.0, 7.0)
+    data = Document2(Vector2D(3.0, 4.0), [shape1, shape2])
+    text = yaml.dump(data, Dumper=document2_dumper)
+    print(text)
+    assert text == (
+            'cursor_at: {x: 3.0, y: 4.0}\n'
+            'shapes:\n'
+            '- center: {x: 5.0, y: 6.0}\n'
+            '  radius: 12.0\n'
+            '- center: {x: -2.0, y: -5.0}\n'
+            '  height: 7.0\n'
+            '  width: 3.0\n'
+            )
+
+
+def test_broken_custom_attributes(universal_dumper):
+    data = Universal(3, [4])
+    with pytest.raises(RuntimeError):
+        yaml.dump(data, Dumper=universal_dumper)
