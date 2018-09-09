@@ -182,7 +182,9 @@ class Extensible:
         self.kwargs = kwargs
 
     def yatiml_attributes(self) -> Dict[str, Any]:
-        return {'a': self.a, **self.kwargs}
+        attrs = self.kwargs.copy()
+        attrs['a'] = self.a
+        return attrs
 
 
 @pytest.fixture
