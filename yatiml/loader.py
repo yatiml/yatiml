@@ -423,7 +423,8 @@ class Loader(yaml.Loader):
         elif expected_type in self.registered_classes:
             recognized_types = self.__recognize_user_classes(node, expected_type)
 
-        print('{} {} {}'.format(type_, type(type_), type(type_).__name__))
+        print('{} {} {}'.format(
+            expected_type, type(expected_type), type(expected_type).__name__))
         if recognized_types is None:
             raise RecognitionError(('Could not recognize for type {},'
                     ' is it registered?').format(expected_type))
