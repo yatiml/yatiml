@@ -146,7 +146,7 @@ class Loader(yaml.Loader):
         if type_ in scalar_type_to_str:
             return scalar_type_to_str[type_]
 
-        if type(type_).__name__ == 'UnionMeta':
+        if type(type_).__name__ in ['UnionMeta', '_Union']:
             return 'union of {}'.format(
                     [self.__type_to_desc(t) for t in type_.__union_params__])
 
@@ -413,7 +413,7 @@ class Loader(yaml.Loader):
         recognized_types = None
         if expected_type in [str, int, float, bool, None, type(None)]:
             recognized_types = self.__recognize_scalar(node, expected_type)
-        elif type(expected_type).__name__ == 'UnionMeta':
+        elif type(expected_type).__name__ in ['UnionMeta', '_Union']:
             recognized_types = self.__recognize_union(node, expected_type)
         elif isinstance(expected_type, GenericMeta):
                 if expected_type.__origin__ == List:
