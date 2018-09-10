@@ -1,6 +1,8 @@
 import yatiml
+from yatiml.recognizer import Recognizer
 
 import pytest   # type: ignore
+from ruamel import yaml
 
 import math
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
@@ -148,7 +150,7 @@ class SubA(Super):
         super().__init__(subclass)
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.ClassNode) -> None:
+    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_attribute_value('subclass', 'A')
 
 
@@ -157,8 +159,47 @@ class SubB(Super):
         super().__init__(subclass)
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.ClassNode) -> None:
+    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_attribute_value('subclass', 'B')
+
+
+class Super2:
+    def __init__(self) -> None:
+        pass
+
+
+class SubA2(Super2):
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        node.require_attribute_value('subclass', 'A2')
+
+    @classmethod
+    def yatiml_savorize(cls, node: yatiml.ClassNode) -> None:
+        node.remove_attribute('subclass')
+
+    @classmethod
+    def yatiml_sweeten(cls, node: yatiml.ClassNode) -> None:
+        node.set_attribute('subclass', 'A2')
+
+
+class SubB2(Super2):
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        node.require_attribute_value('subclass', 'B2')
+
+    @classmethod
+    def yatiml_savorize(cls, node: yatiml.ClassNode) -> None:
+        node.remove_attribute('subclass')
+
+    @classmethod
+    def yatiml_sweeten(cls, node: yatiml.ClassNode) -> None:
+        node.set_attribute('subclass', 'B2')
 
 
 class Universal:
@@ -264,6 +305,23 @@ def super_loader():
 
 
 @pytest.fixture
+def super2_loader():
+    class Super2Loader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(Super2Loader, [Super2, SubA2, SubB2])
+    yatiml.set_document_type(Super2Loader, Super2)
+    return Super2Loader
+
+
+@pytest.fixture
+def super2_dumper():
+    class Super2Dumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(Super2Dumper, [Super2, SubA2, SubB2])
+    return Super2Dumper
+
+
+@pytest.fixture
 def universal_loader():
     class UniversalLoader(yatiml.Loader):
         pass
@@ -295,3 +353,111 @@ def extensible_dumper():
         pass
     yatiml.add_to_dumper(ExtensibleDumper, Extensible)
     return ExtensibleDumper
+
+
+@pytest.fixture
+def yaml_seq_node():
+    # A yaml.SequenceNode representing a sequence of mappings
+    tag1 = 'tag:yaml.org,2002:map'
+    item1_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item_id')
+    item1_value1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item1')
+    item1_key2_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'price')
+    item1_value2_node = yaml.ScalarNode('tag:yaml.org,2002:float', 100.0)
+    value1 = [
+            (item1_key1_node, item1_value1_node),
+            (item1_key2_node, item1_value2_node)
+            ]
+
+    item1 = yaml.MappingNode(tag1, value1)
+
+    tag2 = 'tag:yaml.org,2002:map'
+    item2_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item_id')
+    item2_value1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item2')
+    item2_key2_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'price')
+    item2_value2_node = yaml.ScalarNode('tag:yaml.org,2002:float', 200.0)
+    value2 = [
+            (item2_key1_node, item2_value1_node),
+            (item2_key2_node, item2_value2_node)
+            ]
+    item2 = yaml.MappingNode(tag2, value2)
+
+    return yaml.SequenceNode('tag:yaml.org,2002:seq', [item1, item2])
+
+
+@pytest.fixture
+def yaml_map_node():
+    # A yaml.MappingNode representing a mapping of mappings
+    tag1 = 'tag:yaml.org,2002:map'
+    item1_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'price')
+    item1_value1_node = yaml.ScalarNode('tag:yaml.org,2002:float', 100.0)
+    value1 = [(item1_key1_node, item1_value1_node)]
+
+    item1 = yaml.MappingNode(tag1, value1)
+    key1 = yaml.ScalarNode('tag:yaml.org,2002:str', 'item1')
+
+    tag2 = 'tag:yaml.org,2002:map'
+    item2_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'price')
+    item2_value1_node = yaml.ScalarNode('tag:yaml.org,2002:float', 200.0)
+    value2 = [(item2_key1_node, item2_value1_node)]
+
+    item2 = yaml.MappingNode(tag2, value2)
+    key2 = yaml.ScalarNode('tag:yaml.org,2002:str', 'item2')
+
+    outer_map_value = [(key1, item1), (key2, item2)]
+    outer_tag = 'tag:yaml.org,2002:map'
+    outer_map = yaml.MappingNode(outer_tag, outer_map_value)
+
+    return outer_map
+
+
+@pytest.fixture
+def yaml_node(yaml_seq_node, yaml_map_node):
+    tag = 'tag:yaml.org,2002:map'
+
+    attr1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'attr1')
+    attr1_value_node = yaml.ScalarNode('tag:yaml.org,2002:int', 42)
+
+    list1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'list1')
+    dict1_key_node = yaml.ScalarNode('tag:yaml.org,2002:map', 'dict1')
+
+    value = [
+            (attr1_key_node, attr1_value_node),
+            (list1_key_node, yaml_seq_node),
+            (dict1_key_node, yaml_map_node)
+            ]
+    return yaml.MappingNode(tag, value)
+
+
+@pytest.fixture
+def class_node(yaml_node):
+    return yatiml.ClassNode(yaml_node)
+
+
+@pytest.fixture
+def unknown_node(yaml_node):
+    return yatiml.UnknownNode(Recognizer({}), yaml_node)
+
+
+@pytest.fixture
+def class_node_dup_key():
+    # A ClassNode wrapping a yaml.SequenceNode representing a sequence of
+    # mappings with a duplicate key.
+    tag1 = 'tag:yaml.org,2002:map'
+    item1_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item_id')
+    item1_value1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item')
+    value1 = [(item1_key1_node, item1_value1_node)]
+
+    item1 = yaml.MappingNode(tag1, value1)
+
+    tag2 = 'tag:yaml.org,2002:map'
+    item2_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item_id')
+    item2_value1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item')
+    value2 = [(item2_key1_node, item2_value1_node)]
+    item2 = yaml.MappingNode(tag2, value2)
+
+    seq_node = yaml.SequenceNode('tag:yaml.org,2002:seq', [item1, item2])
+
+    list1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'dup_list')
+    value = [(list1_key_node, seq_node)]
+    map_node = yaml.MappingNode('tag:yaml.org,2002:map', value)
+    return yatiml.ClassNode(map_node)

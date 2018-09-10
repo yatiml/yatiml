@@ -3,6 +3,8 @@ from typing import Any, List, Type
 
 from ruamel import yaml
 
+from yatiml.helpers import ClassNode
+
 
 class Representer:
     """A yaml Representer class for user-defined types.
@@ -30,6 +32,7 @@ class Representer:
         Returns:
             A yaml.Node representing the object.
         """
+        # make a dict with attributes
         if hasattr(data, 'yatiml_attributes'):
             attributes = data.yatiml_attributes()
             if attributes is None:
@@ -40,8 +43,34 @@ class Representer:
             attribute_names = list(argspec.args[1:])
             attributes = {name: getattr(data, name) for name in attribute_names}
 
+        # convert to a yaml.MappingNode
         represented = dumper.represent_mapping('tag:yaml.org,2002:map', attributes)
+
+        # sweeten
+        cnode = ClassNode(represented)
+        self.__sweeten(dumper, self.class_, cnode)
+
         return represented
+
+    def __sweeten(
+            self, dumper: 'Dumper',
+            class_: Type, represented_object: Any) -> None:
+        """Applies the user's yatiml_sweeten() function(s), if any.
+
+        Sweetening is done for the base classes first, then for the \
+        derived classes, down the hierarchy to the class we're \
+        constructing.
+
+        Args:
+            dumper: The dumper that is dumping this object.
+            class_: The type of the object to be dumped.
+            represented_object: The object to be dumped.
+        """
+        for base_class in class_.__bases__:
+            if base_class in dumper.yaml_representers:
+                self.__sweeten(dumper, base_class, represented_object)
+        if hasattr(class_, 'yatiml_sweeten'):
+            class_.yatiml_sweeten(represented_object)
 
 
 class Dumper(yaml.Dumper):

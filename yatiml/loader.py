@@ -7,6 +7,9 @@ import ruamel.yaml as yaml
 
 from yatiml.exceptions import RecognitionError
 from yatiml.helpers import ClassNode
+from yatiml.introspection import class_subobjects
+from yatiml.recognizer import Recognizer
+from yatiml.util import scalar_type_to_tag
 
 
 class Constructor:
@@ -57,7 +60,7 @@ class Constructor:
         mapping = loader.construct_mapping(node, deep=True)
 
         # check that we have an attribute for each required constructor argument
-        for name, type_, required in loader._Loader__class_subobjects(self.class_):
+        for name, type_, required in class_subobjects(self.class_):
             if required and not name in mapping:
                 raise RecognitionError(('{}{}Missing attribute {} needed for'
                     ' constructing a {}').format(node.start_mark, os.linesep,
@@ -69,6 +72,7 @@ class Constructor:
 
         # check that we have a constructor argument for each attribute
         argspec = inspect.getfullargspec(self.class_.__init__)
+        print('{} {}'.format(argspec, mapping))
         if argspec.varkw is None:
             for key, value in mapping.items():
                 # ensure that we have a parameter of a matching type
@@ -91,6 +95,10 @@ class Constructor:
 
 
 class Loader(yaml.Loader):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.__recognizer = Recognizer(self._registered_classes)
+
     def get_single_node(self) -> yaml.Node:
         """Hook used when loading a single document.
 
@@ -159,7 +167,7 @@ class Loader(yaml.Loader):
             if type_.__origin__ == Dict:
                 return 'dict of string to ({})'.format(self.__type_to_desc(type_.__args__[1]))
 
-        if type_ in self.registered_classes:
+        if type_ in self._registered_classes.values():
             return type_.__name__
 
         raise RuntimeError(('Unknown type {} in type_to_desc,'      # pragma: no cover
@@ -174,15 +182,6 @@ class Loader(yaml.Loader):
         Returns:
             A string containing the YAML tag.
         """
-        scalar_type_to_tag = {
-                str: 'tag:yaml.org,2002:str',
-                int: 'tag:yaml.org,2002:int',
-                float: 'tag:yaml.org,2002:float',
-                bool: 'tag:yaml.org,2002:bool',
-                None: 'tag:yaml.org,2002:null',
-                type(None): 'tag:yaml.org,2002:null'
-                }
-
         if type_ in scalar_type_to_tag:
             return scalar_type_to_tag[type_]
 
@@ -192,252 +191,29 @@ class Loader(yaml.Loader):
                 elif type_.__origin__ == Dict:
                     return 'tag:yaml.org,2002:map'
 
-        if type_ in self.registered_classes:
+        if type_ in self._registered_classes.values():
             return '!{}'.format(type_.__name__)
 
         raise RuntimeError(('Unknown type {} in type_to_tag,'       # pragma: no cover
                 ' please report a YAtiML bug.').format(type_))
 
-    def __recognize_scalar(
-            self,
-            node: yaml.Node,
-            expected_type: Type
-            ) -> List[Type]:
-        """Recognize a node that we expect to be a scalar.
+    def __savorize(self, node: yaml.MappingNode, expected_type: Type) -> None:
+        """Removes syntactic sugar from the node.
+
+        This calls yatiml_savorize(), first on the class's base \
+        classes, then on the class itself.
 
         Args:
-            node: The node to recognize.
-            expected_type: The type it is expected to be.
-
-        Returns:
-            A list of recognized types
+            node: The node to modify.
+            expected_type: The type to assume this type is.
         """
-        if (isinstance(node, yaml.ScalarNode) and
-                node.tag == self.__type_to_tag(expected_type)):
-            return [expected_type]
-        return []
+        for base_class in expected_type.__bases__:
+            if base_class in self._registered_classes.values():
+                self.__savorize(node, base_class)
 
-    def __recognize_list(
-            self,
-            node: yaml.Node,
-            expected_type: Type
-            ) -> List[Type]:
-        """Recognize a node that we expect to be a list of some kind.
-
-        Args:
-            node: The node to recognize.
-            expected_type: List[...something...]
-
-        Returns
-            expected_type if it was recognized, [] otherwise.
-        """
-        if not isinstance(node, yaml.SequenceNode):
-            return []
-        item_type = expected_type.__args__[0]
-        for item in node.value:
-            recognized_types = self.__recognize(item, item_type)
-            if len(recognized_types) == 0:
-                return []
-            if len(recognized_types) > 1:
-                return [List[t] for t in recognized_types]      # type: ignore
-
-        return [expected_type]
-
-    def __recognize_dict(
-            self,
-            node: yaml.Node,
-            expected_type: Type
-            ) -> List[Type]:
-        """Recognize a node that we expect to be a dict of some kind.
-
-        Args:
-            node: The node to recognize.
-            expected_type: Dict[str, ...something...]
-
-        Returns:
-            expected_type if it was recognized, [] otherwise.
-        """
-        if not issubclass(expected_type.__args__[0], str):
-            raise RuntimeError('YAtiML only supports dicts with strings as keys')
-        if not isinstance(node, yaml.MappingNode):
-            return []
-        value_type = expected_type.__args__[1]
-        for key, value in node.value:
-            recognized_value_types = self.__recognize(value, value_type)
-            if len(recognized_value_types) == 0:
-                return []
-            if len(recognized_value_types) > 1:
-                return [Dict[str, t] for t in recognized_value_types]      # type: ignore
-
-        return [expected_type]
-
-    def __recognize_union(
-            self,
-            node: yaml.Node,
-            expected_type: Type
-            ) -> List[Type]:
-        """Recognize a node that we expect to be one of a union of types.
-
-        Args:
-            node: The node to recognize.
-            expected_type: Union[...something...]
-
-        Returns:
-            The specific type that was recognized, multiple, or none.
-        """
-        print('{} {} {}'.format(expected_type, type(expected_type), dir(expected_type)))
-        recognized_types = []
-        if hasattr(expected_type, '__union_set_params__'):
-            union_types = expected_type.__union_set_params__
-        else:
-            union_types = expected_type.__args__
-        print('{}'.format(union_types))
-        for possible_type in union_types:
-            recognized_types.extend(self.__recognize(node, possible_type))
-        recognized_types = list(set(recognized_types))
-        return recognized_types
-
-    def __class_subobjects(
-            self, class_: Type
-            ) -> Generator[Tuple[str, Type, bool], None, None]:
-        """Find the aggregated subobjects of an object.
-
-        These are the public attributes.
-
-        Args:
-            class_: The class whose subobjects to return.
-
-        Yields:
-            Tuples (name, type, required) describing subobjects.
-        """
-        argspec = inspect.getfullargspec(class_.__init__)
-        defaults = argspec.defaults if argspec.defaults else []
-        num_optional = len(defaults)
-        first_optional = len(argspec.args) - num_optional
-
-        for i, attr_name in enumerate(argspec.args):
-            if attr_name == 'self':
-                continue
-            attr_type = argspec.annotations.get(attr_name, Any)
-            yield attr_name, attr_type, i < first_optional
-
-    def __recognize_user_class(
-            self,
-            node: yaml.Node,
-            expected_type: Type
-            ) -> List[Type]:
-        """Recognize a user-defined class in the node.
-
-        This tries to recognize only exactly the specified class. It \
-        recurses down into the class's attributes, but not to its \
-        subclasses. See also __recognize_user_classes().
-
-        Args:
-            node The node to recognize.
-            expected_type: A user-defined class.
-
-        Returns:
-            A list containing the user-defined class, or an empty list.
-        """
-        if hasattr(expected_type, 'yatiml_recognize'):
-            try:
-                cnode = ClassNode(node)
-                expected_type.yatiml_recognize(cnode)
-                return [expected_type]
-            except RecognitionError:
-                return []
-        else:
-            # auto-recognize based on constructor signature
-            if not isinstance(node, yaml.MappingNode):
-                return []
-
-            for attr_name, type_, required in self.__class_subobjects(expected_type):
-                cnode = ClassNode(node)
-                if cnode.has_attribute(attr_name):
-                    subnode = cnode.get_attribute(attr_name)
-                    recognized_types = self.__recognize(subnode, type_)
-                    if len(recognized_types) == 0:
-                        return []
-                elif required:
-                    return []
-
-            return [expected_type]
-
-    def __recognize_user_classes(
-            self,
-            node: yaml.Node,
-            expected_type: Type
-            ) -> List[Type]:
-        """Recognize a user-defined class in the node.
-
-        This returns a list of classes from the inheritance hierarchy \
-        headed by expected_type which match the given node and which \
-        do not have a registered derived class that matches the given \
-        node. So, the returned classes are the most derived matching \
-        classes that inherit from expected_type.
-
-        This function recurses down the user's inheritance hierarchy.
-
-        Args:
-            node: The node to recognize.
-            expected_type: A user-defined class.
-
-        Returns:
-            A list containing matched user-defined classes.
-        """
-        # Let the user override with an explicit tag
-        if node.tag in self.registered_tags:
-            return [self.yaml_constructors[node.tag].class_]
-
-        recognized_subclasses = []
-        for other_class in self.registered_classes:
-            if expected_type in other_class.__bases__:
-                sub_subclasses = self.__recognize_user_classes(node, other_class)
-                recognized_subclasses.extend(sub_subclasses)
-
-        if len(recognized_subclasses) == 0:
-            recognized_subclasses = self.__recognize_user_class(node, expected_type)
-
-        return recognized_subclasses
-
-    def __recognize(self, node: yaml.Node, expected_type: Type) -> List[Type]:
-        """Figure out how to interpret this node.
-
-        This is not quite a type check. This function makes a list of \
-        all types that match the expected type and also the node, and \
-        returns that list. The goal here is not to test validity, but \
-        to determine how to process this node further.
-
-        That said, it will recognize built-in types only in case of \
-        an exact match.
-
-        Args:
-            node: The YAML node to recognize.
-            expected_type: The type we expect this node to be, based \
-                    on the context provided by our type definitions.
-
-        Returns:
-            A list of matching types.
-        """
-        recognized_types = None
-        if expected_type in [str, int, float, bool, None, type(None)]:
-            recognized_types = self.__recognize_scalar(node, expected_type)
-        elif type(expected_type).__name__ in ['UnionMeta', '_Union']:
-            recognized_types = self.__recognize_union(node, expected_type)
-        elif isinstance(expected_type, GenericMeta):
-                if expected_type.__origin__ == List:
-                    recognized_types = self.__recognize_list(node, expected_type)
-                elif expected_type.__origin__ == Dict:
-                    recognized_types = self.__recognize_dict(node, expected_type)
-        elif expected_type in self.registered_classes:
-            recognized_types = self.__recognize_user_classes(node, expected_type)
-
-        print('{} {} {}'.format(
-            expected_type, type(expected_type), type(expected_type).__name__))
-        if recognized_types is None:
-            raise RecognitionError(('Could not recognize for type {},'
-                    ' is it registered?').format(expected_type))
-        return recognized_types
+        if hasattr(expected_type, 'yatiml_savorize'):
+            cnode = ClassNode(node)
+            expected_type.yatiml_savorize(cnode)
 
     def __process_node(
             self,
@@ -459,7 +235,7 @@ class Loader(yaml.Loader):
             The transformed node, or a transformed copy.
         """
         # figure out how to interpret this node
-        recognized_types = self.__recognize(node, expected_type)
+        recognized_types = self.__recognizer.recognize(node, expected_type)
 
         if len(recognized_types) == 0:
             raise RecognitionError('{}{}Type mismatch, expected a {}'.format(
@@ -472,6 +248,10 @@ class Loader(yaml.Loader):
 
         recognized_type = recognized_types[0]
         node.tag = self.__type_to_tag(recognized_type)
+
+        # remove syntactic sugar
+        if recognized_type in self._registered_classes.values():
+            self.__savorize(node, recognized_type)
 
         # process subnodes
         if isinstance(recognized_type, GenericMeta):
@@ -488,8 +268,8 @@ class Loader(yaml.Loader):
                 for key_node, value_node in node.value:
                     self.__process_node(value_node, recognized_type.__args__[1])
 
-        elif recognized_type in self.registered_classes:
-            for attr_name, type_, required in self.__class_subobjects(expected_type):
+        elif recognized_type in self._registered_classes.values():
+            for attr_name, type_, required in class_subobjects(expected_type):
                 cnode = ClassNode(node)
                 if cnode.has_attribute(attr_name):
                     subnode = cnode.get_attribute(attr_name)
@@ -506,10 +286,8 @@ def set_document_type(loader_cls: Type, type_: Type) -> None:
     """
     loader_cls.document_type = type_
 
-    if not hasattr(loader_cls, 'registered_classes'):
-        loader_cls.registered_classes = []
-    if not hasattr(loader_cls, 'registered_tags'):
-        loader_cls.registered_tags = []
+    if not hasattr(loader_cls, '_registered_classes'):
+        loader_cls._registered_classes = dict()
 
 
 # Python errors if we define classes as Union[List[Type], Type]
@@ -533,10 +311,6 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
         tag = '!{}'.format(class_.__name__)
         loader_cls.add_constructor(tag, Constructor(class_))
 
-        if not hasattr(loader_cls, 'registered_classes'):
-            loader_cls.registered_classes = []
-        loader_cls.registered_classes.append(class_)
-
-        if not hasattr(loader_cls, 'registered_tags'):
-            loader_cls.registered_tags = []
-        loader_cls.registered_tags.append(tag)
+        if not hasattr(loader_cls, '_registered_classes'):
+            loader_cls._registered_classes = dict()
+        loader_cls._registered_classes[tag] = class_

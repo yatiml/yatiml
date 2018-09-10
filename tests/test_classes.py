@@ -8,7 +8,7 @@ import ruamel.yaml as yaml
 import yatiml
 
 from .conftest import Circle, Document1, Document2, Extensible, Rectangle
-from .conftest import Shape, SubA, Super, Universal, Vector2D
+from .conftest import Shape, SubA, SubA2, Super, Universal, Vector2D
 
 
 def test_load_class(document1_loader):
@@ -116,6 +116,18 @@ def test_user_class_override2(super_loader):
             'subclass: A\n')
     data = yaml.load(text, Loader=super_loader)
     assert isinstance(data, Super)
+
+
+def test_savorize(super2_loader):
+    text = 'subclass: A2\n'
+    data = yaml.load(text, Loader=super2_loader)
+    assert isinstance(data, SubA2)
+
+
+def test_sweeten(super2_dumper):
+    data = SubA2()
+    text = yaml.dump(data, Dumper=super2_dumper)
+    assert text == '{subclass: A2}\n'
 
 
 def test_dump_document1(document1_dumper):
