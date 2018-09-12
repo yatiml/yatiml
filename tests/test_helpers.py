@@ -40,7 +40,7 @@ def test_has_attribute_type(class_node):
 
 def test_get_attribute(class_node):
     assert class_node.get_attribute('attr1').value == 42
-    with pytest.raises(KeyError):
+    with pytest.raises(yatiml.SeasoningError):
         class_node.get_attribute('non_existent_attribute')
 
 
@@ -132,7 +132,7 @@ def test_seq_attribute_to_map(class_node, class_node_dup_key):
     class_node.seq_attribute_to_map('attr1', 'item_id')
 
     # check that it raises with strict=True and duplicate keys
-    with pytest.raises(yatiml.RecognitionError):
+    with pytest.raises(yatiml.SeasoningError):
         class_node_dup_key.seq_attribute_to_map('dup_list', 'item_id', True)
 
 

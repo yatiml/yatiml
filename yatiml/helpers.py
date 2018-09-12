@@ -3,7 +3,7 @@ from ruamel import yaml
 import os
 from typing import Optional, Set, Type, Union
 
-from yatiml.exceptions import RecognitionError
+from yatiml.exceptions import RecognitionError, SeasoningError
 from yatiml.irecognizer import IRecognizer
 from yatiml.util import scalar_type_to_tag
 
@@ -173,7 +173,7 @@ class ClassNode:
                 for key_node, value_node in self.yaml_node.value
                 if key_node.value == attribute]
         if len(matches) != 1:
-            raise KeyError('Attribute not found, or found multiple times: {}'.format(
+            raise SeasoningError('Attribute not found, or found multiple times: {}'.format(
                 matches))
         return matches[0]
 
@@ -313,18 +313,18 @@ class ClassNode:
         for item in attr_node.value:
             if not isinstance(item, yaml.MappingNode):
                 if strict:
-                    raise RecognitionError(('Expected a sequence of mappings'
+                    raise SeasoningError(('Expected a sequence of mappings'
                         ' but got {}'.format(attr_node)))
                 return
 
             item_cnode = ClassNode(item)
             key_attr_node = item_cnode.get_attribute(key_attribute)
             if key_attr_node.tag != 'tag:yaml.org,2002:str':
-                raise RuntimeError(('Attribute names must be strings in'
+                raise SeasoningError(('Attribute names must be strings in'
                     'YAtiML, {} is not a string.').format(key_attr_node))
             if key_attr_node.value in seen_keys:
                 if strict:
-                    raise RecognitionError(('Found a duplicate key {}: {} when'
+                    raise SeasoningError(('Found a duplicate key {}: {} when'
                         ' converting from sequence to mapping'.format(
                             key_attribute, key_attr_node.value)))
                 return
