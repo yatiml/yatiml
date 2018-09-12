@@ -73,7 +73,7 @@ class Representer:
             class_.yatiml_sweeten(represented_object)
 
 
-class Dumper(yaml.Dumper):
+class Dumper(yaml.SafeDumper):
     """The YAtiML Dumper class.
 
     Derive your own Dumper class from this one, then add classes to it \

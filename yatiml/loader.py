@@ -94,7 +94,7 @@ class Constructor:
                     node.start_mark, os.linesep, self.class_.__name__, node)))
 
 
-class Loader(yaml.Loader):
+class Loader(yaml.SafeLoader):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.__recognizer = Recognizer(self._registered_classes)
