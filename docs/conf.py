@@ -114,8 +114,6 @@ def run_apidoc(_):
 # such.
 def skip_loader_hooks(app, what, name, obj, skip, options):
     if name == 'get_node' or name == 'get_single_node':
-        app.info('running hook: {} {} {}'.format(name, type(obj), dir(obj)))
-        app.info('{}'.format(obj.__qualname__))
         return True
     return skip
 
