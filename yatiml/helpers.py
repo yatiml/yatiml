@@ -126,14 +126,23 @@ class ClassNode:
         the given type. Matching between types passed as type_ and \
         yaml node types is as follows:
 
-                type_       yaml
-                str         ScalarNode containing string
-                int         ScalarNode containing int
-                float       ScalarNode containing float
-                bool        ScalarNode containing bool
-                None        ScalarNode containing null
-                list        SequenceNode
-                dict        MappingNode
+        +---------+-------------------------------------------+
+        |   type  |                 yaml                      |
+        +=========+===========================================+
+        |   str   |      ScalarNode containing string         |
+        +---------+-------------------------------------------+
+        |   int   |      ScalarNode containing int            |
+        +---------+-------------------------------------------+
+        |  float  |      ScalarNode containing float          |
+        +---------+-------------------------------------------+
+        |   bool  |      ScalarNode containing bool           |
+        +---------+-------------------------------------------+
+        |   None  |      ScalarNode containing null           |
+        +---------+-------------------------------------------+
+        |   list  |      SequenceNode                         |
+        +---------+-------------------------------------------+
+        |   dict  |      MappingNode                          |
+        +---------+-------------------------------------------+
 
         Args:
             attribute: The name of the attribute to check.
@@ -258,7 +267,7 @@ class ClassNode:
         as a key for the new outer mapping.
 
         An example probably helps. If you have a ClassNode representing \
-        this piece of YAML:
+        this piece of YAML::
 
             items:
             - item_id: item1
@@ -269,7 +278,7 @@ class ClassNode:
               price: 200.0
 
         and call seq_attribute_to_map('items', 'item_id'), then the \
-        ClassNode will be modified to represent this:
+        ClassNode will be modified to represent this::
 
             items:
               item1:
@@ -357,26 +366,26 @@ class ClassNode:
         sequence containing all the inner mappings.
 
         An example probably helps. If you have a ClassNode representing \
-        this piece of YAML:
+        this piece of YAML::
 
-        items:
-          item1:
-            description: Basic widget
-            price: 100.0
-          item2:
-            description: Premium quality widget
-            price: 200.0
+            items:
+              item1:
+                description: Basic widget
+                price: 100.0
+              item2:
+                description: Premium quality widget
+                price: 200.0
 
         and call map_attribute_to_seq('items', 'item_id'), then the \
-        ClassNode will be modified to represent this:
+        ClassNode will be modified to represent this::
 
-        items:
-        - item_id: item1
-          description: Basic widget
-          price: 100.0
-        - item_id: item2
-          description: Premium quality widget
-          price: 200.0
+            items:
+            - item_id: item1
+              description: Basic widget
+              price: 100.0
+            - item_id: item2
+              description: Premium quality widget
+              price: 200.0
 
         which once converted to an object is often easier to deal with \
         in code.
