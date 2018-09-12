@@ -307,7 +307,7 @@ class ClassNode:
                     not unique.
 
         Raises:
-            RecognitionError: If the keys are not unique and strict is \
+            SeasoningError: If the keys are not unique and strict is \
                     True.
         """
         if not self.has_attribute(attribute):
