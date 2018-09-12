@@ -45,7 +45,8 @@ setup(
         # dependencies for `python setup.py build_sphinx`
         'sphinx',
         'recommonmark',
-        'sphinx-rtd-theme'
+        'sphinx-rtd-theme',
+        'ruamel.yaml'
     ],
     tests_require=[
         'pytest>=3.5',
