@@ -108,8 +108,21 @@ def run_apidoc(_):
         apidoc.main(argv)
 
 
+# Skip the hooks for ruamel.yaml in our Loader class
+# Those are protected, not public, and not part of
+# the public API, so they should not be documented as
+# such.
+def skip_loader_hooks(app, what, name, obj, skip, options):
+    if name == 'get_node' or name == 'get_single_node':
+        app.info('running hook: {} {} {}'.format(name, type(obj), dir(obj)))
+        app.info('{}'.format(obj.__qualname__))
+        return True
+    return skip
+
+
 def setup(app):
     app.connect('builder-inited', run_apidoc)
+    app.connect('autodoc-skip-member', skip_loader_hooks)
 
 
 # -- Options for HTML output ----------------------------------------------
