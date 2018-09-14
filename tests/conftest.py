@@ -5,7 +5,7 @@ import pytest   # type: ignore
 from ruamel import yaml
 
 import math
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 
 @pytest.fixture
@@ -218,14 +218,9 @@ class Universal:
 
 
 class Extensible:
-    def __init__(self, a: int, **kwargs: Any) -> None:
+    def __init__(self, a: int, yatiml_extra: yatiml.CommentedMap=None) -> None:
         self.a = a
-        self.kwargs = kwargs
-
-    def yatiml_attributes(self) -> Dict[str, Any]:
-        attrs = self.kwargs.copy()
-        attrs['a'] = self.a
-        return attrs
+        self.yatiml_extra = yatiml_extra
 
 
 @pytest.fixture

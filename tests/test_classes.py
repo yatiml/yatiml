@@ -84,15 +84,15 @@ def test_missing_discriminator(super_loader):
         yaml.load(text, Loader=super_loader)
 
 
-def test_kwargs(extensible_loader):
+def test_yatiml_extra(extensible_loader):
     text = ('a: 10\n'
             'b: test1\n'
             'c: 42\n')
     data = yaml.load(text, Loader=extensible_loader)
     assert isinstance(data, Extensible)
     assert data.a == 10
-    assert data.kwargs['b'] == 'test1'
-    assert data.kwargs['c'] == 42
+    assert data.yatiml_extra['b'] == 'test1'
+    assert data.yatiml_extra['c'] == 42
 
 
 def test_missing_class(missing_circle_loader):
@@ -127,19 +127,20 @@ def test_savorize(super2_loader):
 def test_sweeten(super2_dumper):
     data = SubA2()
     text = yaml.dump(data, Dumper=super2_dumper)
-    assert text == '{subclass: A2}\n'
+    assert text == 'subclass: A2\n'
 
 
 def test_dump_document1(document1_dumper):
     data = Document1('test')
     text = yaml.dump(data, Dumper=document1_dumper)
-    assert text == '{attr1: test}\n'
+    assert text == 'attr1: test\n'
 
 
 def test_dump_custom_attributes(extensible_dumper):
-    data = Extensible(10, b=5, c=3)
+    extra_attributes = yatiml.CommentedMap([('b', 5), ('c', 3)])
+    data = Extensible(10, yatiml_extra=extra_attributes)
     text = yaml.dump(data, Dumper=extensible_dumper)
-    assert text == '{a: 10, b: 5, c: 3}\n'
+    assert text == 'a: 10\nb: 5\nc: 3\n'
 
 
 def test_dump_complex_document(document2_dumper):
@@ -149,13 +150,19 @@ def test_dump_complex_document(document2_dumper):
     text = yaml.dump(data, Dumper=document2_dumper)
     print(text)
     assert text == (
-            'cursor_at: {x: 3.0, y: 4.0}\n'
+            'cursor_at:\n'
+            '  x: 3.0\n'
+            '  y: 4.0\n'
             'shapes:\n'
-            '- center: {x: 5.0, y: 6.0}\n'
+            '- center:\n'
+            '    x: 5.0\n'
+            '    y: 6.0\n'
             '  radius: 12.0\n'
-            '- center: {x: -2.0, y: -5.0}\n'
-            '  height: 7.0\n'
+            '- center:\n'
+            '    x: -2.0\n'
+            '    y: -5.0\n'
             '  width: 3.0\n'
+            '  height: 7.0\n'
             )
 
 

@@ -41,7 +41,16 @@ class Representer:
         else:
             argspec = inspect.getfullargspec(data.__init__)
             attribute_names = list(argspec.args[1:])
-            attributes = {name: getattr(data, name) for name in attribute_names}
+            attrs = [(name, getattr(data, name))
+                    for name in attribute_names
+                    if name != 'yatiml_extra']
+            if 'yatiml_extra' in attribute_names:
+                if not hasattr(data, 'yatiml_extra'):
+                    raise RuntimeError(('Class {} takes yatiml_extra but has '
+                        ' no yatiml_extra attribute, and no '
+                        ' yatiml_attributes().').format(self.class_.__name__))
+                attrs.extend(data.yatiml_extra.items())
+            attributes = yaml.comments.CommentedMap(attrs)
 
         # convert to a yaml.MappingNode
         represented = dumper.represent_mapping('tag:yaml.org,2002:map', attributes)
@@ -73,7 +82,7 @@ class Representer:
             class_.yatiml_sweeten(represented_object)
 
 
-class Dumper(yaml.SafeDumper):
+class Dumper(yaml.RoundTripDumper):
     """The YAtiML Dumper class.
 
     Derive your own Dumper class from this one, then add classes to it \

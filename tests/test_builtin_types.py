@@ -5,6 +5,7 @@
 import pytest
 import ruamel.yaml as yaml
 
+from collections import MutableMapping
 from typing import Dict, List
 
 import yatiml
@@ -95,7 +96,7 @@ def test_load_list_mismatch(int_list_loader):
 def test_load_dict(string_dict_loader):
     text = 'key1: test1\nkey2: test2\n'
     data = yaml.load(text, Loader=string_dict_loader)
-    assert isinstance(data, dict)
+    assert isinstance(data, MutableMapping)
     assert data == {'key1': 'test1', 'key2': 'test2'}
 
 

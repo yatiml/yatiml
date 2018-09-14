@@ -57,7 +57,8 @@ class Constructor:
         # construct object and let yaml lib construct subobjects
         new_obj = self.class_.__new__(self.class_)  # type: ignore
         yield new_obj
-        mapping = loader.construct_mapping(node, deep=True)
+        mapping = yaml.comments.CommentedMap()
+        loader.construct_mapping(node, mapping, deep=True)
 
         # check that we have an attribute for each required constructor argument
         for name, type_, required in class_subobjects(self.class_):
@@ -73,7 +74,7 @@ class Constructor:
         # check that we have a constructor argument for each attribute
         argspec = inspect.getfullargspec(self.class_.__init__)
         print('{} {}'.format(argspec, mapping))
-        if argspec.varkw is None:
+        if 'yatiml_extra' not in argspec.args:
             for key, value in mapping.items():
                 # ensure that we have a parameter of a matching type
                 if not isinstance(key, str):
@@ -87,14 +88,28 @@ class Constructor:
 
         # construct object, this should work now
         try:
-            new_obj.__init__(**mapping)
+            if 'yatiml_extra' in argspec.args:
+                # split off extra attributes into yatiml_extra
+                named_attrs = mapping.copy()    # type: Dict
+                attr_names = list(named_attrs.keys())
+                for name in attr_names:
+                    if name not in argspec.args or name == 'yatiml_extra':
+                        del(named_attrs[name])
+                    else:
+                        del(mapping[name])
+                named_attrs['yatiml_extra'] = mapping
+                new_obj.__init__(**named_attrs)
+
+            else:
+                new_obj.__init__(**mapping)
+
         except TypeError as e:  # pragma: no cover
             raise RecognitionError(('{}{}Could not construct object of class {}'
                 ' from {}. This is a bug in YAtiML, please report.'.format(
                     node.start_mark, os.linesep, self.class_.__name__, node)))
 
 
-class Loader(yaml.SafeLoader):
+class Loader(yaml.RoundTripLoader):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.__recognizer = Recognizer(self._registered_classes)
