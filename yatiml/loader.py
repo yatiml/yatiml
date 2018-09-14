@@ -1,5 +1,6 @@
 import copy
 import inspect
+import logging
 import os
 from typing import Any, Dict, Generator, GenericMeta, List, Tuple, Type, Union
 
@@ -10,6 +11,9 @@ from yatiml.helpers import ClassNode
 from yatiml.introspection import class_subobjects
 from yatiml.recognizer import Recognizer
 from yatiml.util import scalar_type_to_tag
+
+
+logger = logging.getLogger(__name__)
 
 
 class Constructor:
@@ -49,6 +53,7 @@ class Constructor:
         Yields:
             The incomplete constructed object.
         """
+        logger.debug('Constructing an object of type {}'.format(self.class_.__name__))
         if not isinstance(node, yaml.MappingNode):
             raise RecognitionError(('{}{}Expected a MappingNode. There'
                     ' is probably something wrong with your yatiml_savorize()'
@@ -61,6 +66,7 @@ class Constructor:
         loader.construct_mapping(node, mapping, deep=True)
 
         # check that we have an attribute for each required constructor argument
+        logger.debug('Checking presence of required attributes')
         for name, type_, required in class_subobjects(self.class_):
             if required and not name in mapping:
                 raise RecognitionError(('{}{}Missing attribute {} needed for'
@@ -72,8 +78,9 @@ class Constructor:
                         name, type(mapping[name]), type_))
 
         # check that we have a constructor argument for each attribute
+        logger.debug('Checking for extraneous attributes')
         argspec = inspect.getfullargspec(self.class_.__init__)
-        print('{} {}'.format(argspec, mapping))
+        logger.debug('Constructor arguments: {}, mapping: {}'.format(argspec.args, list(mapping.keys())))
         if 'yatiml_extra' not in argspec.args:
             for key, value in mapping.items():
                 # ensure that we have a parameter of a matching type
@@ -88,6 +95,7 @@ class Constructor:
 
         # construct object, this should work now
         try:
+            logger.debug('Calling __init__')
             if 'yatiml_extra' in argspec.args:
                 # split off extra attributes into yatiml_extra
                 named_attrs = mapping.copy()    # type: Dict
@@ -107,6 +115,7 @@ class Constructor:
             raise RecognitionError(('{}{}Could not construct object of class {}'
                 ' from {}. This is a bug in YAtiML, please report.'.format(
                     node.start_mark, os.linesep, self.class_.__name__, node)))
+        logger.debug('Done constructing {}'.format(self.class_.__name__))
 
 
 class Loader(yaml.RoundTripLoader):
@@ -222,11 +231,15 @@ class Loader(yaml.RoundTripLoader):
             node: The node to modify.
             expected_type: The type to assume this type is.
         """
+        logger.debug('Savorizing node assuming type {}'.format(
+                expected_type.__name__))
         for base_class in expected_type.__bases__:
             if base_class in self._registered_classes.values():
                 self.__savorize(node, base_class)
 
         if hasattr(expected_type, 'yatiml_savorize'):
+            logger.debug('Calling {}.yatiml_savorize()'.format(
+                    expected_type.__name__))
             cnode = ClassNode(node)
             expected_type.yatiml_savorize(cnode)
 
@@ -249,6 +262,8 @@ class Loader(yaml.RoundTripLoader):
         Returns:
             The transformed node, or a transformed copy.
         """
+        logger.info('Processing node {} expecting type {}'.format(node, expected_type))
+
         # figure out how to interpret this node
         recognized_types = self.__recognizer.recognize(node, expected_type)
 
@@ -265,10 +280,12 @@ class Loader(yaml.RoundTripLoader):
         node.tag = self.__type_to_tag(recognized_type)
 
         # remove syntactic sugar
+        logger.debug('Savorizing node')
         if recognized_type in self._registered_classes.values():
             self.__savorize(node, recognized_type)
 
         # process subnodes
+        logger.debug('Recursing into subnodes')
         if isinstance(recognized_type, GenericMeta):
             if recognized_type.__origin__ == List:
                 if node.tag != 'tag:yaml.org,2002:seq':
@@ -290,6 +307,7 @@ class Loader(yaml.RoundTripLoader):
                     subnode = cnode.get_attribute(attr_name)
                     self.__process_node(subnode, type_)
 
+        logger.debug('Finished processing node {}'.format(node))
         return node
 
 def set_document_type(loader_cls: Type, type_: Type) -> None:

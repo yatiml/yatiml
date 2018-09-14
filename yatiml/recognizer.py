@@ -1,6 +1,7 @@
 from ruamel import yaml
 
 import abc
+import logging
 
 from typing import Dict, Generator, GenericMeta, List, Tuple, Type
 
@@ -9,6 +10,9 @@ from yatiml.helpers import UnknownNode, ClassNode
 from yatiml.introspection import class_subobjects
 from yatiml.irecognizer import IRecognizer
 from yatiml.util import scalar_type_to_tag
+
+
+logger = logging.getLogger(__name__)
 
 
 class Recognizer(IRecognizer):
@@ -36,6 +40,7 @@ class Recognizer(IRecognizer):
         Returns:
             A list of recognized types
         """
+        logger.debug('Recognizing as a scalar')
         if (isinstance(node, yaml.ScalarNode) and
                 node.tag == scalar_type_to_tag[expected_type]):
             return [expected_type]
@@ -55,6 +60,7 @@ class Recognizer(IRecognizer):
         Returns
             expected_type if it was recognized, [] otherwise.
         """
+        logger.debug('Recognizing as a list')
         if not isinstance(node, yaml.SequenceNode):
             return []
         item_type = expected_type.__args__[0]
@@ -81,6 +87,7 @@ class Recognizer(IRecognizer):
         Returns:
             expected_type if it was recognized, [] otherwise.
         """
+        logger.debug('Recognizing as a dict')
         if not issubclass(expected_type.__args__[0], str):
             raise RuntimeError('YAtiML only supports dicts with strings as keys')
         if not isinstance(node, yaml.MappingNode):
@@ -109,13 +116,13 @@ class Recognizer(IRecognizer):
         Returns:
             The specific type that was recognized, multiple, or none.
         """
-        print('{} {} {}'.format(expected_type, type(expected_type), dir(expected_type)))
+        logger.debug('Recognizing as a union')
         recognized_types = []
         if hasattr(expected_type, '__union_set_params__'):
             union_types = expected_type.__union_set_params__
         else:
             union_types = expected_type.__args__
-        print('{}'.format(union_types))
+        logger.debug('Union types {}'.format(union_types))
         for possible_type in union_types:
             recognized_types.extend(self.recognize(node, possible_type))
         recognized_types = list(set(recognized_types))
@@ -139,6 +146,7 @@ class Recognizer(IRecognizer):
         Returns:
             A list containing the user-defined class, or an empty list.
         """
+        logger.debug('Recognizing as a user-defined class')
         if hasattr(expected_type, 'yatiml_recognize'):
             try:
                 unode = UnknownNode(self, node)
@@ -219,6 +227,7 @@ class Recognizer(IRecognizer):
         Returns:
             A list of matching types.
         """
+        logger.debug('Recognizing {} as a {}'.format(node, expected_type))
         recognized_types = None
         if expected_type in [str, int, float, bool, None, type(None)]:
             recognized_types = self.__recognize_scalar(node, expected_type)
@@ -232,11 +241,9 @@ class Recognizer(IRecognizer):
         elif expected_type in self.__registered_classes.values():
             recognized_types = self.__recognize_user_classes(node, expected_type)
 
-        print('{} {} {}'.format(
-            expected_type, type(expected_type), type(expected_type).__name__))
         if recognized_types is None:
             raise RecognitionError(('Could not recognize for type {},'
                     ' is it registered?').format(expected_type))
+        logger.debug('Recognized types {} matching {}'.format(
+            recognized_types, expected_type))
         return recognized_types
-
-

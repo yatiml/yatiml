@@ -1,9 +1,13 @@
 import inspect
+import logging
 from typing import Any, List, Type
 
 from ruamel import yaml
 
 from yatiml.helpers import ClassNode
+
+
+logger = logging.getLogger(__name__)
 
 
 class Representer:
@@ -33,12 +37,15 @@ class Representer:
             A yaml.Node representing the object.
         """
         # make a dict with attributes
+        logger.info('Representing {} of class {}'.format(data, self.class_.__name__))
         if hasattr(data, 'yatiml_attributes'):
+            logger.debug('Found yatiml_attributes()')
             attributes = data.yatiml_attributes()
             if attributes is None:
                 raise RuntimeError(('{}.yatiml_attributes() returned None,'
                     ' where a dict was expected.').format(self.class_.__name__))
         else:
+            logger.debug('No yatiml_attributes() found, using public attributes')
             argspec = inspect.getfullargspec(data.__init__)
             attribute_names = list(argspec.args[1:])
             attrs = [(name, getattr(data, name))
@@ -59,6 +66,7 @@ class Representer:
         cnode = ClassNode(represented)
         self.__sweeten(dumper, self.class_, cnode)
 
+        logger.debug('End representing {}'.format(data))
         return represented
 
     def __sweeten(
@@ -77,6 +85,7 @@ class Representer:
         """
         for base_class in class_.__bases__:
             if base_class in dumper.yaml_representers:
+                logger.debug('Sweetening for class {}'.format(self.class_.__name__))
                 self.__sweeten(dumper, base_class, represented_object)
         if hasattr(class_, 'yatiml_sweeten'):
             class_.yatiml_sweeten(represented_object)

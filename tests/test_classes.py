@@ -148,7 +148,6 @@ def test_dump_complex_document(document2_dumper):
     shape2 = Rectangle(Vector2D(-2.0, -5.0), 3.0, 7.0)
     data = Document2(Vector2D(3.0, 4.0), [shape1, shape2])
     text = yaml.dump(data, Dumper=document2_dumper)
-    print(text)
     assert text == (
             'cursor_at:\n'
             '  x: 3.0\n'

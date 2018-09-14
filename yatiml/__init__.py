@@ -20,7 +20,26 @@ from yatiml.helpers import ClassNode, UnknownNode
 
 from ruamel.yaml.comments import CommentedMap
 
+import logging
+
+
+logger = logging.getLogger('yatiml')
+"""The YAtiML root logger. Use this to set YAtiML's log level.
+
+In particular, if something goes wrong with loading or dumping from \
+or to YAML, and you want more debug output from YAtiML, use::
+
+    import logging
+
+    yatiml.logger.setLevel(logging.INFO)
+
+or for even more::
+
+    yatiml.logger.setLevel(logging.DEBUG)
+"""
+
 __all__ = [
+        'logger',
         'RecognitionError', 'SeasoningError',
         'ClassNode', 'UnknownNode',
         'Loader',
