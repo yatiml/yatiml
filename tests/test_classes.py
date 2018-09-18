@@ -95,6 +95,22 @@ def test_yatiml_extra(extensible_loader):
     assert data.yatiml_extra['c'] == 42
 
 
+def test_yatiml_extra_strip(extensible_loader):
+    text = ('a: 10\n'
+            'b: test1\n'
+            'c: !Extensible\n'
+            '  a: 12\n'
+            '  b: test2\n')
+    data = yaml.load(text, Loader=extensible_loader)
+    assert isinstance(data, Extensible)
+    assert data.a == 10
+    assert data.yatiml_extra['b'] == 'test1'
+    assert not isinstance(data.yatiml_extra['c'], Extensible)
+    assert isinstance(data.yatiml_extra['c'], yaml.comments.CommentedMap)
+    assert data.yatiml_extra['c']['a'] == 12
+    assert data.yatiml_extra['c']['b'] == 'test2'
+
+
 def test_missing_class(missing_circle_loader):
     text = ('center:\n'
             '  x: 1.0\n'

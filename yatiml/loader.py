@@ -59,6 +59,23 @@ class Constructor:
                     ' is probably something wrong with your yatiml_savorize()'
                     ' function.').format(node.start_mark, os.linesep))
 
+        # figure out which keys are extra and strip them
+        argspec = inspect.getfullargspec(self.class_.__init__)
+        known_keys = list(argspec.args)
+        known_keys.remove('self')
+        if 'yatiml_extra' in known_keys:
+            known_keys.remove('yatiml_extra')
+
+        for key_node, value_node in node.value:
+            if (not isinstance(key_node, yaml.ScalarNode) or
+                    key_node.tag != 'tag:yaml.org,2002:str'):
+                raise RecognitionError(('{}{}Mapping keys that are not of type'
+                    ' string are not supported by YAtiML.').format(node.start_mark,
+                        os.linesep))
+            if key_node.value not in known_keys:
+                self.__strip_tags(value_node)
+
+
         # construct object and let yaml lib construct subobjects
         new_obj = self.class_.__new__(self.class_)  # type: ignore
         yield new_obj
@@ -116,6 +133,23 @@ class Constructor:
                 ' from {}. This is a bug in YAtiML, please report.'.format(
                     node.start_mark, os.linesep, self.class_.__name__, node)))
         logger.debug('Done constructing {}'.format(self.class_.__name__))
+
+    def __strip_tags(self, node: yaml.Node) -> None:
+        """Strips tags from mappings in the tree headed by node.
+
+        This keeps yaml from constructing any objects in this tree.
+
+        Args:
+            node: Head of the tree to strip
+        """
+        if isinstance(node, yaml.SequenceNode):
+            for subnode in node.value:
+                self.__strip_tags(subnode)
+        elif isinstance(node, yaml.MappingNode):
+            node.tag = 'tag:yaml.org,2002:map'
+            for key_node, value_node in node.value:
+                self.__strip_tags(key_node)
+                self.__strip_tags(value_node)
 
 
 class Loader(yaml.RoundTripLoader):
