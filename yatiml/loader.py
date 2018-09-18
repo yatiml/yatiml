@@ -5,6 +5,7 @@ import os
 from typing import Any, Dict, Generator, GenericMeta, List, Tuple, Type, Union
 
 import ruamel.yaml as yaml
+from ruamel.yaml.comments import CommentedMap
 
 from yatiml.exceptions import RecognitionError
 from yatiml.helpers import ClassNode
@@ -59,9 +60,138 @@ class Constructor:
                     ' is probably something wrong with your yatiml_savorize()'
                     ' function.').format(node.start_mark, os.linesep))
 
-        # figure out which keys are extra and strip them
+        # figure out which keys are extra and strip them of tags
+        # to prevent constructing objects we haven't type checked
         argspec = inspect.getfullargspec(self.class_.__init__)
-        known_keys = list(argspec.args)
+        self.__strip_extra_attributes(node, argspec.args)
+
+        # create object and let yaml lib construct subobjects
+        new_obj = self.class_.__new__(self.class_)  # type: ignore
+        yield new_obj
+        mapping = CommentedMap()
+        loader.construct_mapping(node, mapping, deep=True)
+
+        # do type check
+        self.__check_no_missing_attributes(node, mapping)
+        self.__check_no_extraneous_attributes(node, mapping, argspec)
+
+        # construct object, this should work now
+        try:
+            logger.debug('Calling __init__')
+            if 'yatiml_extra' in argspec.args:
+                attrs = self.__split_off_extra_attributes(mapping, argspec.args)
+                new_obj.__init__(**attrs)
+
+            else:
+                new_obj.__init__(**mapping)
+
+        except TypeError as e:  # pragma: no cover
+            raise RecognitionError(('{}{}Could not construct object of class {}'
+                ' from {}. This is a bug in YAtiML, please report.'.format(
+                    node.start_mark, os.linesep, self.class_.__name__, node)))
+        logger.debug('Done constructing {}'.format(self.class_.__name__))
+
+    def __split_off_extra_attributes(
+            self,
+            mapping: CommentedMap,
+            known_attrs: List[str]
+            ) -> CommentedMap:
+        """Separates the extra attributes in mapping into yatiml_extra.
+
+        This returns a mapping containing all key-value pairs from \
+        mapping whose key is in known_attrs, and an additional key \
+        yatiml_extra which maps to a dict containing the remaining \
+        key-value pairs.
+
+        Args:
+            mapping: The mapping to split
+            known_attrs: Attributes that should be kept in the main \
+                    map, and not moved to yatiml_extra.
+
+        Returns:
+            A map with attributes reorganised as described above.
+        """
+        attr_names = list(mapping.keys())
+        main_attrs = mapping.copy()
+        extra_attrs = CommentedMap(mapping.items())
+        for name in attr_names:
+            if name not in known_attrs or name == 'yatiml_extra':
+                del(main_attrs[name])
+            else:
+                del(extra_attrs[name])
+        main_attrs['yatiml_extra'] = extra_attrs
+        return main_attrs
+
+    def __check_no_missing_attributes(
+            self,
+            node: yaml.Node,
+            mapping: CommentedMap
+            ) -> None:
+        """Checks that all required attributes are present.
+
+        Also checks that they're of the correct type.
+
+        Args:
+            mapping: The mapping with subobjects of this object.
+
+        Raises:
+            RecognitionError: if an attribute is missing or the type \
+                is incorrect.
+        """
+        logger.debug('Checking presence of required attributes')
+        for name, type_, required in class_subobjects(self.class_):
+            if required and not name in mapping:
+                raise RecognitionError(('{}{}Missing attribute {} needed for'
+                    ' constructing a {}').format(node.start_mark, os.linesep,
+                        name, self.class_.__name__))
+            if name in mapping and not isinstance(mapping[name], type_):
+                raise RecognitionError(('{}{}Attribute {} has incorrect type'
+                    ' {}, expecting a {}').format(node.start_mark, os.linesep,
+                        name, type(mapping[name]), type_))
+
+    def __check_no_extraneous_attributes(
+            self,
+            node: yaml.Node,
+            mapping: CommentedMap,
+            argspec: inspect.FullArgSpec
+            ) -> None:
+        """Ensure all attributes have a matching constructor argument.
+
+        If the class has a yatiml_extra attribute, then extra \
+        attributes are okay and no error will be raised.
+
+        Args:
+            node: The node we're processing
+            mapping: The mapping with constructed subobjects
+            constructor_attrs: The attributes of the constructor, \
+                    including self and yatiml_extra, if applicable
+        """
+        logger.debug('Checking for extraneous attributes')
+        logger.debug('Constructor arguments: {}, mapping: {}'.format(
+            argspec.args, list(mapping.keys())))
+        if 'yatiml_extra' not in argspec.args:
+            for key, value in mapping.items():
+                if not isinstance(key, str):
+                    raise RecognitionError(('{}{}YAtiML only supports strings'
+                        ' for mapping keys').format(node.start_mark,
+                            os.linesep))
+                if key not in argspec.args or not isinstance(value, argspec.annotations[key]):
+                    raise RecognitionError(('{}{}Found additional attributes'
+                        ' and {} does not support keyword args').format(node.start_mark,
+                            os.linesep, self.class_.__name__))
+
+    def __strip_extra_attributes(self, node: yaml.Node, known_attrs: List[str]) -> None:
+        """Strips tags from extra attributes.
+
+        This prevents nodes under attributes that are not part of our \
+        data model from being converted to objects. They'll be plain \
+        CommentedMaps instead.
+
+        Args:
+            node: The node to process
+            known_attrs: The attributes to not strip
+        """
+        known_keys = list(known_attrs)
         known_keys.remove('self')
         if 'yatiml_extra' in known_keys:
             known_keys.remove('yatiml_extra')
@@ -74,65 +204,6 @@ class Constructor:
                         os.linesep))
             if key_node.value not in known_keys:
                 self.__strip_tags(value_node)
-
-
-        # construct object and let yaml lib construct subobjects
-        new_obj = self.class_.__new__(self.class_)  # type: ignore
-        yield new_obj
-        mapping = yaml.comments.CommentedMap()
-        loader.construct_mapping(node, mapping, deep=True)
-
-        # check that we have an attribute for each required constructor argument
-        logger.debug('Checking presence of required attributes')
-        for name, type_, required in class_subobjects(self.class_):
-            if required and not name in mapping:
-                raise RecognitionError(('{}{}Missing attribute {} needed for'
-                    ' constructing a {}').format(node.start_mark, os.linesep,
-                        name, self.class_.__name__))
-            if name in mapping and not isinstance(mapping[name], type_):
-                raise RecognitionError(('{}{}Attribute {} has incorrect type'
-                    ' {}, expecting a {}').format(node.start_mark, os.linesep,
-                        name, type(mapping[name]), type_))
-
-        # check that we have a constructor argument for each attribute
-        logger.debug('Checking for extraneous attributes')
-        argspec = inspect.getfullargspec(self.class_.__init__)
-        logger.debug('Constructor arguments: {}, mapping: {}'.format(argspec.args, list(mapping.keys())))
-        if 'yatiml_extra' not in argspec.args:
-            for key, value in mapping.items():
-                # ensure that we have a parameter of a matching type
-                if not isinstance(key, str):
-                    raise RecognitionError(('{}{}YAtiML only supports strings'
-                        ' for mapping keys').format(node.start_mark,
-                            os.linesep))
-                if key not in argspec.args or not isinstance(value, argspec.annotations[key]):
-                    raise RecognitionError(('{}{}Found additional attributes'
-                        ' and {} does not support keyword args').format(node.start_mark,
-                            os.linesep, self.class_.__name__))
-
-        # construct object, this should work now
-        try:
-            logger.debug('Calling __init__')
-            if 'yatiml_extra' in argspec.args:
-                # split off extra attributes into yatiml_extra
-                named_attrs = mapping.copy()    # type: Dict
-                attr_names = list(named_attrs.keys())
-                for name in attr_names:
-                    if name not in argspec.args or name == 'yatiml_extra':
-                        del(named_attrs[name])
-                    else:
-                        del(mapping[name])
-                named_attrs['yatiml_extra'] = mapping
-                new_obj.__init__(**named_attrs)
-
-            else:
-                new_obj.__init__(**mapping)
-
-        except TypeError as e:  # pragma: no cover
-            raise RecognitionError(('{}{}Could not construct object of class {}'
-                ' from {}. This is a bug in YAtiML, please report.'.format(
-                    node.start_mark, os.linesep, self.class_.__name__, node)))
-        logger.debug('Done constructing {}'.format(self.class_.__name__))
 
     def __strip_tags(self, node: yaml.Node) -> None:
         """Strips tags from mappings in the tree headed by node.
