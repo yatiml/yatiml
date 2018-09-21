@@ -8,16 +8,26 @@ Welcome to YAtiML's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Contents
 
-
-API Reference
-=============
+   installation
+   tutorial
+   problem_solving
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 1
 
-  yatiml <apidocs/yatiml.rst>
+   API reference <apidocs/yatiml.rst>
+
+
+Development
+===========
+
+.. toctree::
+  :maxdepth: 3
+
+  development
+  Source code documentation <apidocs/yatiml.rst>
 
 
 Indices and tables
