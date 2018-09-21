@@ -122,6 +122,33 @@ class Constructor:
         main_attrs['yatiml_extra'] = extra_attrs
         return main_attrs
 
+    def __type_matches(self, obj: Any, type_: Type) -> bool:
+        """Checks that the object matches the given type.
+
+        Like isinstance(), but will work with union types using Union.
+
+        Args:
+            obj: The object to check
+            type_: The type to check against
+
+        Returns:
+            True iff obj is of type type_
+        """
+        if type(type_).__name__ in ['UnionMeta', '_Union']:
+            if hasattr(type_, '__union_params__'):
+                types = type_.__union_params__
+            else:
+                types = type_.__args__
+
+            for t in types:
+                if self.__type_matches(obj, t):
+                    return True
+            else:
+                return False
+        else:
+            return isinstance(obj, type_)
+
+
     def __check_no_missing_attributes(
             self,
             node: yaml.Node,
@@ -144,7 +171,7 @@ class Constructor:
                 raise RecognitionError(('{}{}Missing attribute {} needed for'
                     ' constructing a {}').format(node.start_mark, os.linesep,
                         name, self.class_.__name__))
-            if name in mapping and not isinstance(mapping[name], type_):
+            if name in mapping and not self.__type_matches(mapping[name], type_):
                 raise RecognitionError(('{}{}Attribute {} has incorrect type'
                     ' {}, expecting a {}').format(node.start_mark, os.linesep,
                         name, type(mapping[name]), type_))
@@ -182,7 +209,7 @@ class Constructor:
                     ' and {} does not support those').format(node.start_mark,
                         os.linesep, self.class_.__name__))
 
-            if key in argspec.args and not isinstance(value, argspec.annotations[key]):
+            if key in argspec.args and not self.__type_matches(value, argspec.annotations[key]):
                 raise RecognitionError(('{}{}Expected attribute {} to be of'
                     ' type {} but it is a(n) {}').format(node.start_mark,
                         os.linesep, key, argspec.annotations[key], type(value)))

@@ -223,6 +223,11 @@ class Extensible:
         self.yatiml_extra = yatiml_extra
 
 
+class UnionAttribute:
+    def __init__(self, a: Union[int, str]) -> None:
+        self.a = a
+
+
 @pytest.fixture
 def document1_loader():
     class Document1Loader(yatiml.Loader):
@@ -348,6 +353,15 @@ def extensible_dumper():
         pass
     yatiml.add_to_dumper(ExtensibleDumper, Extensible)
     return ExtensibleDumper
+
+
+@pytest.fixture
+def union_attribute_loader():
+    class UnionAttributeLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(UnionAttributeLoader, UnionAttribute)
+    yatiml.set_document_type(UnionAttributeLoader, UnionAttribute)
+    return UnionAttributeLoader
 
 
 @pytest.fixture

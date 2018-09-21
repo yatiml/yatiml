@@ -8,7 +8,8 @@ import ruamel.yaml as yaml
 import yatiml
 
 from .conftest import Circle, Document1, Document2, Extensible, Rectangle
-from .conftest import Shape, SubA, SubA2, Super, Universal, Vector2D
+from .conftest import Shape, SubA, SubA2, Super, UnionAttribute, Universal
+from .conftest import Vector2D
 
 
 def test_load_class(document1_loader):
@@ -58,6 +59,12 @@ def test_optional_attribute(document2_loader):
     assert data.cursor_at.x == 42.0
     assert data.cursor_at.y == 42.1
     assert data.shapes == []
+
+
+def test_union_attribute(union_attribute_loader):
+    text = 'a: 10'
+    data = yaml.load(text, Loader=union_attribute_loader)
+    assert isinstance(data, UnionAttribute)
 
 
 def test_custom_recognize(super_loader):
