@@ -22,6 +22,8 @@ def class_subobjects(
     for i, attr_name in enumerate(argspec.args):
         if attr_name == 'self':
             continue
+        if attr_name == 'yatiml_extra':
+            continue
         attr_type = argspec.annotations.get(attr_name, Any)
         yield attr_name, attr_type, i < first_optional
 
