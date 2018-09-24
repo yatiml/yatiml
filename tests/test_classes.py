@@ -102,6 +102,14 @@ def test_yatiml_extra(extensible_loader):
     assert data.yatiml_extra['c'] == 42
 
 
+def test_yatiml_extra_empty(extensible_loader):
+    text = 'a: 10\n'
+    data = yaml.load(text, Loader=extensible_loader)
+    assert isinstance(data, Extensible)
+    assert data.a == 10
+    assert len(data.yatiml_extra) == 0
+
+
 def test_yatiml_extra_strip(extensible_loader):
     text = ('a: 10\n'
             'b: test1\n'
