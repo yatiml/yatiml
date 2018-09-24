@@ -1,4 +1,5 @@
 from ruamel import yaml
+from ruamel.yaml.error import StreamMark
 
 import os
 from typing import Optional, Set, Type, Union
@@ -204,16 +205,19 @@ class ClassNode:
             attribute: Name of the attribute whose value to change.
             value: The value to set.
         """
+        start_mark = StreamMark('generated node', 0, 0, 0)
+        end_mark = StreamMark('generated node', 0, 0, 0)
         if isinstance(value, str):
-            value_node = yaml.ScalarNode('tag:yaml.org,2002:str', value)
+            value_node = yaml.ScalarNode('tag:yaml.org,2002:str', value, start_mark, end_mark)
         elif isinstance(value, bool):
-            value_node = yaml.ScalarNode('tag:yaml.org,2002:bool', value)
+            value_str = 'true' if value else 'false'
+            value_node = yaml.ScalarNode('tag:yaml.org,2002:bool', value_str, start_mark, end_mark)
         elif isinstance(value, int):
-            value_node = yaml.ScalarNode('tag:yaml.org,2002:int', value)
+            value_node = yaml.ScalarNode('tag:yaml.org,2002:int', str(value), start_mark, end_mark)
         elif isinstance(value, float):
-            value_node = yaml.ScalarNode('tag:yaml.org,2002:float', value)
+            value_node = yaml.ScalarNode('tag:yaml.org,2002:float', str(value), start_mark, end_mark)
         elif value is None:
-            value_node = yaml.ScalarNode('tag:yaml.org,2002:null', value)
+            value_node = yaml.ScalarNode('tag:yaml.org,2002:null', '', start_mark, end_mark)
         elif isinstance(value, yaml.Node):
             value_node = value
         else:

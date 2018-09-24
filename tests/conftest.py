@@ -218,7 +218,7 @@ class Universal:
 
 
 class Extensible:
-    def __init__(self, a: int, yatiml_extra: yatiml.CommentedMap=None) -> None:
+    def __init__(self, a: int, yatiml_extra: yatiml.CommentedMap) -> None:
         self.a = a
         self.yatiml_extra = yatiml_extra
 

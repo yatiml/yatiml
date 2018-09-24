@@ -49,27 +49,39 @@ def test_set_attribute(class_node):
 
     class_node.set_attribute('attr1', 43)
     assert class_node.get_attribute('attr1').tag == 'tag:yaml.org,2002:int'
-    assert class_node.get_attribute('attr1').value == 43
+    assert class_node.get_attribute('attr1').value == '43'
+    assert class_node.get_attribute('attr1').start_mark is not None
+    assert class_node.get_attribute('attr1').end_mark is not None
 
     class_node.set_attribute('attr1', 'test')
     assert class_node.get_attribute('attr1').tag == 'tag:yaml.org,2002:str'
     assert class_node.get_attribute('attr1').value == 'test'
+    assert class_node.get_attribute('attr1').start_mark is not None
+    assert class_node.get_attribute('attr1').end_mark is not None
 
     class_node.set_attribute('attr1', 3.14)
     assert class_node.get_attribute('attr1').tag == 'tag:yaml.org,2002:float'
-    assert class_node.get_attribute('attr1').value == pytest.approx(3.14)
+    assert class_node.get_attribute('attr1').value == '3.14'
+    assert class_node.get_attribute('attr1').start_mark is not None
+    assert class_node.get_attribute('attr1').end_mark is not None
 
     class_node.set_attribute('attr1', True)
     assert class_node.get_attribute('attr1').tag == 'tag:yaml.org,2002:bool'
-    assert class_node.get_attribute('attr1').value is True
+    assert class_node.get_attribute('attr1').value == 'true'
+    assert class_node.get_attribute('attr1').start_mark is not None
+    assert class_node.get_attribute('attr1').end_mark is not None
 
     class_node.set_attribute('attr1', None)
     assert class_node.get_attribute('attr1').tag == 'tag:yaml.org,2002:null'
-    assert class_node.get_attribute('attr1').value is None
+    assert class_node.get_attribute('attr1').value == ''
+    assert class_node.get_attribute('attr1').start_mark is not None
+    assert class_node.get_attribute('attr1').end_mark is not None
 
     assert not class_node.has_attribute('attr2')
     class_node.set_attribute('attr2', 'testing')
     assert class_node.get_attribute('attr2').value == 'testing'
+    assert class_node.get_attribute('attr2').start_mark is not None
+    assert class_node.get_attribute('attr2').end_mark is not None
 
     node = yaml.ScalarNode('tag:yaml.org,2002:str', 'testnode')
     class_node.set_attribute('attr3', node)
