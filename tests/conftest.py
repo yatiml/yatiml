@@ -228,6 +228,18 @@ class UnionAttribute:
         self.a = a
 
 
+class PrivateAttributes:
+    def __init__(self, a: int, b: float) -> None:
+        self.__a = a
+        self.__b = b
+
+    def yatiml_attributes(self) -> yatiml.CommentedMap:
+        attrs = yatiml.CommentedMap()
+        attrs['a'] = self.__a
+        attrs['b'] = self.__b
+        return attrs
+
+
 @pytest.fixture
 def document1_loader():
     class Document1Loader(yatiml.Loader):
@@ -353,6 +365,14 @@ def extensible_dumper():
         pass
     yatiml.add_to_dumper(ExtensibleDumper, Extensible)
     return ExtensibleDumper
+
+
+@pytest.fixture
+def private_attributes_dumper():
+    class PrivateAttributesDumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(PrivateAttributesDumper, PrivateAttributes)
+    return PrivateAttributesDumper
 
 
 @pytest.fixture

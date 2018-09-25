@@ -35,7 +35,7 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     install_requires=[
-        'ruamel.yaml',
+        'ruamel.yaml<=0.15.64',
         'typing>=3.6'
     ],
     test_suite='tests',
