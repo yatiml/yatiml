@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """Tests for the yatiml module."""
+from collections import OrderedDict
 import pytest   # type: ignore
 import ruamel.yaml as yaml
 
@@ -121,7 +122,7 @@ def test_yatiml_extra_strip(extensible_loader):
     assert data.a == 10
     assert data.yatiml_extra['b'] == 'test1'
     assert not isinstance(data.yatiml_extra['c'], Extensible)
-    assert isinstance(data.yatiml_extra['c'], yaml.comments.CommentedMap)
+    assert isinstance(data.yatiml_extra['c'], OrderedDict)
     assert data.yatiml_extra['c']['a'] == 12
     assert data.yatiml_extra['c']['b'] == 'test2'
 
@@ -168,10 +169,30 @@ def test_dump_document1(document1_dumper):
 
 
 def test_dump_custom_attributes(extensible_dumper):
-    extra_attributes = yatiml.CommentedMap([('b', 5), ('c', 3)])
+    extra_attributes = OrderedDict([('b', 5), ('c', 3)])
     data = Extensible(10, yatiml_extra=extra_attributes)
     text = yaml.dump(data, Dumper=extensible_dumper)
     assert text == 'a: 10\nb: 5\nc: 3\n'
+
+
+def test_load_complex_document(document2_loader):
+    text = ('cursor_at:\n'
+            '  x: 3.0\n'
+            '  y: 4.0\n'
+            'shapes:\n'
+            '- center:\n'
+            '    x: 5.0\n'
+            '    y: 6.0\n'
+            '  radius: 12.0\n'
+            '- center:\n'
+            '    x: -2.0\n'
+            '    y: -5.0\n'
+            '  width: 3.0\n'
+            '  height: 7.0\n'
+            )
+    doc = yaml.load(text, Loader=document2_loader)
+    assert isinstance(doc, Document2)
+    assert isinstance(doc.shapes, list)
 
 
 def test_dump_complex_document(document2_dumper):

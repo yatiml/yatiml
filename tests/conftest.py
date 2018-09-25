@@ -4,6 +4,7 @@ from yatiml.recognizer import Recognizer
 import pytest   # type: ignore
 from ruamel import yaml
 
+from collections import OrderedDict
 import math
 from typing import Dict, List, Optional, Tuple, Type, Union
 
@@ -218,7 +219,7 @@ class Universal:
 
 
 class Extensible:
-    def __init__(self, a: int, yatiml_extra: yatiml.CommentedMap) -> None:
+    def __init__(self, a: int, yatiml_extra: OrderedDict) -> None:
         self.a = a
         self.yatiml_extra = yatiml_extra
 
@@ -233,8 +234,8 @@ class PrivateAttributes:
         self.__a = a
         self.__b = b
 
-    def yatiml_attributes(self) -> yatiml.CommentedMap:
-        attrs = yatiml.CommentedMap()
+    def yatiml_attributes(self) -> OrderedDict:
+        attrs = OrderedDict()
         attrs['a'] = self.__a
         attrs['b'] = self.__b
         return attrs

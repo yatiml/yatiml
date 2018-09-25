@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import copy
 import inspect
 import logging
@@ -5,7 +6,7 @@ import os
 from typing import Any, Dict, Generator, GenericMeta, List, Tuple, Type, Union
 
 import ruamel.yaml as yaml
-from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from yatiml.exceptions import RecognitionError
 from yatiml.helpers import ClassNode
@@ -71,6 +72,14 @@ class Constructor:
         mapping = CommentedMap()
         loader.construct_mapping(node, mapping, deep=True)
 
+        # Convert ruamel.yaml's round-trip types to list and OrderedDict,
+        # recursively for each attribute value in our mapping. Note that
+        # mapping itself is still a CommentedMap.
+        for key, value in mapping.copy().items():
+            if (isinstance(value, CommentedMap) or
+                    isinstance(value, CommentedSeq)):
+                mapping[key] = self.__to_plain_containers(value)
+
         # do type check
         self.__check_no_missing_attributes(node, mapping)
         self.__type_check_attributes(node, mapping, argspec)
@@ -90,6 +99,39 @@ class Constructor:
                 ' from {}. This is a bug in YAtiML, please report.'.format(
                     node.start_mark, os.linesep, self.class_.__name__, node)))
         logger.debug('Done constructing {}'.format(self.class_.__name__))
+
+    def __to_plain_containers(
+            self,
+            container: Union[CommentedSeq, CommentedMap]
+            ) -> Union[OrderedDict, list]:
+        """Converts any sequence or mapping to list or OrderedDict
+
+        Stops at anything that isn't a sequence or a mapping.
+
+        One day, we'll extract the comments and formatting and store \
+        them out-of-band.
+
+        Args:
+            mapping: The mapping of constructed subobjects to edit
+        """
+        if isinstance(container, CommentedMap):
+            new_container = OrderedDict()       # type: Union[OrderedDict, list]
+            for key, value_obj in container.items():
+                if (isinstance(value_obj, CommentedMap) or
+                        isinstance(value_obj, CommentedSeq)):
+                    new_container[key] = self.__to_plain_containers(value_obj)
+                else:
+                    new_container[key] = value_obj
+
+        elif isinstance(container, CommentedSeq):
+            new_container = list()
+            for value_obj in container:
+                if (isinstance(value_obj, CommentedMap) or
+                        isinstance(value_obj, CommentedSeq)):
+                    new_container.append(self.__to_plain_containers(value_obj))
+                else:
+                    new_container.append(value_obj)
+        return new_container
 
     def __split_off_extra_attributes(
             self,
@@ -113,7 +155,7 @@ class Constructor:
         """
         attr_names = list(mapping.keys())
         main_attrs = mapping.copy()
-        extra_attrs = CommentedMap(mapping.items())
+        extra_attrs = OrderedDict(mapping.items())
         for name in attr_names:
             if name not in known_attrs or name == 'yatiml_extra':
                 del(main_attrs[name])
@@ -219,7 +261,8 @@ class Constructor:
 
         This prevents nodes under attributes that are not part of our \
         data model from being converted to objects. They'll be plain \
-        CommentedMaps instead.
+        CommentedMaps instead, which then get converted to OrderedDicts \
+        for the user.
 
         Args:
             node: The node to process

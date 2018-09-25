@@ -18,8 +18,6 @@ from yatiml.loader import Loader, add_to_loader, set_document_type
 from yatiml.dumper import Dumper, add_to_dumper
 from yatiml.helpers import ClassNode, UnknownNode
 
-from ruamel.yaml.comments import CommentedMap
-
 import logging
 
 
@@ -44,5 +42,4 @@ __all__ = [
         'ClassNode', 'UnknownNode',
         'Loader',
         'add_to_loader', 'set_document_type',
-        'Dumper', 'add_to_dumper',
-        'CommentedMap']
+        'Dumper', 'add_to_dumper']
