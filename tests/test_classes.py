@@ -7,9 +7,9 @@ import ruamel.yaml as yaml
 
 import yatiml
 
-from .conftest import Circle, Document1, Document2, Extensible
-from .conftest import PrivateAttributes, Rectangle, Shape, SubA, SubA2, Super
-from .conftest import UnionAttribute, Universal, Vector2D
+from .conftest import BrokenPrivateAttributes, Circle, Document1, Document2
+from .conftest import Extensible, PrivateAttributes, Rectangle, Shape, SubA
+from .conftest import SubA2, Super, UnionAttribute, Universal, Vector2D
 
 
 def test_load_class(document1_loader):
@@ -206,3 +206,9 @@ def test_yatiml_attributes(private_attributes_dumper):
     data = PrivateAttributes(10, 42.0)
     text = yaml.dump(data, Dumper=private_attributes_dumper)
     assert text == 'a: 10\nb: 42.0\n'
+
+
+def test_private_attributes(broken_private_attributes_dumper):
+    data = BrokenPrivateAttributes(10, 42.0)
+    with pytest.raises(AttributeError):
+        yaml.dump(data, Dumper=broken_private_attributes_dumper)

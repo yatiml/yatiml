@@ -240,6 +240,12 @@ class PrivateAttributes:
         return attrs
 
 
+class BrokenPrivateAttributes:
+    def __init__(self, a: int, b: float) -> None:
+        self.__a = a
+        self.__b = b
+
+
 @pytest.fixture
 def document1_loader():
     class Document1Loader(yatiml.Loader):
@@ -373,6 +379,16 @@ def private_attributes_dumper():
         pass
     yatiml.add_to_dumper(PrivateAttributesDumper, PrivateAttributes)
     return PrivateAttributesDumper
+
+
+@pytest.fixture
+def broken_private_attributes_dumper():
+    class BrokenPrivateAttributesDumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(
+            BrokenPrivateAttributesDumper,
+            BrokenPrivateAttributes)
+    return BrokenPrivateAttributesDumper
 
 
 @pytest.fixture
