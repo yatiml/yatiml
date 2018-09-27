@@ -1,9 +1,9 @@
 import inspect
 from typing import Any, Generator, Tuple, Type
 
+
 def class_subobjects(
-         class_: Type
-        ) -> Generator[Tuple[str, Type, bool], None, None]:
+        class_: Type) -> Generator[Tuple[str, Type, bool], None, None]:
     """Find the aggregated subobjects of an object.
 
     These are the public attributes.
@@ -26,4 +26,3 @@ def class_subobjects(
             continue
         attr_type = argspec.annotations.get(attr_name, Any)
         yield attr_name, attr_type, i < first_optional
-

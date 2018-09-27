@@ -1,8 +1,8 @@
-from collections import OrderedDict
 import copy
 import inspect
 import logging
 import os
+from collections import OrderedDict
 from typing import Any, Dict, Generator, GenericMeta, List, Tuple, Type, Union
 
 import ruamel.yaml as yaml
@@ -14,12 +14,12 @@ from yatiml.introspection import class_subobjects
 from yatiml.recognizer import Recognizer
 from yatiml.util import scalar_type_to_tag
 
-
 logger = logging.getLogger(__name__)
 
 
 class Constructor:
     """A constructor for user classes to register with YAML."""
+
     def __init__(self, class_: Type) -> None:
         """Create a constructor
 
@@ -28,7 +28,8 @@ class Constructor:
         """
         self.class_ = class_
 
-    def __call__(self, loader: 'Loader', node: yaml.Node) -> Generator[Any, None, None]:
+    def __call__(self, loader: 'Loader',
+                 node: yaml.Node) -> Generator[Any, None, None]:
         """Construct an object from a yaml node.
 
         This constructs an object of the user-defined type that this \
@@ -55,11 +56,13 @@ class Constructor:
         Yields:
             The incomplete constructed object.
         """
-        logger.debug('Constructing an object of type {}'.format(self.class_.__name__))
+        logger.debug('Constructing an object of type {}'.format(
+            self.class_.__name__))
         if not isinstance(node, yaml.MappingNode):
-            raise RecognitionError(('{}{}Expected a MappingNode. There'
-                    ' is probably something wrong with your yatiml_savorize()'
-                    ' function.').format(node.start_mark, os.linesep))
+            raise RecognitionError(
+                ('{}{}Expected a MappingNode. There'
+                 ' is probably something wrong with your yatiml_savorize()'
+                 ' function.').format(node.start_mark, os.linesep))
 
         # figure out which keys are extra and strip them of tags
         # to prevent constructing objects we haven't type checked
@@ -76,8 +79,8 @@ class Constructor:
         # recursively for each attribute value in our mapping. Note that
         # mapping itself is still a CommentedMap.
         for key, value in mapping.copy().items():
-            if (isinstance(value, CommentedMap) or
-                    isinstance(value, CommentedSeq)):
+            if (isinstance(value, CommentedMap)
+                    or isinstance(value, CommentedSeq)):
                 mapping[key] = self.__to_plain_containers(value)
 
         # do type check
@@ -88,22 +91,23 @@ class Constructor:
         try:
             logger.debug('Calling __init__')
             if 'yatiml_extra' in argspec.args:
-                attrs = self.__split_off_extra_attributes(mapping, argspec.args)
+                attrs = self.__split_off_extra_attributes(
+                    mapping, argspec.args)
                 new_obj.__init__(**attrs)
 
             else:
                 new_obj.__init__(**mapping)
 
         except TypeError as e:  # pragma: no cover
-            raise RecognitionError(('{}{}Could not construct object of class {}'
-                ' from {}. This is a bug in YAtiML, please report.'.format(
-                    node.start_mark, os.linesep, self.class_.__name__, node)))
+            raise RecognitionError(
+                ('{}{}Could not construct object of class {}'
+                 ' from {}. This is a bug in YAtiML, please report.'.format(
+                     node.start_mark, os.linesep, self.class_.__name__, node)))
         logger.debug('Done constructing {}'.format(self.class_.__name__))
 
-    def __to_plain_containers(
-            self,
-            container: Union[CommentedSeq, CommentedMap]
-            ) -> Union[OrderedDict, list]:
+    def __to_plain_containers(self,
+                              container: Union[CommentedSeq, CommentedMap]
+                              ) -> Union[OrderedDict, list]:
         """Converts any sequence or mapping to list or OrderedDict
 
         Stops at anything that isn't a sequence or a mapping.
@@ -115,10 +119,10 @@ class Constructor:
             mapping: The mapping of constructed subobjects to edit
         """
         if isinstance(container, CommentedMap):
-            new_container = OrderedDict()       # type: Union[OrderedDict, list]
+            new_container = OrderedDict()  # type: Union[OrderedDict, list]
             for key, value_obj in container.items():
-                if (isinstance(value_obj, CommentedMap) or
-                        isinstance(value_obj, CommentedSeq)):
+                if (isinstance(value_obj, CommentedMap)
+                        or isinstance(value_obj, CommentedSeq)):
                     new_container[key] = self.__to_plain_containers(value_obj)
                 else:
                     new_container[key] = value_obj
@@ -126,18 +130,15 @@ class Constructor:
         elif isinstance(container, CommentedSeq):
             new_container = list()
             for value_obj in container:
-                if (isinstance(value_obj, CommentedMap) or
-                        isinstance(value_obj, CommentedSeq)):
+                if (isinstance(value_obj, CommentedMap)
+                        or isinstance(value_obj, CommentedSeq)):
                     new_container.append(self.__to_plain_containers(value_obj))
                 else:
                     new_container.append(value_obj)
         return new_container
 
-    def __split_off_extra_attributes(
-            self,
-            mapping: CommentedMap,
-            known_attrs: List[str]
-            ) -> CommentedMap:
+    def __split_off_extra_attributes(self, mapping: CommentedMap,
+                                     known_attrs: List[str]) -> CommentedMap:
         """Separates the extra attributes in mapping into yatiml_extra.
 
         This returns a mapping containing all key-value pairs from \
@@ -158,9 +159,9 @@ class Constructor:
         extra_attrs = OrderedDict(mapping.items())
         for name in attr_names:
             if name not in known_attrs or name == 'yatiml_extra':
-                del(main_attrs[name])
+                del (main_attrs[name])
             else:
-                del(extra_attrs[name])
+                del (extra_attrs[name])
         main_attrs['yatiml_extra'] = extra_attrs
         return main_attrs
 
@@ -210,12 +211,8 @@ class Constructor:
         else:
             return isinstance(obj, type_)
 
-
-    def __check_no_missing_attributes(
-            self,
-            node: yaml.Node,
-            mapping: CommentedMap
-            ) -> None:
+    def __check_no_missing_attributes(self, node: yaml.Node,
+                                      mapping: CommentedMap) -> None:
         """Checks that all required attributes are present.
 
         Also checks that they're of the correct type.
@@ -231,19 +228,18 @@ class Constructor:
         for name, type_, required in class_subobjects(self.class_):
             if required and not name in mapping:
                 raise RecognitionError(('{}{}Missing attribute {} needed for'
-                    ' constructing a {}').format(node.start_mark, os.linesep,
-                        name, self.class_.__name__))
-            if name in mapping and not self.__type_matches(mapping[name], type_):
+                                        ' constructing a {}').format(
+                                            node.start_mark, os.linesep, name,
+                                            self.class_.__name__))
+            if name in mapping and not self.__type_matches(
+                    mapping[name], type_):
                 raise RecognitionError(('{}{}Attribute {} has incorrect type'
-                    ' {}, expecting a {}').format(node.start_mark, os.linesep,
-                        name, type(mapping[name]), type_))
+                                        ' {}, expecting a {}').format(
+                                            node.start_mark, os.linesep, name,
+                                            type(mapping[name]), type_))
 
-    def __type_check_attributes(
-            self,
-            node: yaml.Node,
-            mapping: CommentedMap,
-            argspec: inspect.FullArgSpec
-            ) -> None:
+    def __type_check_attributes(self, node: yaml.Node, mapping: CommentedMap,
+                                argspec: inspect.FullArgSpec) -> None:
         """Ensure all attributes have a matching constructor argument.
 
         This checks that there is a constructor argument with a \
@@ -264,19 +260,24 @@ class Constructor:
         for key, value in mapping.items():
             if not isinstance(key, str):
                 raise RecognitionError(('{}{}YAtiML only supports strings'
-                    ' for mapping keys').format(node.start_mark,
-                        os.linesep))
+                                        ' for mapping keys').format(
+                                            node.start_mark, os.linesep))
             if key not in argspec.args and 'yatiml_extra' not in argspec.args:
-                raise RecognitionError(('{}{}Found additional attributes'
-                    ' and {} does not support those').format(node.start_mark,
-                        os.linesep, self.class_.__name__))
+                raise RecognitionError(
+                    ('{}{}Found additional attributes'
+                     ' and {} does not support those').format(
+                         node.start_mark, os.linesep, self.class_.__name__))
 
-            if key in argspec.args and not self.__type_matches(value, argspec.annotations[key]):
+            if key in argspec.args and not self.__type_matches(
+                    value, argspec.annotations[key]):
                 raise RecognitionError(('{}{}Expected attribute {} to be of'
-                    ' type {} but it is a(n) {}').format(node.start_mark,
-                        os.linesep, key, argspec.annotations[key], type(value)))
+                                        ' type {} but it is a(n) {}').format(
+                                            node.start_mark, os.linesep, key,
+                                            argspec.annotations[key],
+                                            type(value)))
 
-    def __strip_extra_attributes(self, node: yaml.Node, known_attrs: List[str]) -> None:
+    def __strip_extra_attributes(self, node: yaml.Node,
+                                 known_attrs: List[str]) -> None:
         """Strips tags from extra attributes.
 
         This prevents nodes under attributes that are not part of our \
@@ -294,11 +295,12 @@ class Constructor:
             known_keys.remove('yatiml_extra')
 
         for key_node, value_node in node.value:
-            if (not isinstance(key_node, yaml.ScalarNode) or
-                    key_node.tag != 'tag:yaml.org,2002:str'):
-                raise RecognitionError(('{}{}Mapping keys that are not of type'
-                    ' string are not supported by YAtiML.').format(node.start_mark,
-                        os.linesep))
+            if (not isinstance(key_node, yaml.ScalarNode)
+                    or key_node.tag != 'tag:yaml.org,2002:str'):
+                raise RecognitionError(
+                    ('{}{}Mapping keys that are not of type'
+                     ' string are not supported by YAtiML.').format(
+                         node.start_mark, os.linesep))
             if key_node.value not in known_keys:
                 self.__strip_tags(value_node)
 
@@ -369,13 +371,13 @@ class Loader(yaml.RoundTripLoader):
             A human-readable description.
         """
         scalar_type_to_str = {
-                str: 'string',
-                int: 'int',
-                float: 'float',
-                bool: 'boolean',
-                None: 'null value',
-                type(None): 'null value'
-                }
+            str: 'string',
+            int: 'int',
+            float: 'float',
+            bool: 'boolean',
+            None: 'null value',
+            type(None): 'null value'
+        }
 
         if type_ in scalar_type_to_str:
             return scalar_type_to_str[type_]
@@ -385,19 +387,23 @@ class Loader(yaml.RoundTripLoader):
                 types = type_.__union_params__
             else:
                 types = type_.__args__
-            return 'union of {}'.format([self.__type_to_desc(t) for t in types])
+            return 'union of {}'.format(
+                [self.__type_to_desc(t) for t in types])
 
         if isinstance(type_, GenericMeta):
             if type_.__origin__ == List:
-                return 'list of ({})'.format(self.__type_to_desc(type_.__args__[0]))
+                return 'list of ({})'.format(
+                    self.__type_to_desc(type_.__args__[0]))
             if type_.__origin__ == Dict:
-                return 'dict of string to ({})'.format(self.__type_to_desc(type_.__args__[1]))
+                return 'dict of string to ({})'.format(
+                    self.__type_to_desc(type_.__args__[1]))
 
         if type_ in self._registered_classes.values():
             return type_.__name__
 
-        raise RuntimeError(('Unknown type {} in type_to_desc,'      # pragma: no cover
-                ' please report a YAtiML bug.').format(type_))
+        raise RuntimeError((
+            'Unknown type {} in type_to_desc,'  # pragma: no cover
+            ' please report a YAtiML bug.').format(type_))
 
     def __type_to_tag(self, type_: Type) -> str:
         """Convert a type to the corresponding YAML tag.
@@ -412,16 +418,17 @@ class Loader(yaml.RoundTripLoader):
             return scalar_type_to_tag[type_]
 
         if isinstance(type_, GenericMeta):
-                if type_.__origin__ == List:
-                    return 'tag:yaml.org,2002:seq'
-                elif type_.__origin__ == Dict:
-                    return 'tag:yaml.org,2002:map'
+            if type_.__origin__ == List:
+                return 'tag:yaml.org,2002:seq'
+            elif type_.__origin__ == Dict:
+                return 'tag:yaml.org,2002:map'
 
         if type_ in self._registered_classes.values():
             return '!{}'.format(type_.__name__)
 
-        raise RuntimeError(('Unknown type {} in type_to_tag,'       # pragma: no cover
-                ' please report a YAtiML bug.').format(type_))
+        raise RuntimeError((
+            'Unknown type {} in type_to_tag,'  # pragma: no cover
+            ' please report a YAtiML bug.').format(type_))
 
     def __savorize(self, node: yaml.MappingNode, expected_type: Type) -> None:
         """Removes syntactic sugar from the node.
@@ -434,22 +441,19 @@ class Loader(yaml.RoundTripLoader):
             expected_type: The type to assume this type is.
         """
         logger.debug('Savorizing node assuming type {}'.format(
-                expected_type.__name__))
+            expected_type.__name__))
         for base_class in expected_type.__bases__:
             if base_class in self._registered_classes.values():
                 self.__savorize(node, base_class)
 
         if hasattr(expected_type, 'yatiml_savorize'):
             logger.debug('Calling {}.yatiml_savorize()'.format(
-                    expected_type.__name__))
+                expected_type.__name__))
             cnode = ClassNode(node)
             expected_type.yatiml_savorize(cnode)
 
-    def __process_node(
-            self,
-            node: yaml.Node,
-            expected_type: Type
-            ) -> yaml.Node:
+    def __process_node(self, node: yaml.Node,
+                       expected_type: Type) -> yaml.Node:
         """Processes a node.
 
         This is the main function that implements yatiml's \
@@ -464,19 +468,21 @@ class Loader(yaml.RoundTripLoader):
         Returns:
             The transformed node, or a transformed copy.
         """
-        logger.info('Processing node {} expecting type {}'.format(node, expected_type))
+        logger.info('Processing node {} expecting type {}'.format(
+            node, expected_type))
 
         # figure out how to interpret this node
         recognized_types = self.__recognizer.recognize(node, expected_type)
 
         if len(recognized_types) == 0:
             raise RecognitionError('{}{}Type mismatch, expected a {}'.format(
-                node.start_mark, os.linesep, self.__type_to_desc(expected_type)))
+                node.start_mark, os.linesep,
+                self.__type_to_desc(expected_type)))
         if len(recognized_types) > 1:
             raise RecognitionError(
-                    '{}{}Ambiguous value, could be any of {}'.format(
-                        node.start_mark, os.linesep,
-                        [self.__type_to_desc(t) for t in recognized_types]))
+                '{}{}Ambiguous value, could be any of {}'.format(
+                    node.start_mark, os.linesep,
+                    [self.__type_to_desc(t) for t in recognized_types]))
 
         recognized_type = recognized_types[0]
         node.tag = self.__type_to_tag(recognized_type)
@@ -492,15 +498,18 @@ class Loader(yaml.RoundTripLoader):
             if recognized_type.__origin__ == List:
                 if node.tag != 'tag:yaml.org,2002:seq':
                     raise RecognitionError('{}{}Expected a {} here'.format(
-                        node.start_mark, os.linesep, self.__type_to_desc(expected_type)))
+                        node.start_mark, os.linesep,
+                        self.__type_to_desc(expected_type)))
                 for item in node.value:
                     self.__process_node(item, recognized_type.__args__[0])
             elif recognized_type.__origin__ == Dict:
                 if node.tag != 'tag:yaml.org,2002:map':
                     raise RecognitionError('{}{}Expected a {} here'.format(
-                        node.start_mark, os.linesep, self.__type_to_desc(expected_type)))
+                        node.start_mark, os.linesep,
+                        self.__type_to_desc(expected_type)))
                 for key_node, value_node in node.value:
-                    self.__process_node(value_node, recognized_type.__args__[1])
+                    self.__process_node(value_node,
+                                        recognized_type.__args__[1])
 
         elif recognized_type in self._registered_classes.values():
             for attr_name, type_, required in class_subobjects(expected_type):
@@ -511,6 +520,7 @@ class Loader(yaml.RoundTripLoader):
 
         logger.debug('Finished processing node {}'.format(node))
         return node
+
 
 def set_document_type(loader_cls: Type, type_: Type) -> None:
     """Set the type corresponding to the whole document.
@@ -540,7 +550,7 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
                 list of them.
     """
     if not isinstance(classes, list):
-        classes = [classes]     # type: ignore
+        classes = [classes]  # type: ignore
 
     for class_ in classes:
         tag = '!{}'.format(class_.__name__)

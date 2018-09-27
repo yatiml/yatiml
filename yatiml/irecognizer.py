@@ -1,7 +1,7 @@
-from ruamel import yaml
-
 import abc
 from typing import List, Type
+
+from ruamel import yaml
 
 
 class IRecognizer(abc.ABC):
@@ -10,6 +10,7 @@ class IRecognizer(abc.ABC):
     I don't like interfaces that have only one implementation, but \
     needed one here to break an import cycle.
     """
+
     def recognize(self, node: yaml.Node, expected_type: Type) -> List[Type]:
         """Figure out how to interpret this node.
 

@@ -1,22 +1,21 @@
-from ruamel import yaml
-
 import abc
 import logging
-
 from typing import Dict, Generator, GenericMeta, List, Tuple, Type
 
+from ruamel import yaml
+
 from yatiml.exceptions import RecognitionError
-from yatiml.helpers import UnknownNode, ClassNode
+from yatiml.helpers import ClassNode, UnknownNode
 from yatiml.introspection import class_subobjects
 from yatiml.irecognizer import IRecognizer
 from yatiml.util import scalar_type_to_tag
-
 
 logger = logging.getLogger(__name__)
 
 
 class Recognizer(IRecognizer):
     """Functions for recognizing objects as types."""
+
     def __init__(self, registered_classes: Dict[str, Type]) -> None:
         """Create a RecognizerImpl.
 
@@ -26,11 +25,8 @@ class Recognizer(IRecognizer):
         """
         self.__registered_classes = registered_classes
 
-    def __recognize_scalar(
-            self,
-            node: yaml.Node,
-            expected_type: Type
-            ) -> List[Type]:
+    def __recognize_scalar(self, node: yaml.Node,
+                           expected_type: Type) -> List[Type]:
         """Recognize a node that we expect to be a scalar.
 
         Args:
@@ -41,16 +37,13 @@ class Recognizer(IRecognizer):
             A list of recognized types
         """
         logger.debug('Recognizing as a scalar')
-        if (isinstance(node, yaml.ScalarNode) and
-                node.tag == scalar_type_to_tag[expected_type]):
+        if (isinstance(node, yaml.ScalarNode)
+                and node.tag == scalar_type_to_tag[expected_type]):
             return [expected_type]
         return []
 
-    def __recognize_list(
-            self,
-            node: yaml.Node,
-            expected_type: Type
-            ) -> List[Type]:
+    def __recognize_list(self, node: yaml.Node,
+                         expected_type: Type) -> List[Type]:
         """Recognize a node that we expect to be a list of some kind.
 
         Args:
@@ -69,15 +62,12 @@ class Recognizer(IRecognizer):
             if len(recognized_types) == 0:
                 return []
             if len(recognized_types) > 1:
-                return [List[t] for t in recognized_types]      # type: ignore
+                return [List[t] for t in recognized_types]  # type: ignore
 
         return [expected_type]
 
-    def __recognize_dict(
-            self,
-            node: yaml.Node,
-            expected_type: Type
-            ) -> List[Type]:
+    def __recognize_dict(self, node: yaml.Node,
+                         expected_type: Type) -> List[Type]:
         """Recognize a node that we expect to be a dict of some kind.
 
         Args:
@@ -89,7 +79,8 @@ class Recognizer(IRecognizer):
         """
         logger.debug('Recognizing as a dict')
         if not issubclass(expected_type.__args__[0], str):
-            raise RuntimeError('YAtiML only supports dicts with strings as keys')
+            raise RuntimeError(
+                'YAtiML only supports dicts with strings as keys')
         if not isinstance(node, yaml.MappingNode):
             return []
         value_type = expected_type.__args__[1]
@@ -98,15 +89,13 @@ class Recognizer(IRecognizer):
             if len(recognized_value_types) == 0:
                 return []
             if len(recognized_value_types) > 1:
-                return [Dict[str, t] for t in recognized_value_types]      # type: ignore
+                return [Dict[str, t]
+                        for t in recognized_value_types]  # type: ignore
 
         return [expected_type]
 
-    def __recognize_union(
-            self,
-            node: yaml.Node,
-            expected_type: Type
-            ) -> List[Type]:
+    def __recognize_union(self, node: yaml.Node,
+                          expected_type: Type) -> List[Type]:
         """Recognize a node that we expect to be one of a union of types.
 
         Args:
@@ -128,11 +117,8 @@ class Recognizer(IRecognizer):
         recognized_types = list(set(recognized_types))
         return recognized_types
 
-    def __recognize_user_class(
-            self,
-            node: yaml.Node,
-            expected_type: Type
-            ) -> List[Type]:
+    def __recognize_user_class(self, node: yaml.Node,
+                               expected_type: Type) -> List[Type]:
         """Recognize a user-defined class in the node.
 
         This tries to recognize only exactly the specified class. It \
@@ -171,11 +157,8 @@ class Recognizer(IRecognizer):
 
             return [expected_type]
 
-    def __recognize_user_classes(
-            self,
-            node: yaml.Node,
-            expected_type: Type
-            ) -> List[Type]:
+    def __recognize_user_classes(self, node: yaml.Node,
+                                 expected_type: Type) -> List[Type]:
         """Recognize a user-defined class in the node.
 
         This returns a list of classes from the inheritance hierarchy \
@@ -200,11 +183,13 @@ class Recognizer(IRecognizer):
         recognized_subclasses = []
         for other_class in self.__registered_classes.values():
             if expected_type in other_class.__bases__:
-                sub_subclasses = self.__recognize_user_classes(node, other_class)
+                sub_subclasses = self.__recognize_user_classes(
+                    node, other_class)
                 recognized_subclasses.extend(sub_subclasses)
 
         if len(recognized_subclasses) == 0:
-            recognized_subclasses = self.__recognize_user_class(node, expected_type)
+            recognized_subclasses = self.__recognize_user_class(
+                node, expected_type)
 
         return recognized_subclasses
 
@@ -234,16 +219,18 @@ class Recognizer(IRecognizer):
         elif type(expected_type).__name__ in ['UnionMeta', '_Union']:
             recognized_types = self.__recognize_union(node, expected_type)
         elif isinstance(expected_type, GenericMeta):
-                if expected_type.__origin__ == List:
-                    recognized_types = self.__recognize_list(node, expected_type)
-                elif expected_type.__origin__ == Dict:
-                    recognized_types = self.__recognize_dict(node, expected_type)
+            if expected_type.__origin__ == List:
+                recognized_types = self.__recognize_list(node, expected_type)
+            elif expected_type.__origin__ == Dict:
+                recognized_types = self.__recognize_dict(node, expected_type)
         elif expected_type in self.__registered_classes.values():
-            recognized_types = self.__recognize_user_classes(node, expected_type)
+            recognized_types = self.__recognize_user_classes(
+                node, expected_type)
 
         if recognized_types is None:
-            raise RecognitionError(('Could not recognize for type {},'
-                    ' is it registered?').format(expected_type))
+            raise RecognitionError(
+                ('Could not recognize for type {},'
+                 ' is it registered?').format(expected_type))
         logger.debug('Recognized types {} matching {}'.format(
             recognized_types, expected_type))
         return recognized_types

@@ -1,8 +1,8 @@
-from ruamel import yaml
-from ruamel.yaml.error import StreamMark
-
 import os
 from typing import Optional, Set, Type, Union
+
+from ruamel import yaml
+from ruamel.yaml.error import StreamMark
 
 from yatiml.exceptions import RecognitionError, SeasoningError
 from yatiml.irecognizer import IRecognizer
@@ -15,7 +15,9 @@ class UnknownNode:
     This class defines a number of helper function for you to use \
     when writing yatiml_recognize() functions.
     """
-    def __init__(self, recognizer: IRecognizer, node: yaml.MappingNode) -> None:
+
+    def __init__(self, recognizer: IRecognizer,
+                 node: yaml.MappingNode) -> None:
         """Create an UnknownNode for a particular mapping node.
 
         The member functions will act on the contained node.
@@ -30,33 +32,33 @@ class UnknownNode:
         """Convert to a human-readable string."""
         return 'UnknownNode({})'.format(self.yaml_node)
 
-    def require_attribute(self, attribute: str, type_: Type=None) -> None:
+    def require_attribute(self, attribute: str, type_: Type = None) -> None:
         """Require an attribute on the node to exist.
 
         Args:
             attribute: The name of the attribute / mapping key.
         """
-        attr_nodes = [value_node
-                for key_node, value_node in self.yaml_node.value
-                if key_node.value == attribute]
+        attr_nodes = [
+            value_node for key_node, value_node in self.yaml_node.value
+            if key_node.value == attribute
+        ]
         if len(attr_nodes) == 0:
-            raise RecognitionError(('{}{}Missing required attribute {}'
-                ).format(self.yaml_node.start_mark, os.linesep, attribute))
+            raise RecognitionError(
+                ('{}{}Missing required attribute {}').format(
+                    self.yaml_node.start_mark, os.linesep, attribute))
         attr_node = attr_nodes[0]
 
         if type_ is not None:
-            recognized_types = self.__recognizer.recognize(
-                    attr_node, type_)
+            recognized_types = self.__recognizer.recognize(attr_node, type_)
             if len(recognized_types) == 0:
                 raise RecognitionError(('{}{}Attribute {} is not of required'
-                    ' type {}').format(self.yaml_node.start_mark, os.linesep,
-                        attribute, type_))
+                                        ' type {}').format(
+                                            self.yaml_node.start_mark,
+                                            os.linesep, attribute, type_))
 
     def require_attribute_value(
-            self,
-            attribute: str,
-            value: Union[int, str, float, bool, None]
-            ) -> None:
+            self, attribute: str,
+            value: Union[int, str, float, bool, None]) -> None:
         """Require an attribute on the node to have a particular value.
 
         This requires the attribute to exist, and to have the given value \
@@ -74,18 +76,20 @@ class UnknownNode:
         """
         found = False
         for key_node, value_node in self.yaml_node.value:
-            if (key_node.tag == 'tag:yaml.org,2002:str' and
-                    key_node.value == attribute):
+            if (key_node.tag == 'tag:yaml.org,2002:str'
+                    and key_node.value == attribute):
                 found = True
                 if value_node.value != value:
-                    raise RecognitionError(('{}{}Incorrect attribute value'
-                        ' {} where {} was required').format(
-                            self.yaml_node.start_mark, os.linesep, value_node.value,
-                            value))
+                    raise RecognitionError(
+                        ('{}{}Incorrect attribute value'
+                         ' {} where {} was required').format(
+                             self.yaml_node.start_mark, os.linesep,
+                             value_node.value, value))
 
         if not found:
-            raise RecognitionError(('{}{}Required attribute {} not found'
-                ).format(self.yaml_node.start_mark, os.linesep, attribute))
+            raise RecognitionError(
+                ('{}{}Required attribute {} not found').format(
+                    self.yaml_node.start_mark, os.linesep, attribute))
 
 
 class ClassNode:
@@ -94,6 +98,7 @@ class ClassNode:
     This class defines a number of helper function for you to use \
     when writing yatiml_sweeten() and yatiml_savorize() functions.
     """
+
     def __init__(self, node: yaml.MappingNode) -> None:
         """Create a ClassNode for a particular mapping node.
 
@@ -117,8 +122,9 @@ class ClassNode:
         Returns:
             True iff the attribute is present.
         """
-        return any([key_node.value == attribute
-                for key_node, _ in self.yaml_node.value])
+        return any([
+            key_node.value == attribute for key_node, _ in self.yaml_node.value
+        ])
 
     def has_attribute_type(self, attribute: str, type_: Type) -> bool:
         """Whether the given attribute exists and has a compatible type.
@@ -179,19 +185,19 @@ class ClassNode:
         Returns:
             A node representing the value.
         """
-        matches = [value_node
-                for key_node, value_node in self.yaml_node.value
-                if key_node.value == attribute]
+        matches = [
+            value_node for key_node, value_node in self.yaml_node.value
+            if key_node.value == attribute
+        ]
         if len(matches) != 1:
-            raise SeasoningError('Attribute not found, or found multiple times: {}'.format(
-                matches))
+            raise SeasoningError(
+                'Attribute not found, or found multiple times: {}'.format(
+                    matches))
         return matches[0]
 
     def set_attribute(
-            self,
-            attribute: str,
-            value: Union[str, int, float, bool, None, yaml.Node]
-            ) -> None:
+            self, attribute: str,
+            value: Union[str, int, float, bool, None, yaml.Node]) -> None:
         """Sets the attribute to the given value.
 
         If the attribute does not exist, this adds a new attribute, \
@@ -208,16 +214,21 @@ class ClassNode:
         start_mark = StreamMark('generated node', 0, 0, 0)
         end_mark = StreamMark('generated node', 0, 0, 0)
         if isinstance(value, str):
-            value_node = yaml.ScalarNode('tag:yaml.org,2002:str', value, start_mark, end_mark)
+            value_node = yaml.ScalarNode('tag:yaml.org,2002:str', value,
+                                         start_mark, end_mark)
         elif isinstance(value, bool):
             value_str = 'true' if value else 'false'
-            value_node = yaml.ScalarNode('tag:yaml.org,2002:bool', value_str, start_mark, end_mark)
+            value_node = yaml.ScalarNode('tag:yaml.org,2002:bool', value_str,
+                                         start_mark, end_mark)
         elif isinstance(value, int):
-            value_node = yaml.ScalarNode('tag:yaml.org,2002:int', str(value), start_mark, end_mark)
+            value_node = yaml.ScalarNode('tag:yaml.org,2002:int', str(value),
+                                         start_mark, end_mark)
         elif isinstance(value, float):
-            value_node = yaml.ScalarNode('tag:yaml.org,2002:float', str(value), start_mark, end_mark)
+            value_node = yaml.ScalarNode('tag:yaml.org,2002:float', str(value),
+                                         start_mark, end_mark)
         elif value is None:
-            value_node = yaml.ScalarNode('tag:yaml.org,2002:null', '', start_mark, end_mark)
+            value_node = yaml.ScalarNode('tag:yaml.org,2002:null', '',
+                                         start_mark, end_mark)
         elif isinstance(value, yaml.Node):
             value_node = value
         else:
@@ -257,11 +268,10 @@ class ClassNode:
                 key_node.value = new_name
                 break
 
-    def seq_attribute_to_map(
-            self,
-            attribute: str, key_attribute: str,
-            strict: bool=True
-            ) -> None:
+    def seq_attribute_to_map(self,
+                             attribute: str,
+                             key_attribute: str,
+                             strict: bool = True) -> None:
         """Converts a sequence attribute to a map.
 
         This function takes an attribute of this ClassNode that is \
@@ -322,24 +332,26 @@ class ClassNode:
             return
 
         # check that all list items are mappings and that the keys are unique strings
-        seen_keys = set()   # type: Set[str]
+        seen_keys = set()  # type: Set[str]
         for item in attr_node.value:
             if not isinstance(item, yaml.MappingNode):
                 if strict:
                     raise SeasoningError(('Expected a sequence of mappings'
-                        ' but got {}'.format(attr_node)))
+                                          ' but got {}'.format(attr_node)))
                 return
 
             item_cnode = ClassNode(item)
             key_attr_node = item_cnode.get_attribute(key_attribute)
             if key_attr_node.tag != 'tag:yaml.org,2002:str':
-                raise SeasoningError(('Attribute names must be strings in'
-                    'YAtiML, {} is not a string.').format(key_attr_node))
+                raise SeasoningError(
+                    ('Attribute names must be strings in'
+                     'YAtiML, {} is not a string.').format(key_attr_node))
             if key_attr_node.value in seen_keys:
                 if strict:
-                    raise SeasoningError(('Found a duplicate key {}: {} when'
-                        ' converting from sequence to mapping'.format(
-                            key_attribute, key_attr_node.value)))
+                    raise SeasoningError(
+                        ('Found a duplicate key {}: {} when'
+                         ' converting from sequence to mapping'.format(
+                             key_attribute, key_attr_node.value)))
                 return
             seen_keys.add(key_attr_node.value)
 
@@ -356,10 +368,7 @@ class ClassNode:
         mapping = yaml.MappingNode('tag:yaml.org,2002:map', mapping_values)
         self.set_attribute(attribute, mapping)
 
-    def map_attribute_to_seq(
-            self,
-            attribute: str, key_attribute: str
-            ) -> None:
+    def map_attribute_to_seq(self, attribute: str, key_attribute: str) -> None:
         """Converts a mapping attribute to a sequence.
 
         This function takes an attribute of this ClassNode whose value \
@@ -419,7 +428,6 @@ class ClassNode:
             object_list.append(item_value_cnode.yaml_node)
         seq_node = yaml.SequenceNode('tag:yaml.org,2002:seq', object_list)
         self.set_attribute(attribute, seq_node)
-
 
     def __attr_index(self, attribute: str) -> Optional[int]:
         """Finds an attribute's index in the yaml_node.value list."""

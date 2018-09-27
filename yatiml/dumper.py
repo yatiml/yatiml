@@ -6,7 +6,6 @@ from ruamel import yaml
 
 from yatiml.helpers import ClassNode
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -18,6 +17,7 @@ class Representer:
     which represents classes based on their public attributes by \
     default, with an optional user override using a member function.
     """
+
     def __init__(self, class_: Type) -> None:
         """Creates a new Representer for the given class.
 
@@ -37,30 +37,34 @@ class Representer:
             A yaml.Node representing the object.
         """
         # make a dict with attributes
-        logger.info('Representing {} of class {}'.format(data, self.class_.__name__))
+        logger.info('Representing {} of class {}'.format(
+            data, self.class_.__name__))
         if hasattr(data, 'yatiml_attributes'):
             logger.debug('Found yatiml_attributes()')
             attributes = data.yatiml_attributes()
             if attributes is None:
                 raise RuntimeError(('{}.yatiml_attributes() returned None,'
-                    ' where a dict was expected.').format(self.class_.__name__))
+                                    ' where a dict was expected.').format(
+                                        self.class_.__name__))
         else:
-            logger.debug('No yatiml_attributes() found, using public attributes')
+            logger.debug(
+                'No yatiml_attributes() found, using public attributes')
             argspec = inspect.getfullargspec(data.__init__)
             attribute_names = list(argspec.args[1:])
-            attrs = [(name, getattr(data, name))
-                    for name in attribute_names
-                    if name != 'yatiml_extra']
+            attrs = [(name, getattr(data, name)) for name in attribute_names
+                     if name != 'yatiml_extra']
             if 'yatiml_extra' in attribute_names:
                 if not hasattr(data, 'yatiml_extra'):
-                    raise RuntimeError(('Class {} takes yatiml_extra but has '
-                        ' no yatiml_extra attribute, and no '
-                        ' yatiml_attributes().').format(self.class_.__name__))
+                    raise RuntimeError(
+                        ('Class {} takes yatiml_extra but has '
+                         ' no yatiml_extra attribute, and no '
+                         ' yatiml_attributes().').format(self.class_.__name__))
                 attrs.extend(data.yatiml_extra.items())
             attributes = yaml.comments.CommentedMap(attrs)
 
         # convert to a yaml.MappingNode
-        represented = dumper.represent_mapping('tag:yaml.org,2002:map', attributes)
+        represented = dumper.represent_mapping('tag:yaml.org,2002:map',
+                                               attributes)
 
         # sweeten
         cnode = ClassNode(represented)
@@ -69,9 +73,8 @@ class Representer:
         logger.debug('End representing {}'.format(data))
         return represented
 
-    def __sweeten(
-            self, dumper: 'Dumper',
-            class_: Type, represented_object: Any) -> None:
+    def __sweeten(self, dumper: 'Dumper', class_: Type,
+                  represented_object: Any) -> None:
         """Applies the user's yatiml_sweeten() function(s), if any.
 
         Sweetening is done for the base classes first, then for the \
@@ -85,7 +88,8 @@ class Representer:
         """
         for base_class in class_.__bases__:
             if base_class in dumper.yaml_representers:
-                logger.debug('Sweetening for class {}'.format(self.class_.__name__))
+                logger.debug('Sweetening for class {}'.format(
+                    self.class_.__name__))
                 self.__sweeten(dumper, base_class, represented_object)
         if hasattr(class_, 'yatiml_sweeten'):
             class_.yatiml_sweeten(represented_object)
@@ -114,6 +118,6 @@ def add_to_dumper(dumper: Type, classes: List[Type]) -> None:
         classes: One or more classes to add.
     """
     if not isinstance(classes, list):
-        classes = [classes]     # type: ignore
+        classes = [classes]  # type: ignore
     for class_ in classes:
         dumper.add_representer(class_, Representer(class_))
