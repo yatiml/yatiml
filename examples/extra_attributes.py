@@ -1,8 +1,7 @@
 from ruamel import yaml
 from collections import OrderedDict
-from typing import Optional, Union
+from typing import Union
 import yatiml
-import logging
 
 
 # Create document class

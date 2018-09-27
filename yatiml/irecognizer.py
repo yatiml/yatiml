@@ -30,4 +30,4 @@ class IRecognizer(abc.ABC):
         Returns:
             A list of matching types.
         """
-        raise NotImplemented()  # pragma: no cover
+        raise NotImplementedError()  # pragma: no cover

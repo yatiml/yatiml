@@ -1,5 +1,5 @@
 from ruamel import yaml
-from typing import List, Sequence, Union
+from typing import List, Union
 import yatiml
 
 

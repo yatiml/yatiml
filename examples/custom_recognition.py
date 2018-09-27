@@ -1,7 +1,6 @@
 from ruamel import yaml
 from typing import Optional, Union
 import yatiml
-import logging
 
 
 # Create document class

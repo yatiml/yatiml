@@ -507,7 +507,7 @@ a somewhat crude representation consisting of circles and squares.
   :caption: class_hierarchy.py
 
   from ruamel import yaml
-  from typing import List, Sequence, Union
+  from typing import List, Union
   import yatiml
 
 
@@ -609,12 +609,11 @@ convenient if you want to check which age category to file a submission under.
 So let's add a savourising function to convert strings to int on loading:
 
 .. code-block:: python
-  :caption: ``savorising.py``
+  :caption: ``savorizing.py``
 
   from ruamel import yaml
   from typing import Optional, Union
   import yatiml
-  import logging
 
 
   # Create document class
@@ -890,9 +889,8 @@ Here is an example:
 
   from ruamel import yaml
   from collections import OrderedDict
-  from typing import Optional, Union
+  from typing import Union
   import yatiml
-  import logging
 
 
   # Create document class

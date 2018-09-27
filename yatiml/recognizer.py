@@ -1,6 +1,5 @@
-import abc
 import logging
-from typing import Dict, Generator, GenericMeta, List, Tuple, Type
+from typing import Dict, GenericMeta, List, Tuple, Type
 
 from ruamel import yaml
 
@@ -89,8 +88,10 @@ class Recognizer(IRecognizer):
             if len(recognized_value_types) == 0:
                 return []
             if len(recognized_value_types) > 1:
-                return [Dict[str, t]
-                        for t in recognized_value_types]  # type: ignore
+                return [
+                    Dict[str, t]  # type: ignore
+                    for t in recognized_value_types
+                ]  # type: ignore
 
         return [expected_type]
 

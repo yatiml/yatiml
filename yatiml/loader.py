@@ -1,4 +1,3 @@
-import copy
 import inspect
 import logging
 import os
@@ -98,7 +97,7 @@ class Constructor:
             else:
                 new_obj.__init__(**mapping)
 
-        except TypeError as e:  # pragma: no cover
+        except TypeError:  # pragma: no cover
             raise RecognitionError(
                 ('{}{}Could not construct object of class {}'
                  ' from {}. This is a bug in YAtiML, please report.'.format(
@@ -187,8 +186,7 @@ class Constructor:
             for t in types:
                 if self.__type_matches(obj, t):
                     return True
-            else:
-                return False
+            return False
         elif isinstance(type_, GenericMeta):
             if type_.__origin__ == List:
                 if not isinstance(obj, list):
@@ -507,12 +505,12 @@ class Loader(yaml.RoundTripLoader):
                     raise RecognitionError('{}{}Expected a {} here'.format(
                         node.start_mark, os.linesep,
                         self.__type_to_desc(expected_type)))
-                for key_node, value_node in node.value:
+                for _, value_node in node.value:
                     self.__process_node(value_node,
                                         recognized_type.__args__[1])
 
         elif recognized_type in self._registered_classes.values():
-            for attr_name, type_, required in class_subobjects(expected_type):
+            for attr_name, type_, _ in class_subobjects(expected_type):
                 cnode = ClassNode(node)
                 if cnode.has_attribute(attr_name):
                     subnode = cnode.get_attribute(attr_name)
