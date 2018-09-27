@@ -48,7 +48,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'YAtiML'
-copyright = u'2018, Netherlands eScience Center and University of Amsterdam'
+copyright = u'2018, Netherlands eScience Center, University of Amsterdam, and VU University Amsterdam'
 author = u'Lourens Veen'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -108,8 +108,19 @@ def run_apidoc(_):
         apidoc.main(argv)
 
 
+# Skip the hooks for ruamel.yaml in our Loader class
+# Those are protected, not public, and not part of
+# the public API, so they should not be documented as
+# such.
+def skip_loader_hooks(app, what, name, obj, skip, options):
+    if name == 'get_node' or name == 'get_single_node':
+        return True
+    return skip
+
+
 def setup(app):
     app.connect('builder-inited', run_apidoc)
+    app.connect('autodoc-skip-member', skip_loader_hooks)
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -117,7 +128,7 @@ def setup(app):
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

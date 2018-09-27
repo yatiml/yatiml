@@ -28,12 +28,15 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
-        "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+    ],
+    install_requires=[
+        'ruamel.yaml<=0.15.64',
+        'typing>=3.6'
     ],
     test_suite='tests',
     setup_requires=[
@@ -41,14 +44,16 @@ setup(
         'pytest-runner',
         # dependencies for `python setup.py build_sphinx`
         'sphinx',
-        'recommonmark'
+        'recommonmark',
+        'sphinx-rtd-theme'
     ],
     tests_require=[
-        'pytest',
+        'pytest>=3.5',
         'pytest-cov',
-        'pycodestyle',
+        'pycodestyle>=2.0.0,<2.4.0',
+        'pytest-flake8'
     ],
     extras_require={
-        'dev':  ['prospector[with_pyroma]', 'yapf', 'isort'],
+        'dev':  ['mypy', 'yapf', 'isort'],
     }
 )

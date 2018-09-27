@@ -1,14 +1,22 @@
 # Config file for automatic testing at travis-ci.org
 language: python
 python:
-  - "2.7"
   - "3.4"
   - "3.5"
   - "3.6"
 
+# Travis comes with an old pytest that does not work with pytest-flake8.
+# So upgrade that first.
+before_install:
+  - pip install --upgrade pytest
 # command to install dependencies
 install:
   - pip install -r requirements.txt
+  - pip install codacy-coverage
 
 # command to run tests
 script: python setup.py test
+
+# upload coverage information to Codacy
+after_success:
+  - python-codacy-coverage -r coverage.xml

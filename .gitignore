@@ -3,10 +3,15 @@
 *.eggs
 
 dist
+build
 .cache
+.pytest_cache
+.mypy_cache
+*.swp
 
 htmlcov
 .coverage
+coverage.xml
 
 docs/_build
-docs/apidoc
+docs/apidocs
