@@ -235,7 +235,7 @@ class PrivateAttributes:
         self.__b = b
 
     def yatiml_attributes(self) -> OrderedDict:
-        attrs = OrderedDict()
+        attrs = OrderedDict()   # type: OrderedDict
         attrs['a'] = self.__a
         attrs['b'] = self.__b
         return attrs
