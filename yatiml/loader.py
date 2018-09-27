@@ -167,7 +167,8 @@ class Constructor:
     def __type_matches(self, obj: Any, type_: Type) -> bool:
         """Checks that the object matches the given type.
 
-        Like isinstance(), but will work with union types using Union.
+        Like isinstance(), but will work with union types using Union, \
+        Dict and List.
 
         Args:
             obj: The object to check
@@ -187,6 +188,25 @@ class Constructor:
                     return True
             else:
                 return False
+        elif isinstance(type_, GenericMeta):
+            if type_.__origin__ == List:
+                if not isinstance(obj, list):
+                    return False
+                for item in obj:
+                    if not self.__type_matches(item, type_.__args__[0]):
+                        return False
+                else:
+                    return True
+            elif type_.__origin__ == Dict:
+                if not isinstance(obj, OrderedDict):
+                    return False
+                for key, value in obj:
+                    if not isinstance(key, type_.__args__[0]):
+                        return False
+                    if not self.__type_matches(value, type_.__args__[1]):
+                        return False
+                else:
+                    return True
         else:
             return isinstance(obj, type_)
 
