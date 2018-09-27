@@ -52,6 +52,7 @@ setup(
         'pytest-cov',
         'pycodestyle>=2.0.0,<2.4.0',
         'pytest-flake8',
+        'codacy-coverage'
     ],
     extras_require={
         'dev':  ['mypy', 'yapf', 'isort'],
