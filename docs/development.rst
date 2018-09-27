@@ -179,7 +179,7 @@ And if all seems well, we can upload to the real PyPI:
 
 .. code-block:: bash
 
-  python3 upload dist/*
+  twine upload dist/*
 
 .. _`Git Flow`: http://nvie.com/posts/a-successful-git-branching-model/
 .. _`Semantic Versioning`: http://www.semver.org
