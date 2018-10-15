@@ -495,7 +495,7 @@ class Loader(yaml.RoundTripLoader):
                 logger.debug('Calling {}.yatiml_savorize()'.format(
                     expected_type.__name__))
                 snode = ScalarNode(node)
-                expected_type.yatiml_savorize(snode)
+                expected_type.yatiml_savorize(snode)    # type: ignore
         else:
             for base_class in expected_type.__bases__:
                 if base_class in self._registered_classes.values():
