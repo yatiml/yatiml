@@ -5,6 +5,7 @@ import pytest   # type: ignore
 from ruamel import yaml
 
 from collections import OrderedDict
+import enum
 import math
 from typing import Dict, List, Optional, Tuple, Type, Union
 
@@ -132,6 +133,30 @@ class Ellipse(Shape):
         return [('semi_major', float, True),
                 ('semi_minor', float, True)
                 ]
+
+
+class Color(enum.Enum):
+    red = 'red'
+    orange = 'orange'
+    yellow = 'yellow'
+    green = 'green'
+    blue = 'blue'
+
+
+class Color2(enum.Enum):
+    RED = 1
+    ORANGE = 2
+    YELLOW = 3
+    GREEN = 4
+    BLUE = 5
+
+    @classmethod
+    def yatiml_savorize(self, node: yatiml.ScalarNode) -> None:
+        node.to_upper()
+
+    @classmethod
+    def yatiml_sweeten(self, node: yatiml.ScalarNode) -> None:
+        node.to_lower()
 
 
 class Document2:
@@ -312,6 +337,40 @@ def document2_dumper():
             Document2Dumper,
             [Document2, Shape, Rectangle, Circle, Vector2D])
     return Document2Dumper
+
+
+@pytest.fixture
+def enum_loader():
+    class EnumLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(EnumLoader, Color)
+    yatiml.set_document_type(EnumLoader, Color)
+    return EnumLoader
+
+
+@pytest.fixture
+def enum_dumper():
+    class EnumDumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(EnumDumper, Color)
+    return EnumDumper
+
+
+@pytest.fixture
+def enum_loader2():
+    class EnumLoader2(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(EnumLoader2, Color2)
+    yatiml.set_document_type(EnumLoader2, Color2)
+    return EnumLoader2
+
+
+@pytest.fixture
+def enum_dumper2():
+    class EnumDumper2(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(EnumDumper2, Color2)
+    return EnumDumper2
 
 
 @pytest.fixture

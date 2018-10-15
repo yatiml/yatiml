@@ -1,10 +1,11 @@
+import enum
 import inspect
 import logging
 from typing import Any, List, Type
 
 from ruamel import yaml
 
-from yatiml.helpers import ClassNode
+from yatiml.helpers import ClassNode, ScalarNode
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,49 @@ class Representer:
             class_.yatiml_sweeten(represented_object)
 
 
+class EnumRepresenter:
+    """A yaml Representer class for user-defined enum types.
+
+    For ruamel.yaml to dump a class correctly, it needs a representer \
+    function for that class. YAtiML provides this generic representer \
+    which represents enum classes based on the names of their values by \
+    default, with an optional user override using a member function.
+    """
+
+    def __init__(self, class_: Type) -> None:
+        """Creates a new Representer for the given class.
+
+        Args:
+            class_: The class to represent.
+        """
+        self.class_ = class_
+
+    def __call__(self, dumper: 'Dumper', data: Any) -> yaml.MappingNode:
+        """Represents the class as a ScalarNode.
+
+        Args:
+            dumper: The dumper to use.
+            data: The user-defined object to dump.
+
+        Returns:
+            A yaml.Node representing the object.
+        """
+        # make a ScalarNode of type str with name of value
+        logger.info('Representing {} of class {}'.format(
+            data, self.class_.__name__))
+
+        # convert to a yaml.ScalarNode
+        represented = dumper.represent_str(data.name)
+
+        # sweeten
+        snode = ScalarNode(represented)
+        if hasattr(self.class_, 'yatiml_sweeten'):
+            self.class_.yatiml_sweeten(snode)
+
+        logger.debug('End representing {}'.format(data))
+        return represented
+
+
 class Dumper(yaml.RoundTripDumper):
     """The YAtiML Dumper class.
 
@@ -120,4 +164,7 @@ def add_to_dumper(dumper: Type, classes: List[Type]) -> None:
     if not isinstance(classes, list):
         classes = [classes]  # type: ignore
     for class_ in classes:
-        dumper.add_representer(class_, Representer(class_))
+        if issubclass(class_, enum.Enum):
+            dumper.add_representer(class_, EnumRepresenter(class_))
+        else:
+            dumper.add_representer(class_, Representer(class_))

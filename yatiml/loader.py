@@ -1,3 +1,4 @@
+import enum
 import inspect
 import logging
 import os
@@ -8,7 +9,7 @@ import ruamel.yaml as yaml
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from yatiml.exceptions import RecognitionError
-from yatiml.helpers import ClassNode
+from yatiml.helpers import ClassNode, ScalarNode
 from yatiml.introspection import class_subobjects
 from yatiml.recognizer import Recognizer
 from yatiml.util import scalar_type_to_tag
@@ -320,6 +321,55 @@ class Constructor:
                 self.__strip_tags(value_node)
 
 
+class EnumConstructor:
+    """A constructor for user enum classes to register with YAML.
+
+    This constructor should be used in place of Constructor for enums, \
+    i.e. classes derived from enum.Enum.
+    """
+
+    def __init__(self, class_: Type) -> None:
+        """Create a constructor
+
+        Args:
+            class_: The class that this is a constructor for.
+        """
+        self.class_ = class_
+
+    def __call__(self, loader: 'Loader',
+                 node: yaml.Node) -> Generator[Any, None, None]:
+        """Construct an enum value from a yaml node.
+
+        This constructs an object of the user-defined enum that this \
+        is the constructor for. It is registered with the yaml library, \
+        and called by it.
+
+        Note that this yields rather than returns, in a somewhat odd \
+        way. That's directly from the PyYAML/ruamel.yaml documentation.
+
+        Args:
+            loader: The yatiml.loader that is creating this object.
+            node: The node to construct from.
+
+        Yields:
+            The incomplete constructed object.
+        """
+        logger.debug('Constructing an object of type {}'.format(
+            self.class_.__name__))
+
+        if not isinstance(node, yaml.ScalarNode):
+            raise RecognitionError(
+                ('{}{}Expected a string matching a {}. There'
+                 ' is probably something wrong with your yatiml_savorize()'
+                 ' function.').format(node.start_mark, os.linesep,
+                                      self.class_.__name__))
+
+        # ruamel.yaml expects us to yield an incomplete object, but enums are
+        # immutable, so we'll have to make the whole thing right away.
+        new_obj = self.class_[node.value]
+        yield new_obj
+
+
 class Loader(yaml.RoundTripLoader):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -440,15 +490,22 @@ class Loader(yaml.RoundTripLoader):
         """
         logger.debug('Savorizing node assuming type {}'.format(
             expected_type.__name__))
-        for base_class in expected_type.__bases__:
-            if base_class in self._registered_classes.values():
-                self.__savorize(node, base_class)
+        if issubclass(expected_type, enum.Enum):
+            if hasattr(expected_type, 'yatiml_savorize'):
+                logger.debug('Calling {}.yatiml_savorize()'.format(
+                    expected_type.__name__))
+                snode = ScalarNode(node)
+                expected_type.yatiml_savorize(snode)
+        else:
+            for base_class in expected_type.__bases__:
+                if base_class in self._registered_classes.values():
+                    self.__savorize(node, base_class)
 
-        if hasattr(expected_type, 'yatiml_savorize'):
-            logger.debug('Calling {}.yatiml_savorize()'.format(
-                expected_type.__name__))
-            cnode = ClassNode(node)
-            expected_type.yatiml_savorize(cnode)
+            if hasattr(expected_type, 'yatiml_savorize'):
+                logger.debug('Calling {}.yatiml_savorize()'.format(
+                    expected_type.__name__))
+                cnode = ClassNode(node)
+                expected_type.yatiml_savorize(cnode)
 
     def __process_node(self, node: yaml.Node,
                        expected_type: Type) -> yaml.Node:
@@ -510,11 +567,12 @@ class Loader(yaml.RoundTripLoader):
                                         recognized_type.__args__[1])
 
         elif recognized_type in self._registered_classes.values():
-            for attr_name, type_, _ in class_subobjects(expected_type):
-                cnode = ClassNode(node)
-                if cnode.has_attribute(attr_name):
-                    subnode = cnode.get_attribute(attr_name)
-                    self.__process_node(subnode, type_)
+            if not issubclass(recognized_type, enum.Enum):
+                for attr_name, type_, _ in class_subobjects(expected_type):
+                    cnode = ClassNode(node)
+                    if cnode.has_attribute(attr_name):
+                        subnode = cnode.get_attribute(attr_name)
+                        self.__process_node(subnode, type_)
 
         logger.debug('Finished processing node {}'.format(node))
         return node
@@ -552,7 +610,10 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
 
     for class_ in classes:
         tag = '!{}'.format(class_.__name__)
-        loader_cls.add_constructor(tag, Constructor(class_))
+        if issubclass(class_, enum.Enum):
+            loader_cls.add_constructor(tag, EnumConstructor(class_))
+        else:
+            loader_cls.add_constructor(tag, Constructor(class_))
 
         if not hasattr(loader_cls, '_registered_classes'):
             loader_cls._registered_classes = dict()

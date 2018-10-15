@@ -587,6 +587,96 @@ typing, but it also makes it easier to see what's going on when reading the
 code, and that's very important for code maintainability. So that's what YAtiML
 does.
 
+Enumerations
+------------
+
+Enumerations, or enums, are types that are defined by listing a set of possible
+values. In Python 3, they are made by creating a class that inherits from
+``enum.Enum``. YAML does not have enumerations, but strings work fine provided
+that you have something like YAtiML to check that the string that the user put
+in actually matches one of the values of the enum type, and return the correct
+value from the enum class. Here's how to add some colour to the drawings.
+
+.. code-block:: python
+  :caption: .py
+
+  import enum
+  from ruamel import yaml
+  from typing import List, Union
+  import yatiml
+
+
+  # Create document classes
+  class Color(enum.Enum):
+      red = 0xff0000
+      orange = 0xff8000
+      yellow = 0xffff00
+      green = 0x008000
+      blue = 0x00aeef
+
+
+  class Shape:
+      def __init__(self, center: List[float], color: Color) -> None:
+          self.center = center
+          self.color = color
+
+
+  class Circle(Shape):
+      def __init__(self, center: List[float], color: Color, radius: float) -> None:
+          super().__init__(center, color)
+          self.radius = radius
+
+
+  class Square(Shape):
+      def __init__(self, center: List[float], color: Color, width: float, height: float) -> None:
+          super().__init__(center, color)
+          self.width = width
+          self.height = height
+
+
+  class Submission(Shape):
+      def __init__(
+              self,
+              name: str,
+              age: Union[int, str],
+              drawing: List[Shape]
+              ) -> None:
+          self.name = name
+          self.age = age
+          self.drawing = drawing
+
+
+  # Create loader
+  class MyLoader(yatiml.Loader):
+    pass
+
+  yatiml.add_to_loader(MyLoader, [Color, Shape, Circle, Square, Submission])
+  yatiml.set_document_type(MyLoader, Submission)
+
+  # Load YAML
+  yaml_text = ('name: Janice\n'
+               'age: 6\n'
+               'drawing:\n'
+               '  - center: [1.0, 1.0]\n'
+               '    color: red\n'
+               '    radius: 2.0\n'
+               '  - center: [5.0, 5.0]\n'
+               '    color: blue\n'
+               '    width: 1.0\n'
+               '    height: 1.0\n')
+  doc = yaml.load(yaml_text, Loader=MyLoader)
+
+  print(doc.name)
+  print(doc.age)
+  print(doc.drawing[0].color)
+
+Note that the labels that YAtiML looks for are the names of the enum members,
+not their values. In many existing standards, enums map to numerical values, or
+if you're making something new, it's often convenient to use the values for
+something else. The names are usually what you want to write though, so they're
+probably easier for the users to write in the YAML file too.
+
+
 Seasoning your YAML
 -------------------
 
@@ -678,6 +768,12 @@ it as the new value. If a string value was used that we do not know how to
 convert, we raise a :class:`yatiml.SeasoningError`, which is the appropriate way
 to signal an error during execution of ``yatiml_savorize()``.
 
+Note that a ``yatiml_savorize()`` class method for an enum has a slightly
+different signature: it takes a :class:`yatiml.ScalarNode` instead of
+:class:`yatiml.ClassNode`. Since enums are strings on the YAML text side,
+you need helper functions that can manipulate strings, and that's what
+ScalarNode provides.
+
 (At this point I should apologise for the language mix-up; the code uses
 North-American spelling because it's rare to use British spelling in code and so
 it would confuse everyone, while the documentation uses British spelling because
@@ -732,13 +828,13 @@ classmethod:
 
   print(yaml_text)
 
-The ``yatiml_sweeten()`` method has the same signature as ``yatiml_savorize()``,
-but is called by a Dumper, not by a Loader. It gives you access to the YAML node
-that has been produced from a Submission object before it is written out to the
-YAML output. Here, we use the same functions as before to convert some of the
-int values back to strings. Since we converted all the strings to ints on
-loading above, we can assume that the value is indeed an int, and we do not have
-to check.
+The ``yatiml_sweeten()`` method has the same signature as ``yatiml_savorize()``
+(with a ScalarNode for enums), but is called by a Dumper, not by a Loader. It
+gives you access to the YAML node that has been produced from a Submission
+object before it is written out to the YAML output. Here, we use the same
+functions as before to convert some of the int values back to strings. Since we
+converted all the strings to ints on loading above, we can assume that the value
+is indeed an int, and we do not have to check.
 
 Indeed, if we run this example, we get:
 
