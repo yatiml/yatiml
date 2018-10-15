@@ -48,6 +48,7 @@ setup(
         'sphinx-rtd-theme'
     ],
     tests_require=[
+        'mypy',
         'pytest>=3.5',
         'pytest-cov',
         'pycodestyle>=2.0.0,<2.4.0',
@@ -55,6 +56,6 @@ setup(
         'pytest-mypy'
     ],
     extras_require={
-        'dev':  ['mypy', 'yapf', 'isort'],
+        'dev':  ['yapf', 'isort'],
     }
 )
