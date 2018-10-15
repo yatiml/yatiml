@@ -16,19 +16,12 @@ rather than copying them, so that changes are reflected immediately in the
 installed copy. The additional ``[dev]`` installs the development tools, which
 you can then use as follows.
 
-Run tests (including coverage) with:
+Run tests (including coverage and type checking) with:
 
 .. code-block:: console
 
   python setup.py test
 
-
-Static type checks can be done using:
-
-.. code-block:: console
-
-  mypy yatiml
-  mypy tests
 
 A local copy of the documentation can be generated using:
 
