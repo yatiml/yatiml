@@ -1,11 +1,14 @@
 import enum
 import inspect
 import logging
-from typing import Any, Type
+from typing import Any, Type, TYPE_CHECKING
 
 from ruamel import yaml
 
 from yatiml.helpers import ClassNode, ScalarNode
+
+if TYPE_CHECKING:
+    from yatiml.dumper import Dumper  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +140,3 @@ class EnumRepresenter:
 
         logger.debug('End representing {}'.format(data))
         return represented
-
-
-

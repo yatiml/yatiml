@@ -3,13 +3,17 @@ import inspect
 import logging
 import os
 from collections import OrderedDict
-from typing import Any, Dict, Generator, GenericMeta, List, Type, Union
+from typing import (Any, Dict, Generator, GenericMeta, List, Type,
+                    TYPE_CHECKING, Union)
 
 import ruamel.yaml as yaml
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from yatiml.exceptions import RecognitionError
 from yatiml.introspection import class_subobjects
+
+if TYPE_CHECKING:
+    from yatiml.loader import Loader  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -354,12 +358,11 @@ class EnumConstructor:
         logger.debug('Constructing an object of type {}'.format(
             self.class_.__name__))
 
-        if not isinstance(node, yaml.ScalarNode):
+        if not isinstance(node, yaml.ScalarNode) or not isinstance(
+                node.value, str):
             raise RecognitionError(
-                ('{}{}Expected a string matching a {}. There'
-                 ' is probably something wrong with your yatiml_savorize()'
-                 ' function.').format(node.start_mark, os.linesep,
-                                      self.class_.__name__))
+                ('{}{}Expected a string matching a {}.').format(
+                    node.start_mark, os.linesep, self.class_.__name__))
 
         # ruamel.yaml expects us to yield an incomplete object, but enums are
         # immutable, so we'll have to make the whole thing right away.
