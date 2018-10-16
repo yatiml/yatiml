@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Set, Type, Union
+from typing import Optional, Set, Type, Union  # noqa: F401
 
 from ruamel import yaml
 from ruamel.yaml.error import StreamMark
@@ -331,7 +331,8 @@ class ClassNode:
         if not isinstance(attr_node, yaml.SequenceNode):
             return
 
-        # check that all list items are mappings and that the keys are unique strings
+        # check that all list items are mappings and that the keys are unique
+        # strings
         seen_keys = set()  # type: Set[str]
         for item in attr_node.value:
             if not isinstance(item, yaml.MappingNode):

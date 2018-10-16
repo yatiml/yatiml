@@ -1,4 +1,3 @@
-import enum
 import inspect
 import logging
 from typing import Any, Type, TYPE_CHECKING

@@ -1,4 +1,3 @@
-import enum
 import inspect
 import logging
 import os
@@ -226,7 +225,7 @@ class Constructor:
         """
         logger.debug('Checking presence of required attributes')
         for name, type_, required in class_subobjects(self.class_):
-            if required and not name in mapping:
+            if required and name not in mapping:
                 raise RecognitionError(('{}{}Missing attribute {} needed for'
                                         ' constructing a {}').format(
                                             node.start_mark, os.linesep, name,

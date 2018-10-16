@@ -1,6 +1,7 @@
+from collections import UserString
 import enum
 import logging
-from typing import Dict, GenericMeta, List, Tuple, Type
+from typing import Dict, GenericMeta, List, Type
 
 from ruamel import yaml
 
