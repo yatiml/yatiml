@@ -8,7 +8,7 @@ with open('README.rst') as readme_file:
 
 setup(
     name='yatiml',
-    version='0.1.0',
+    version='0.2.0',
     description="A library for making YAML-based file formats",
     long_description=readme + '\n\n',
     author="Lourens Veen",
@@ -48,12 +48,15 @@ setup(
         'sphinx-rtd-theme'
     ],
     tests_require=[
+        'coverage<5',
+        'mypy',
         'pytest>=3.5',
         'pytest-cov',
         'pycodestyle>=2.0.0,<2.4.0',
-        'pytest-flake8'
+        'pytest-flake8',
+        'pytest-mypy'
     ],
     extras_require={
-        'dev':  ['mypy', 'yapf', 'isort'],
+        'dev':  ['yapf', 'isort'],
     }
 )

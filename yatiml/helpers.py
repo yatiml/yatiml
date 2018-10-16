@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Set, Type, Union
+from typing import Optional, Set, Type, Union  # noqa: F401
 
 from ruamel import yaml
 from ruamel.yaml.error import StreamMark
@@ -93,7 +93,7 @@ class UnknownNode:
 
 
 class ClassNode:
-    """A wrapper class for yaml Nodes that provides utility functions.
+    """A wrapper class for yaml MappingNodes that provides utility functions.
 
     This class defines a number of helper function for you to use \
     when writing yatiml_sweeten() and yatiml_savorize() functions.
@@ -331,7 +331,8 @@ class ClassNode:
         if not isinstance(attr_node, yaml.SequenceNode):
             return
 
-        # check that all list items are mappings and that the keys are unique strings
+        # check that all list items are mappings and that the keys are unique
+        # strings
         seen_keys = set()  # type: Set[str]
         for item in attr_node.value:
             if not isinstance(item, yaml.MappingNode):
@@ -437,3 +438,36 @@ class ClassNode:
                 attr_index = i
                 break
         return attr_index
+
+
+class ScalarNode:
+    """A wrapper class for yaml scalar nodes.
+
+    Provides utility functions for use in savorize/sweeten methods.
+    """
+
+    def __init__(self, node: yaml.ScalarNode) -> None:
+        """Create a ClassNode for a particular mapping node.
+
+        The member functions will act on the contained node.
+
+        Args:
+            node: The node to provide help for.
+        """
+        self.yaml_node = node
+
+    def to_upper(self) -> None:
+        """Convert the string to all upper case."""
+        self.yaml_node.value = self.yaml_node.value.upper()
+
+    def to_lower(self) -> None:
+        """Convert the string to all lower case."""
+        self.yaml_node.value = self.yaml_node.value.lower()
+
+    def to_title(self) -> None:
+        """Convert the string to title case.
+
+        This will make every word start with a capital, and all the \
+        other letters lowercase.
+        """
+        self.yaml_node.value = self.yaml_node.value.title()

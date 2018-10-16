@@ -5,7 +5,7 @@ import yatiml
 
 # Create loader
 class MyLoader(yatiml.Loader):
-  pass
+    pass
 
 yatiml.set_document_type(MyLoader, Dict[str, Union[str, int]])
 

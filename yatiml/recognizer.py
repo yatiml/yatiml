@@ -1,5 +1,7 @@
+from collections import UserString
+import enum
 import logging
-from typing import Dict, GenericMeta, List, Tuple, Type
+from typing import Dict, GenericMeta, List, Type
 
 from ruamel import yaml
 
@@ -142,19 +144,30 @@ class Recognizer(IRecognizer):
             except RecognitionError:
                 return []
         else:
-            # auto-recognize based on constructor signature
-            if not isinstance(node, yaml.MappingNode):
-                return []
-
-            for attr_name, type_, required in class_subobjects(expected_type):
-                cnode = ClassNode(node)
-                if cnode.has_attribute(attr_name):
-                    subnode = cnode.get_attribute(attr_name)
-                    recognized_types = self.recognize(subnode, type_)
-                    if len(recognized_types) == 0:
-                        return []
-                elif required:
+            if issubclass(expected_type, enum.Enum):
+                if (not isinstance(node, yaml.ScalarNode)
+                        or node.tag != 'tag:yaml.org,2002:str'):
                     return []
+            elif (issubclass(expected_type, UserString)
+                  or issubclass(expected_type, str)):
+                if (not isinstance(node, yaml.ScalarNode)
+                        or node.tag != 'tag:yaml.org,2002:str'):
+                    return []
+            else:
+                # auto-recognize based on constructor signature
+                if not isinstance(node, yaml.MappingNode):
+                    return []
+
+                for attr_name, type_, required in class_subobjects(
+                        expected_type):
+                    cnode = ClassNode(node)
+                    if cnode.has_attribute(attr_name):
+                        subnode = cnode.get_attribute(attr_name)
+                        recognized_types = self.recognize(subnode, type_)
+                        if len(recognized_types) == 0:
+                            return []
+                    elif required:
+                        return []
 
             return [expected_type]
 

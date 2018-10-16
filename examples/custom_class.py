@@ -11,7 +11,7 @@ class Submission:
 
 # Create loader
 class MyLoader(yatiml.Loader):
-  pass
+    pass
 
 yatiml.add_to_loader(MyLoader, Submission)
 yatiml.set_document_type(MyLoader, Submission)

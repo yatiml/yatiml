@@ -4,9 +4,10 @@ from yatiml.recognizer import Recognizer
 import pytest   # type: ignore
 from ruamel import yaml
 
-from collections import OrderedDict
+from collections import OrderedDict, UserString
+import enum
 import math
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 
 @pytest.fixture
@@ -134,6 +135,30 @@ class Ellipse(Shape):
                 ]
 
 
+class Color(enum.Enum):
+    red = 'red'
+    orange = 'orange'
+    yellow = 'yellow'
+    green = 'green'
+    blue = 'blue'
+
+
+class Color2(enum.Enum):
+    RED = 1
+    ORANGE = 2
+    YELLOW = 3
+    GREEN = 4
+    BLUE = 5
+
+    @classmethod
+    def yatiml_savorize(self, node: yatiml.ScalarNode) -> None:
+        node.to_upper()
+
+    @classmethod
+    def yatiml_sweeten(self, node: yatiml.ScalarNode) -> None:
+        node.to_lower()
+
+
 class Document2:
     def __init__(self, cursor_at: Vector2D, shapes: List[Shape]=[]) -> None:
         # Yes, having [] as a default value is a bad idea, but ok here
@@ -247,6 +272,13 @@ class BrokenPrivateAttributes:
         self.__b = b
 
 
+class ConstrainedString(UserString):
+    def __init__(self, seq: Any) -> None:
+        super().__init__(seq)
+        if not self.data.startswith('a'):   # type: ignore
+            raise ValueError('ConstrainedString must start with an a')
+
+
 @pytest.fixture
 def document1_loader():
     class Document1Loader(yatiml.Loader):
@@ -312,6 +344,57 @@ def document2_dumper():
             Document2Dumper,
             [Document2, Shape, Rectangle, Circle, Vector2D])
     return Document2Dumper
+
+
+@pytest.fixture
+def enum_loader():
+    class EnumLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(EnumLoader, Color)
+    yatiml.set_document_type(EnumLoader, Color)
+    return EnumLoader
+
+
+@pytest.fixture
+def enum_dumper():
+    class EnumDumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(EnumDumper, Color)
+    return EnumDumper
+
+
+@pytest.fixture
+def enum_loader2():
+    class EnumLoader2(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(EnumLoader2, Color2)
+    yatiml.set_document_type(EnumLoader2, Color2)
+    return EnumLoader2
+
+
+@pytest.fixture
+def enum_dumper2():
+    class EnumDumper2(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(EnumDumper2, Color2)
+    return EnumDumper2
+
+
+@pytest.fixture
+def user_string_loader():
+    class UserStringLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(UserStringLoader, ConstrainedString)
+    yatiml.set_document_type(UserStringLoader, ConstrainedString)
+    return UserStringLoader
+
+
+@pytest.fixture
+def user_string_dumper():
+    class UserStringDumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(UserStringDumper, ConstrainedString)
+    return UserStringDumper
 
 
 @pytest.fixture
