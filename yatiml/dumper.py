@@ -1,11 +1,12 @@
+from collections import UserString
 import enum
 import logging
 from typing import List, Type
 
 from ruamel import yaml
 
-from yatiml.representers import Representer, EnumRepresenter
-
+from yatiml.representers import (Representer, EnumRepresenter,
+                                 UserStringRepresenter)
 
 logger = logging.getLogger(__name__)
 
@@ -37,5 +38,7 @@ def add_to_dumper(dumper: Type, classes: List[Type]) -> None:
     for class_ in classes:
         if issubclass(class_, enum.Enum):
             dumper.add_representer(class_, EnumRepresenter(class_))
+        elif issubclass(class_, str) or issubclass(class_, UserString):
+            dumper.add_representer(class_, UserStringRepresenter(class_))
         else:
             dumper.add_representer(class_, Representer(class_))

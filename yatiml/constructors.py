@@ -367,3 +367,52 @@ class EnumConstructor:
         # immutable, so we'll have to make the whole thing right away.
         new_obj = self.class_[node.value]
         yield new_obj
+
+
+class UserStringConstructor:
+    """A constructor for user-defined string classes to register with YAML.
+
+    This constructor should be used in place of Constructor for \
+    user-defined strings, i.e. classes derived from str or \
+    collections.UserString.
+    """
+
+    def __init__(self, class_: Type) -> None:
+        """Create a constructor
+
+        Args:
+            class_: The class that this is a constructor for.
+        """
+        self.class_ = class_
+
+    def __call__(self, loader: 'Loader',
+                 node: yaml.Node) -> Generator[Any, None, None]:
+        """Construct an user string value from a yaml node.
+
+        This constructs an object of the user-defined string class that \
+        this is the constructor for. It is registered with the yaml \
+        library, and called by it.
+
+        Note that this yields rather than returns, in a somewhat odd \
+        way. That's directly from the PyYAML/ruamel.yaml documentation.
+
+        Args:
+            loader: The yatiml.loader that is creating this object.
+            node: The node to construct from.
+
+        Yields:
+            The incomplete constructed object.
+        """
+        logger.debug('Constructing an object of type {}'.format(
+            self.class_.__name__))
+
+        if not isinstance(node, yaml.ScalarNode) or not isinstance(
+                node.value, str):
+            raise RecognitionError(
+                ('{}{}Expected a string matching a {}.').format(
+                    node.start_mark, os.linesep, self.class_.__name__))
+
+        # ruamel.yaml expects us to yield an incomplete object, but strings are
+        # immutable, so we'll have to make the whole thing right away.
+        new_obj = self.class_(node.value)
+        yield new_obj

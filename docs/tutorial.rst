@@ -598,7 +598,7 @@ in actually matches one of the values of the enum type, and return the correct
 value from the enum class. Here's how to add some colour to the drawings.
 
 .. code-block:: python
-  :caption: .py
+  :caption: enums.py
 
   import enum
   from ruamel import yaml
@@ -675,6 +675,74 @@ not their values. In many existing standards, enums map to numerical values, or
 if you're making something new, it's often convenient to use the values for
 something else. The names are usually what you want to write though, so they're
 probably easier for the users to write in the YAML file too.
+
+User-Defined Strings
+--------------------
+
+When defining file formats, you often find yourself with a need to define a
+string with constraints. For example, Dutch postal codes consist of four digits,
+followed by two uppercase letters. If you use a generic string type for a postal
+code, you may end up accepting invalid values. A better solution is to define a
+custom string type with a built-in constraint. In Python 3, you can do this
+by deriving a class either from ``str`` or from ``collections.UserString``. The
+latter is easier, so that's what we'll use in this example. Let's add the town
+that our participant lives in to our YAML format, but insist that it be
+capitalised.
+
+.. code-block:: python
+  :caption: ``user_defined_string.py``
+
+  from collections import UserString
+  from ruamel import yaml
+  from typing import Any, Union
+  import yatiml
+
+
+  # Create document class
+  class TitleCaseString(UserString):
+      def __init__(self, seq: Any) -> None:
+          super().__init__(seq)
+          if self.data != self.data.title():
+              raise ValueError('Invalid TitleCaseString \'{}\': Each word must'
+                               ' start with a capital letter'.format(self.data))
+
+
+  class Submission:
+      def __init__(self, name: str, age: Union[int, str],
+                   town: TitleCaseString) -> None:
+          self.name = name
+          self.age = age
+          self.town = town
+
+
+  # Create loader
+  class MyLoader(yatiml.Loader):
+      pass
+
+  yatiml.add_to_loader(MyLoader, [TitleCaseString, Submission])
+  yatiml.set_document_type(MyLoader, Submission)
+
+  # Load YAML
+  yaml_text = ('name: Janice\n'
+               'age: 6\n'
+               'town: Piedmont')
+  doc = yaml.load(yaml_text, Loader=MyLoader)
+
+  print(type(doc))
+  print(doc.name)
+  print(doc.town)
+
+Python's ``UserString`` provides an attribute ``data`` containing the actual
+string, so all we need to do is test that for validity in the constructor. If
+you spell the town using only lowercase letters, you'll get:
+
+.. code-block:: none
+
+  ValueError: Invalid TitleCaseString 'piedmont': Each word must start with a
+  capital letter
+
+Note that you can't make a TitleCaseString object containing 'piedmont' from
+Python either, so the object model and the YAML format are consistent.
 
 
 Seasoning your YAML

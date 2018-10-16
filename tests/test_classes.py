@@ -8,10 +8,10 @@ import ruamel.yaml as yaml
 
 import yatiml
 
-from .conftest import (BrokenPrivateAttributes, Circle, Color, Color2,
-                       Document1, Document2)
-from .conftest import Extensible, PrivateAttributes, Rectangle, Shape, SubA
-from .conftest import SubA2, Super, UnionAttribute, Universal, Vector2D
+from .conftest import (BrokenPrivateAttributes, Circle, ConstrainedString,
+                       Color, Color2, Document1, Document2, Extensible,
+                       PrivateAttributes, Rectangle, Shape, SubA, SubA2, Super,
+                       UnionAttribute, Universal, Vector2D)
 
 
 def test_load_class(document1_loader):
@@ -246,6 +246,10 @@ def test_enum_class(enum_loader):
     with pytest.raises(KeyError):
         data = yaml.load(text, Loader=enum_loader)
 
+    text = '1\n'
+    with pytest.raises(yatiml.RecognitionError):
+        yaml.load(text, Loader=enum_loader)
+
 
 def test_dump_enum(enum_dumper):
     text = yaml.dump(Color.green, Dumper=enum_dumper)
@@ -262,3 +266,20 @@ def test_enum_savorize(enum_loader2):
 def test_enum_sweeten(enum_dumper2):
     text = yaml.dump(Color2.YELLOW, Dumper=enum_dumper2)
     assert text == 'yellow\n...\n'
+
+
+def test_user_string(user_string_loader):
+    text = 'abcd\n'
+    data = yaml.load(text, Loader=user_string_loader)
+    assert isinstance(data, ConstrainedString)
+    assert data == 'abcd'
+
+    text = 'efgh\n'
+    with pytest.raises(ValueError):
+        yaml.load(text, Loader=user_string_loader)
+
+
+def test_dump_user_string(user_string_dumper):
+    data = ConstrainedString('abc')
+    text = yaml.dump(data, Dumper=user_string_dumper)
+    assert text == 'abc\n...\n'

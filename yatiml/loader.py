@@ -1,3 +1,4 @@
+from collections import UserString
 import enum
 import logging
 import os
@@ -5,7 +6,8 @@ from typing import Any, Dict, GenericMeta, List, Type
 
 import ruamel.yaml as yaml
 
-from yatiml.constructors import Constructor, EnumConstructor
+from yatiml.constructors import (Constructor, EnumConstructor,
+                                 UserStringConstructor)
 from yatiml.exceptions import RecognitionError
 from yatiml.helpers import ClassNode, ScalarNode
 from yatiml.introspection import class_subobjects
@@ -140,7 +142,7 @@ class Loader(yaml.RoundTripLoader):
                 logger.debug('Calling {}.yatiml_savorize()'.format(
                     expected_type.__name__))
                 snode = ScalarNode(node)
-                expected_type.yatiml_savorize(snode)    # type: ignore
+                expected_type.yatiml_savorize(snode)  # type: ignore
         else:
             for base_class in expected_type.__bases__:
                 if base_class in self._registered_classes.values():
@@ -212,7 +214,9 @@ class Loader(yaml.RoundTripLoader):
                                         recognized_type.__args__[1])
 
         elif recognized_type in self._registered_classes.values():
-            if not issubclass(recognized_type, enum.Enum):
+            if (not issubclass(recognized_type, enum.Enum)
+                    and not issubclass(recognized_type, str)
+                    and not issubclass(recognized_type, UserString)):
                 for attr_name, type_, _ in class_subobjects(expected_type):
                     cnode = ClassNode(node)
                     if cnode.has_attribute(attr_name):
@@ -257,6 +261,8 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
         tag = '!{}'.format(class_.__name__)
         if issubclass(class_, enum.Enum):
             loader_cls.add_constructor(tag, EnumConstructor(class_))
+        elif issubclass(class_, str) or issubclass(class_, UserString):
+            loader_cls.add_constructor(tag, UserStringConstructor(class_))
         else:
             loader_cls.add_constructor(tag, Constructor(class_))
 

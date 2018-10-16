@@ -148,6 +148,11 @@ class Recognizer(IRecognizer):
                 if (not isinstance(node, yaml.ScalarNode)
                         or node.tag != 'tag:yaml.org,2002:str'):
                     return []
+            elif (issubclass(expected_type, UserString)
+                  or issubclass(expected_type, str)):
+                if (not isinstance(node, yaml.ScalarNode)
+                        or node.tag != 'tag:yaml.org,2002:str'):
+                    return []
             else:
                 # auto-recognize based on constructor signature
                 if not isinstance(node, yaml.MappingNode):

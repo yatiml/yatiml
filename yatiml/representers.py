@@ -139,3 +139,45 @@ class EnumRepresenter:
 
         logger.debug('End representing {}'.format(data))
         return represented
+
+
+class UserStringRepresenter:
+    """A yaml Representer class for user-defined string types.
+
+    For ruamel.yaml to dump a class correctly, it needs a representer \
+    function for that class. YAtiML provides this generic representer \
+    which represents user-defined string classes as strings.
+    """
+
+    def __init__(self, class_: Type) -> None:
+        """Creates a new Representer for the given class.
+
+        Args:
+            class_: The class to represent.
+        """
+        self.class_ = class_
+
+    def __call__(self, dumper: 'Dumper', data: Any) -> yaml.MappingNode:
+        """Represents the class as a ScalarNode.
+
+        Args:
+            dumper: The dumper to use.
+            data: The user-defined object to dump.
+
+        Returns:
+            A yaml.ScalarNode representing the object.
+        """
+        # make a ScalarNode of type str with name of value
+        logger.info('Representing {} of class {}'.format(
+            data, self.class_.__name__))
+
+        # convert to a yaml.ScalarNode
+        represented = dumper.represent_str(str(data))
+
+        # sweeten
+        snode = ScalarNode(represented)
+        if hasattr(self.class_, 'yatiml_sweeten'):
+            self.class_.yatiml_sweeten(snode)
+
+        logger.debug('End representing {}'.format(data))
+        return represented

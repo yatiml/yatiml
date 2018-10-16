@@ -4,10 +4,10 @@ from yatiml.recognizer import Recognizer
 import pytest   # type: ignore
 from ruamel import yaml
 
-from collections import OrderedDict
+from collections import OrderedDict, UserString
 import enum
 import math
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 
 @pytest.fixture
@@ -272,6 +272,13 @@ class BrokenPrivateAttributes:
         self.__b = b
 
 
+class ConstrainedString(UserString):
+    def __init__(self, seq: Any) -> None:
+        super().__init__(seq)
+        if not self.data.startswith('a'):   # type: ignore
+            raise ValueError('ConstrainedString must start with an a')
+
+
 @pytest.fixture
 def document1_loader():
     class Document1Loader(yatiml.Loader):
@@ -371,6 +378,23 @@ def enum_dumper2():
         pass
     yatiml.add_to_dumper(EnumDumper2, Color2)
     return EnumDumper2
+
+
+@pytest.fixture
+def user_string_loader():
+    class UserStringLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(UserStringLoader, ConstrainedString)
+    yatiml.set_document_type(UserStringLoader, ConstrainedString)
+    return UserStringLoader
+
+
+@pytest.fixture
+def user_string_dumper():
+    class UserStringDumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(UserStringDumper, ConstrainedString)
+    return UserStringDumper
 
 
 @pytest.fixture
