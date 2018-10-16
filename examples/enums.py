@@ -46,7 +46,7 @@ class Submission(Shape):
 
 # Create loader
 class MyLoader(yatiml.Loader):
-  pass
+    pass
 
 yatiml.add_to_loader(MyLoader, [Color, Shape, Circle, Square, Submission])
 yatiml.set_document_type(MyLoader, Submission)
