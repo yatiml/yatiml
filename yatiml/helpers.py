@@ -1,5 +1,5 @@
 import os
-from typing import cast, Optional, Set, Type, Union  # noqa: F401
+from typing import cast, Optional, Set, Type, TypeVar, Union  # noqa: F401
 
 from ruamel import yaml
 from ruamel.yaml.error import StreamMark
@@ -7,6 +7,9 @@ from ruamel.yaml.error import StreamMark
 from yatiml.exceptions import RecognitionError, SeasoningError
 from yatiml.irecognizer import IRecognizer
 from yatiml.util import scalar_type_to_tag
+
+
+_Any = TypeVar('_Any')
 
 
 class UnknownNode:
@@ -33,7 +36,7 @@ class UnknownNode:
         return 'UnknownNode({})'.format(self.yaml_node)
 
     def require_attribute(self, attribute: str,
-                          typ: Union[Type, str] = 'Any') -> None:
+                          typ: Type = _Any) -> None:
         """Require an attribute on the node to exist.
 
         If `typ` is given, the attribute must have this type.
@@ -52,7 +55,7 @@ class UnknownNode:
                     self.yaml_node.start_mark, os.linesep, attribute))
         attr_node = attr_nodes[0]
 
-        if typ != 'Any':
+        if typ != _Any:
             recognized_types = self.__recognizer.recognize(attr_node,
                                                            cast(Type, typ))
             if len(recognized_types) == 0:
@@ -131,15 +134,15 @@ class ClassNode:
             key_node.value == attribute for key_node, _ in self.yaml_node.value
         ])
 
-    def has_attribute_type(self, attribute: str, type_: Type) -> bool:
+    def has_attribute_type(self, attribute: str, typ: Type) -> bool:
         """Whether the given attribute exists and has a compatible type.
 
         Returns true iff the attribute exists and is an instance of \
-        the given type. Matching between types passed as type_ and \
+        the given type. Matching between types passed as typ and \
         yaml node types is as follows:
 
         +---------+-------------------------------------------+
-        |   type  |                 yaml                      |
+        |   typ   |                 yaml                      |
         +=========+===========================================+
         |   str   |      ScalarNode containing string         |
         +---------+-------------------------------------------+
@@ -158,7 +161,7 @@ class ClassNode:
 
         Args:
             attribute: The name of the attribute to check.
-            type_: The type to check against.
+            typ: The type to check against.
 
         Returns:
             True iff the attribute exists and matches the type.
@@ -168,15 +171,15 @@ class ClassNode:
 
         attr_node = self.get_attribute(attribute)
 
-        if type_ in scalar_type_to_tag:
-            tag = scalar_type_to_tag[type_]
+        if typ in scalar_type_to_tag:
+            tag = scalar_type_to_tag[typ]
             return attr_node.tag == tag
-        elif type_ == list:
+        elif typ == list:
             return isinstance(attr_node, yaml.SequenceNode)
-        elif type_ == dict:
+        elif typ == dict:
             return isinstance(attr_node, yaml.MappingNode)
 
-        raise ValueError('Invalid argument for type_ attribute')
+        raise ValueError('Invalid argument for typ attribute')
 
     def get_attribute(self, attribute: str) -> yaml.Node:
         """Returns the node representing the given attribute's value.
