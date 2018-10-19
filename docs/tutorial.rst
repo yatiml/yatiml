@@ -28,7 +28,7 @@ YAtiML is a helper library that helps address these issues. With YAtiML, you
 have easy-to-read YAML for the user, and easy-to-use objects for the programmer,
 with validation and automatic type recognition in between. This tutorial shows
 how to use YAtiML by example. You can find the example programs shown below in
-the ``examples/`` directory in the repository.
+the ``docs/examples/`` directory in the repository.
 
 
 A first example
@@ -41,26 +41,9 @@ drawing contest for kids, and are tracking submissions in YAML files.
 For the example to run, make sure that you have :ref:`installed YAtiML
 <installing>` first.
 
-.. code-block:: python
-  :caption: ``dict_of_strings.py``
-
-  from ruamel import yaml
-  from typing import Dict
-  import yatiml
-
-
-  # Create loader
-  class MyLoader(yatiml.Loader):
-      pass
-
-  yatiml.set_document_type(MyLoader, Dict[str, str])
-
-  # Load YAML
-  yaml_text = ('name: Janice\n'
-               'age: Six\n')
-  doc = yaml.load(yaml_text, Loader=MyLoader)
-  print(doc)
-
+.. literalinclude:: examples/dict_of_strings.py
+  :caption: ``docs/examples/dict_of_strings.py``
+  :language: python
 
 If you run this program, it will output
 
@@ -163,26 +146,9 @@ So far, we have define the type of our document, and read a matching YAML file.
 But what if we are given a YAML file that does not match? Let's modify our input
 a bit, writing the age as a number:
 
-.. code-block:: python
-  :caption: ``type_error.py``
-
-  from ruamel import yaml
-  from typing import Dict
-  import yatiml
-
-
-  # Create loader
-  class MyLoader(yatiml.Loader):
-      pass
-
-  yatiml.set_document_type(MyLoader, Dict[str, str])
-
-  # Load YAML
-  yaml_text = ('name: Janice\n'
-               'age: 6\n')
-  doc = yaml.load(yaml_text, Loader=MyLoader)
-  print(doc)
-
+.. literalinclude:: examples/type_error.py
+  :caption: ``docs/examples/type_error.py``
+  :language: python
 
 Running this modified version gives an exception traceback ending with:
 
@@ -207,25 +173,9 @@ where the problem was found.
 One way to solve this problem is to tell YAtiML to accept both ints and strings
 as values in the dictionary. We can do this using a ``Union`` type:
 
-.. code-block:: python
-  :caption: ``union_dict.py``
-
-  from ruamel import yaml
-  from typing import Dict, Union
-  import yatiml
-
-
-  # Create loader
-  class MyLoader(yatiml.Loader):
-      pass
-
-  yatiml.set_document_type(MyLoader, Dict[str, Union[str, int]])
-
-  # Load YAML
-  yaml_text = ('name: Janice\n'
-               'age: 6\n')
-  doc = yaml.load(yaml_text, Loader=MyLoader)
-  print(doc)
+.. literalinclude:: examples/union_dict.py
+  :caption: ``docs/examples/union_dict.py``
+  :language: python
 
 However, this will also make YAtiML accept an ``int`` for the ``name``
 attribute, which may not be what we want. In order to improve on this, we'll
@@ -239,36 +189,9 @@ an ``__init__`` method, which is very important to YAtiML, and may have some
 other special methods that interact with YAtiML. Here's our example again, but
 now using a custom class:
 
-.. code-block:: python
-  :caption: ``custom_class.py``
-
-  from ruamel import yaml
-  from typing import Union
-  import yatiml
-
-
-  # Create document class
-  class Submission:
-      def __init__(self, name: str, age: Union[int, str]) -> None:
-          self.name = name
-          self.age = age
-
-  # Create loader
-  class MyLoader(yatiml.Loader):
-      pass
-
-  yatiml.add_to_loader(MyLoader, Submission)
-  yatiml.set_document_type(MyLoader, Submission)
-
-  # Load YAML
-  yaml_text = ('name: Janice\n'
-               'age: 6\n')
-  doc = yaml.load(yaml_text, Loader=MyLoader)
-
-  print(type(doc))
-  print(doc.name)
-  print(doc.age)
-  print(type(doc.age))
+.. literalinclude:: examples/custom_class.py
+  :caption: ``docs/examples/custom_class.py``
+  :language: python
 
 We have added a new class ``Submission``, which represents a submission for our
 drawing contest. It has an ``__init__`` method with two arguments (and ``self``,
@@ -336,43 +259,9 @@ then processing the data becomes a tedious set of nested ifs. In YAtiML,
 default values are easy: since ``__init__`` parameters map to attributes, all
 you have to do is declare a parameter with a default value:
 
-.. code-block:: python
-  :caption: ``default_values.py``
-
-  from ruamel import yaml
-  from typing import Union
-  import yatiml
-
-
-  # Create document class
-  class Submission:
-      def __init__(
-              self,
-              name: str,
-              age: Union[int, str],
-              tool: str='crayons'
-              ) -> None:
-          self.name = name
-          self.age = age
-          self.tool = tool
-
-
-  # Create loader
-  class MyLoader(yatiml.Loader):
-      pass
-
-  yatiml.add_to_loader(MyLoader, Submission)
-  yatiml.set_document_type(MyLoader, Submission)
-
-  # Load YAML
-  yaml_text = ('name: Janice\n'
-               'age: 6\n')
-  doc = yaml.load(yaml_text, Loader=MyLoader)
-
-  print(doc.name)
-  print(doc.age)
-  print(doc.tool)
-
+.. literalinclude:: examples/default_values.py
+  :caption: ``docs/examples/default_values.py``
+  :language: python
 
 Here we have added the tool that was used as an argument with a default value.
 If the YAML file contains a key ``tool`` with a string value, that value will be
@@ -389,27 +278,9 @@ YAML file.
 However, you may want to make the attribute optional in the class as well, and
 perhaps set ``None`` as the default value. That is done like this:
 
-.. code-block:: python
-  :caption: ``optional_attribute.py``
-
-  from ruamel import yaml
-  from typing import Optional, Union
-  import yatiml
-
-
-  # Create document class
-  class Submission:
-      def __init__(
-              self,
-              name: str,
-              age: Union[int, str],
-              tool: Optional[str]=None
-              ) -> None:
-          self.name = name
-          self.age = age
-          self.tool = tool
-
-  # Identical remainder omitted
+.. literalinclude:: examples/optional_attribute.py
+  :caption: ``docs/examples/optional_attribute.py``
+  :language: python
 
 Now the value of a ``Submission`` object's ``tool`` attribute can be ``None``,
 and it will be if that attribute is omitted in the YAML mapping. Note that this
@@ -423,39 +294,9 @@ There is more to be said about loading YAML files with YAtiML, but let's first
 have a look at saving objects back to YAML, or dumping as PyYAML and ruamel.yaml
 call it. The code for this is a mirror image of the loading code:
 
-.. code-block:: python
-  :caption: ``saving.py``
-
-  from ruamel import yaml
-  from typing import Optional, Union
-  import yatiml
-
-
-  # Create document class
-  class Submission:
-      def __init__(
-              self,
-              name: str,
-              age: Union[int, str],
-              tool: Optional[str]=None
-              ) -> None:
-          self.name = name
-          self.age = age
-          self.tool = tool
-
-
-  # Create dumper
-  class MyDumper(yatiml.Dumper):
-      pass
-
-  yatiml.add_to_dumper(MyDumper, Submission)
-
-
-  # Dump YAML
-  doc = Submission('Youssou', 7, 'pencils')
-  yaml_text = yaml.dump(doc, Dumper=MyDumper)
-
-  print(yaml_text)
+.. literalinclude:: examples/saving.py
+  :caption: ``docs/examples/saving.py``
+  :language: python
 
 And as expected, it outputs:
 
@@ -503,66 +344,9 @@ For example, let's add a description of the drawing to our Submission, in the
 form of a list of the shapes that it consists of. We'll content ourselves with
 a somewhat crude representation consisting of circles and squares.
 
-.. code-block:: python
-  :caption: class_hierarchy.py
-
-  from ruamel import yaml
-  from typing import List, Union
-  import yatiml
-
-
-  # Create document classes
-  class Shape:
-      def __init__(self, center: List[float]) -> None:
-          self.center = center
-
-
-  class Circle(Shape):
-      def __init__(self, center: List[float], radius: float) -> None:
-          super().__init__(center)
-          self.radius = radius
-
-
-  class Square(Shape):
-      def __init__(self, center: List[float], width: float, height: float) -> None:
-          super().__init__(center)
-          self.width = width
-          self.height = height
-
-
-  class Submission(Shape):
-      def __init__(
-              self,
-              name: str,
-              age: Union[int, str],
-              drawing: List[Shape]
-              ) -> None:
-          self.name = name
-          self.age = age
-          self.drawing = drawing
-
-
-  # Create loader
-  class MyLoader(yatiml.Loader):
-    pass
-
-  yatiml.add_to_loader(MyLoader, [Shape, Circle, Square, Submission])
-  yatiml.set_document_type(MyLoader, Submission)
-
-  # Load YAML
-  yaml_text = ('name: Janice\n'
-               'age: 6\n'
-               'drawing:\n'
-               '  - center: [1.0, 1.0]\n'
-               '    radius: 2.0\n'
-               '  - center: [5.0, 5.0]\n'
-               '    width: 1.0\n'
-               '    height: 1.0\n')
-  doc = yaml.load(yaml_text, Loader=MyLoader)
-
-  print(doc.name)
-  print(doc.age)
-  print(doc.drawing)
+.. literalinclude:: examples/class_hierarchy.py
+  :caption: ``docs/examples/class_hierarchy.py``
+  :language: python
 
 Here, we have defined a class ``Shape``, and have added a list of Shapes as an
 attribute to ``Submission``. Each shape has a location, its center, which is a
@@ -597,78 +381,9 @@ that you have something like YAtiML to check that the string that the user put
 in actually matches one of the values of the enum type, and return the correct
 value from the enum class. Here's how to add some colour to the drawings.
 
-.. code-block:: python
-  :caption: enums.py
-
-  import enum
-  from ruamel import yaml
-  from typing import List, Union
-  import yatiml
-
-
-  # Create document classes
-  class Color(enum.Enum):
-      red = 0xff0000
-      orange = 0xff8000
-      yellow = 0xffff00
-      green = 0x008000
-      blue = 0x00aeef
-
-
-  class Shape:
-      def __init__(self, center: List[float], color: Color) -> None:
-          self.center = center
-          self.color = color
-
-
-  class Circle(Shape):
-      def __init__(self, center: List[float], color: Color, radius: float) -> None:
-          super().__init__(center, color)
-          self.radius = radius
-
-
-  class Square(Shape):
-      def __init__(self, center: List[float], color: Color, width: float, height: float) -> None:
-          super().__init__(center, color)
-          self.width = width
-          self.height = height
-
-
-  class Submission(Shape):
-      def __init__(
-              self,
-              name: str,
-              age: Union[int, str],
-              drawing: List[Shape]
-              ) -> None:
-          self.name = name
-          self.age = age
-          self.drawing = drawing
-
-
-  # Create loader
-  class MyLoader(yatiml.Loader):
-    pass
-
-  yatiml.add_to_loader(MyLoader, [Color, Shape, Circle, Square, Submission])
-  yatiml.set_document_type(MyLoader, Submission)
-
-  # Load YAML
-  yaml_text = ('name: Janice\n'
-               'age: 6\n'
-               'drawing:\n'
-               '  - center: [1.0, 1.0]\n'
-               '    color: red\n'
-               '    radius: 2.0\n'
-               '  - center: [5.0, 5.0]\n'
-               '    color: blue\n'
-               '    width: 1.0\n'
-               '    height: 1.0\n')
-  doc = yaml.load(yaml_text, Loader=MyLoader)
-
-  print(doc.name)
-  print(doc.age)
-  print(doc.drawing[0].color)
+.. literalinclude:: examples/enums.py
+  :caption: ``docs/examples/enums.py``
+  :language: python
 
 Note that the labels that YAtiML looks for are the names of the enum members,
 not their values. In many existing standards, enums map to numerical values, or
@@ -689,48 +404,9 @@ latter is easier, so that's what we'll use in this example. Let's add the town
 that our participant lives in to our YAML format, but insist that it be
 capitalised.
 
-.. code-block:: python
-  :caption: ``user_defined_string.py``
-
-  from collections import UserString
-  from ruamel import yaml
-  from typing import Any, Union
-  import yatiml
-
-
-  # Create document class
-  class TitleCaseString(UserString):
-      def __init__(self, seq: Any) -> None:
-          super().__init__(seq)
-          if self.data != self.data.title():
-              raise ValueError('Invalid TitleCaseString \'{}\': Each word must'
-                               ' start with a capital letter'.format(self.data))
-
-
-  class Submission:
-      def __init__(self, name: str, age: Union[int, str],
-                   town: TitleCaseString) -> None:
-          self.name = name
-          self.age = age
-          self.town = town
-
-
-  # Create loader
-  class MyLoader(yatiml.Loader):
-      pass
-
-  yatiml.add_to_loader(MyLoader, [TitleCaseString, Submission])
-  yatiml.set_document_type(MyLoader, Submission)
-
-  # Load YAML
-  yaml_text = ('name: Janice\n'
-               'age: 6\n'
-               'town: Piedmont')
-  doc = yaml.load(yaml_text, Loader=MyLoader)
-
-  print(type(doc))
-  print(doc.name)
-  print(doc.town)
+.. literalinclude:: examples/user_defined_string.py
+  :caption: ``docs/examples/user_defined_string.py``
+  :language: python
 
 Python's ``UserString`` provides an attribute ``data`` containing the actual
 string, so all we need to do is test that for validity in the constructor. If
@@ -766,65 +442,17 @@ Let's do another example. Having ages either as strings or as ints is not very
 convenient if you want to check which age category to file a submission under.
 So let's add a savourising function to convert strings to int on loading:
 
-.. code-block:: python
-  :caption: ``savorizing.py``
-
-  from ruamel import yaml
-  from typing import Optional, Union
-  import yatiml
-
-
-  # Create document class
-  class Submission:
-      def __init__(
-              self,
-              name: str,
-              age: Union[int, str],
-              tool: Optional[str]=None
-              ) -> None:
-          self.name = name
-          self.age = age
-          self.tool = tool
-
-      @classmethod
-      def yatiml_savorize(cls, node: yatiml.ClassNode) -> None:
-          str_to_int = {
-                  'five': 5,
-                  'six': 6,
-                  'seven': 7,
-                  }
-          if node.has_attribute_type('age', str):
-              str_val = node.get_attribute('age').value
-              if str_val in str_to_int:
-                  node.set_attribute('age', str_to_int[str_val])
-              else:
-                  raise yatiml.SeasoningError('Invalid age string')
-
-
-  # Create loader
-  class MyLoader(yatiml.Loader):
-      pass
-
-  yatiml.add_to_loader(MyLoader, Submission)
-  yatiml.set_document_type(MyLoader, Submission)
-
-  # Load YAML
-  yaml_text = ('name: Janice\n'
-               'age: six\n')
-  doc = yaml.load(yaml_text, Loader=MyLoader)
-
-  print(doc.name)
-  print(doc.age)
-  print(doc.tool)
-
+.. literalinclude:: examples/savorizing.py
+  :caption: ``docs/examples/savorizing.py``
+  :language: python
 
 We have added a new ``yatiml_savorize()`` class method to our Submission class.
 This method will be called by YAtiML after the YAML text has been parsed, but
 before our Submission object has been generated. This method is passed the
-`node` representing the mapping that will become the object. The node is of type
-``yatiml.ClassNode``, which in turn is a wrapper for an internal ruamel.yaml
-object. Note that this method needs to be a classmethod, since there is no
-object yet to call it with.
+`node` representing the mapping that will become the object. The node is of
+type :class:`yatiml.ClassNode`, which in turn is a wrapper for an internal
+ruamel.yaml object. Note that this method needs to be a classmethod, since
+there is no object yet to call it with.
 
 The :class:`yatiml.ClassNode` class has a number of methods that you can use to
 manipulate the node. In this case, we first check if there is an ``age``
@@ -851,50 +479,9 @@ When saving a Submission, we may want to apply the opposite transformation, and
 convert some ints back to strings. That can be done with a ``yatiml_sweeten``
 classmethod:
 
-.. code-block:: python
-  :caption: ``sweetening.py``
-
-  from ruamel import yaml
-  from typing import Optional, Union
-  import yatiml
-
-
-  # Create document class
-  class Submission:
-      def __init__(
-              self,
-              name: str,
-              age: Union[int, str],
-              tool: Optional[str]=None
-              ) -> None:
-          self.name = name
-          self.age = age
-          self.tool = tool
-
-      @classmethod
-      def yatiml_sweeten(cls, node: yatiml.ClassNode) -> None:
-          int_to_str = {
-                  5: 'five',
-                  6: 'six',
-                  7: 'seven'
-                  }
-          int_val = int(node.get_attribute('age').value)
-          if int_val in int_to_str:
-              node.set_attribute('age', int_to_str[int_val])
-
-
-  # Create dumper
-  class MyDumper(yatiml.Dumper):
-      pass
-
-  yatiml.add_to_dumper(MyDumper, Submission)
-
-
-  # Dump YAML
-  doc = Submission('Youssou', 7, 'pencils')
-  yaml_text = yaml.dump(doc, Dumper=MyDumper)
-
-  print(yaml_text)
+.. literalinclude:: examples/sweetening.py
+  :caption: ``docs/examples/sweetening.py``
+  :language: python
 
 The ``yatiml_sweeten()`` method has the same signature as ``yatiml_savorize()``
 (with a ScalarNode for enums), but is called by a Dumper, not by a Loader. It
@@ -947,42 +534,9 @@ Customising recognition
 Customising the recognition function is done by adding a ``yatiml_recognize()``
 method to your class, like this:
 
-.. code-block:: python
-  :caption: ``custom_recognition.py``
-
-  # Initial identical lines omitted
-
-  class Submission:
-      def __init__(
-              self,
-              name: str,
-              age: int,
-              tool: Optional[str]=None
-              ) -> None:
-          self.name = name
-          self.age = age
-          self.tool = tool
-
-      @classmethod
-      def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
-          node.require_attribute('name', str)
-          node.require_attribute('age', Union[int, str])
-
-      @classmethod
-      def yatiml_savorize(cls, node: yatiml.ClassNode) -> None:
-          str_to_int = {
-                  'five': 5,
-                  'six': 6,
-                  'seven': 7,
-                  }
-          if node.has_attribute_type('age', str):
-              str_val = node.get_attribute('age').value
-              if str_val in str_to_int:
-                  node.set_attribute('age', str_to_int[str_val])
-              else:
-                  raise yatiml.SeasoningError('Invalid age string')
-
-  # Remaining identical lines omitted
+.. literalinclude:: examples/custom_recognition.py
+  :caption: ``docs/examples/custom_recognition.py``
+  :language: python
 
 This is again a classmethod, with a single argument of type
 :class:`yatiml.UnknownNode` representing the node. Like
@@ -1048,44 +602,9 @@ in your favourite order yourself.
 
 Here is an example:
 
-.. code-block:: python
-  :caption: ``extra_attributes.py``
-
-  from ruamel import yaml
-  from collections import OrderedDict
-  from typing import Union
-  import yatiml
-
-
-  # Create document class
-  class Submission:
-      def __init__(
-              self,
-              name: str,
-              age: int,
-              yatiml_extra: OrderedDict
-              ) -> None:
-          self.name = name
-          self.age = age
-          self.yatiml_extra = yatiml_extra
-
-
-  # Create loader
-  class MyLoader(yatiml.Loader):
-      pass
-
-  yatiml.add_to_loader(MyLoader, Submission)
-  yatiml.set_document_type(MyLoader, Submission)
-
-  # Load YAML
-  yaml_text = ('name: Janice\n'
-               'age: 6\n'
-               'tool: crayons\n')
-  doc = yaml.load(yaml_text, Loader=MyLoader)
-
-  print(doc.name)
-  print(doc.age)
-  print(doc.yatiml_extra['tool'])
+.. literalinclude:: examples/extra_attributes.py
+  :caption: ``docs/examples/extra_attributes.py``
+  :language: python
 
 In this example, we use the ``tool`` attribute again, but with this code, we
 could add any attribute, and it would show up in ``yatiml_extra`` with no errors
@@ -1117,42 +636,9 @@ of our work. It would be better encapsulation to use private attributes instead,
 with a ``__str__`` method to help printing. With ``yatiml_attributes()``, that
 can be done:
 
-.. code-block:: python
-  :caption: ``private_attributes.py``
-
-  from ruamel import yaml
-  from collections import OrderedDict
-  from typing import Union
-  import yatiml
-
-
-  # Create document class
-  class Submission:
-      def __init__(self, name: str, age: Union[int, str]) -> None:
-          self.__name = name
-          self.__age = age
-
-      def __str__(self) -> str:
-          return '{}\n{}'.format(self.__name, self.__age)
-
-      def yatiml_attributes(self) -> OrderedDict:
-          return OrderedDict([
-              ('name', self.__name),
-              ('age', self.__age)])
-
-
-  # Create loader
-  class MyLoader(yatiml.Loader):
-    pass
-
-  yatiml.add_to_loader(MyLoader, Submission)
-  yatiml.set_document_type(MyLoader, Submission)
-
-  # Load YAML
-  yaml_text = ('name: Janice\n'
-               'age: 6\n')
-  doc = yaml.load(yaml_text, Loader=MyLoader)
-  print(doc)
+.. literalinclude:: examples/private_attributes.py
+  :caption: ``docs/examples/private_attributes.py``
+  :language: python
 
 Further reading
 ---------------
