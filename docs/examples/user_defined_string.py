@@ -8,7 +8,7 @@ import yatiml
 class TitleCaseString(UserString):
     def __init__(self, seq: Any) -> None:
         super().__init__(seq)
-        if self.data != self.data.title():
+        if not self.data.istitle():
             raise ValueError('Invalid TitleCaseString \'{}\': Each word must'
                              ' start with a capital letter'.format(self.data))
 
