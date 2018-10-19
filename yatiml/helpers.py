@@ -17,6 +17,9 @@ class UnknownNode:
 
     This class defines a number of helper function for you to use \
     when writing yatiml_recognize() functions.
+
+    Attributes:
+        yaml_node: The yaml.Node wrapped by this object.
     """
 
     def __init__(self, recognizer: IRecognizer,
