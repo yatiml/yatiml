@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Set, Type, Union  # noqa: F401
+from typing import cast, Optional, Set, Type, Union  # noqa: F401
 
 from ruamel import yaml
 from ruamel.yaml.error import StreamMark
@@ -32,11 +32,15 @@ class UnknownNode:
         """Convert to a human-readable string."""
         return 'UnknownNode({})'.format(self.yaml_node)
 
-    def require_attribute(self, attribute: str, type_: Type = None) -> None:
+    def require_attribute(self, attribute: str,
+                          typ: Union[Type, str] = 'Any') -> None:
         """Require an attribute on the node to exist.
+
+        If `typ` is given, the attribute must have this type.
 
         Args:
             attribute: The name of the attribute / mapping key.
+            typ: The type the attribute must have.
         """
         attr_nodes = [
             value_node for key_node, value_node in self.yaml_node.value
@@ -48,13 +52,14 @@ class UnknownNode:
                     self.yaml_node.start_mark, os.linesep, attribute))
         attr_node = attr_nodes[0]
 
-        if type_ is not None:
-            recognized_types = self.__recognizer.recognize(attr_node, type_)
+        if typ != 'Any':
+            recognized_types = self.__recognizer.recognize(attr_node,
+                                                           cast(Type, typ))
             if len(recognized_types) == 0:
                 raise RecognitionError(('{}{}Attribute {} is not of required'
                                         ' type {}').format(
                                             self.yaml_node.start_mark,
-                                            os.linesep, attribute, type_))
+                                            os.linesep, attribute, typ))
 
     def require_attribute_value(
             self, attribute: str,

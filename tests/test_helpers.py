@@ -13,6 +13,12 @@ def test_require_attribute(unknown_node):
     with pytest.raises(yatiml.RecognitionError):
         unknown_node.require_attribute('attr1', str)
 
+    unknown_node.require_attribute('null_attr', None)
+    with pytest.raises(yatiml.RecognitionError):
+        unknown_node.require_attribute('attr1', None)
+    with pytest.raises(yatiml.RecognitionError):
+        unknown_node.require_attribute('null_attr', int)
+
 
 def test_require_attribute_value(unknown_node):
     unknown_node.require_attribute_value('attr1', 42)

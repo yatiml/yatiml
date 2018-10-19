@@ -546,11 +546,15 @@ def yaml_node(yaml_seq_node, yaml_map_node):
     attr1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'attr1')
     attr1_value_node = yaml.ScalarNode('tag:yaml.org,2002:int', 42)
 
+    null_attr_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'null_attr')
+    null_attr_value_node = yaml.ScalarNode('tag:yaml.org,2002:null', None)
+
     list1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'list1')
     dict1_key_node = yaml.ScalarNode('tag:yaml.org,2002:map', 'dict1')
 
     value = [
             (attr1_key_node, attr1_value_node),
+            (null_attr_key_node, null_attr_value_node),
             (list1_key_node, yaml_seq_node),
             (dict1_key_node, yaml_map_node)
             ]
