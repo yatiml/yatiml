@@ -985,10 +985,10 @@ method to your class, like this:
   # Remaining identical lines omitted
 
 This is again a classmethod, with a single argument of type
-:class:``yatiml.UnknownNode`` representing the node. Like
-:class:``yatiml.ClassNode``, :class:``yatiml.UnknownNode`` wraps a YAML node,
+:class:`yatiml.UnknownNode` representing the node. Like
+:class:`yatiml.ClassNode`, :class:`yatiml.UnknownNode` wraps a YAML node,
 but this class has helper functions intended for writing recognition functions.
-Here, we use ``require_attribute()`` to list the required attributes and their
+Here, we use :meth:`require_attribute` to list the required attributes and their
 types. Since ``tool`` is optional, it is not required, and not listed. The
 ``age`` attribute is specified with the Union type we used before. Now, any
 mapping that is in a place where we expect a Submission will be recognised as a
