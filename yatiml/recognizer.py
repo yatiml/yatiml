@@ -6,7 +6,7 @@ from typing import Dict, GenericMeta, List, Type
 from ruamel import yaml
 
 from yatiml.exceptions import RecognitionError
-from yatiml.helpers import ClassNode, UnknownNode
+from yatiml.helpers import Node, UnknownNode
 from yatiml.introspection import class_subobjects
 from yatiml.irecognizer import IRecognizer
 from yatiml.util import scalar_type_to_tag
@@ -129,7 +129,7 @@ class Recognizer(IRecognizer):
         subclasses. See also __recognize_user_classes().
 
         Args:
-            node The node to recognize.
+            node: The node to recognize.
             expected_type: A user-defined class.
 
         Returns:
@@ -160,10 +160,11 @@ class Recognizer(IRecognizer):
 
                 for attr_name, type_, required in class_subobjects(
                         expected_type):
-                    cnode = ClassNode(node)
+                    cnode = Node(node)
                     if cnode.has_attribute(attr_name):
                         subnode = cnode.get_attribute(attr_name)
-                        recognized_types = self.recognize(subnode, type_)
+                        recognized_types = self.recognize(
+                                subnode.yaml_node, type_)
                         if len(recognized_types) == 0:
                             return []
                     elif required:

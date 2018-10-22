@@ -16,13 +16,13 @@ class Submission:
         self.tool = tool
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.ClassNode) -> None:
+    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
         int_to_str = {
                 5: 'five',
                 6: 'six',
                 7: 'seven'
                 }
-        int_val = int(node.get_attribute('age').value)
+        int_val = int(node.get_attribute('age').get_value())
         if int_val in int_to_str:
             node.set_attribute('age', int_to_str[int_val])
 

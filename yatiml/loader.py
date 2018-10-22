@@ -9,7 +9,7 @@ import ruamel.yaml as yaml
 from yatiml.constructors import (Constructor, EnumConstructor,
                                  UserStringConstructor)
 from yatiml.exceptions import RecognitionError
-from yatiml.helpers import ClassNode, ScalarNode
+from yatiml.helpers import Node
 from yatiml.introspection import class_subobjects
 from yatiml.recognizer import Recognizer
 from yatiml.util import scalar_type_to_tag
@@ -125,7 +125,7 @@ class Loader(yaml.RoundTripLoader):
             'Unknown type {} in type_to_tag,'  # pragma: no cover
             ' please report a YAtiML bug.').format(type_))
 
-    def __savorize(self, node: yaml.MappingNode, expected_type: Type) -> None:
+    def __savorize(self, node: yaml.Node, expected_type: Type) -> yaml.Node:
         """Removes syntactic sugar from the node.
 
         This calls yatiml_savorize(), first on the class's base \
@@ -137,22 +137,18 @@ class Loader(yaml.RoundTripLoader):
         """
         logger.debug('Savorizing node assuming type {}'.format(
             expected_type.__name__))
-        if issubclass(expected_type, enum.Enum):
-            if hasattr(expected_type, 'yatiml_savorize'):
-                logger.debug('Calling {}.yatiml_savorize()'.format(
-                    expected_type.__name__))
-                snode = ScalarNode(node)
-                expected_type.yatiml_savorize(snode)  # type: ignore
-        else:
-            for base_class in expected_type.__bases__:
-                if base_class in self._registered_classes.values():
-                    self.__savorize(node, base_class)
 
-            if hasattr(expected_type, 'yatiml_savorize'):
-                logger.debug('Calling {}.yatiml_savorize()'.format(
-                    expected_type.__name__))
-                cnode = ClassNode(node)
-                expected_type.yatiml_savorize(cnode)
+        for base_class in expected_type.__bases__:
+            if base_class in self._registered_classes.values():
+                node = self.__savorize(node, base_class)
+
+        if hasattr(expected_type, 'yatiml_savorize'):
+            logger.debug('Calling {}.yatiml_savorize()'.format(
+                expected_type.__name__))
+            cnode = Node(node)
+            expected_type.yatiml_savorize(cnode)
+            node = cnode.yaml_node
+        return node
 
     def __process_node(self, node: yaml.Node,
                        expected_type: Type) -> yaml.Node:
@@ -187,12 +183,11 @@ class Loader(yaml.RoundTripLoader):
                     [self.__type_to_desc(t) for t in recognized_types]))
 
         recognized_type = recognized_types[0]
-        node.tag = self.__type_to_tag(recognized_type)
 
         # remove syntactic sugar
         logger.debug('Savorizing node')
         if recognized_type in self._registered_classes.values():
-            self.__savorize(node, recognized_type)
+            node = self.__savorize(node, recognized_type)
 
         # process subnodes
         logger.debug('Recursing into subnodes')
@@ -218,12 +213,13 @@ class Loader(yaml.RoundTripLoader):
                     and not issubclass(recognized_type, str)
                     and not issubclass(recognized_type, UserString)):
                 for attr_name, type_, _ in class_subobjects(expected_type):
-                    cnode = ClassNode(node)
+                    cnode = Node(node)
                     if cnode.has_attribute(attr_name):
                         subnode = cnode.get_attribute(attr_name)
-                        self.__process_node(subnode, type_)
+                        self.__process_node(subnode.yaml_node, type_)
 
         logger.debug('Finished processing node {}'.format(node))
+        node.tag = self.__type_to_tag(recognized_type)
         return node
 
 

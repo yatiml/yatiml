@@ -27,6 +27,7 @@ Using YAtiML
 
    installation
    tutorial
+   recipes
    problem_solving
 
 .. toctree::

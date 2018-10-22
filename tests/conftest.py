@@ -151,12 +151,13 @@ class Color2(enum.Enum):
     BLUE = 5
 
     @classmethod
-    def yatiml_savorize(self, node: yatiml.ScalarNode) -> None:
-        node.to_upper()
+    def yatiml_savorize(self, node: yatiml.Node) -> None:
+        if node.is_scalar(str):
+            node.set_value(node.get_value().upper())  # type: ignore
 
     @classmethod
-    def yatiml_sweeten(self, node: yatiml.ScalarNode) -> None:
-        node.to_lower()
+    def yatiml_sweeten(self, node: yatiml.Node) -> None:
+        node.set_value(node.get_value().lower())  # type: ignore
 
 
 class Document2:
@@ -203,11 +204,11 @@ class SubA2(Super2):
         node.require_attribute_value('subclass', 'A2')
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.ClassNode) -> None:
+    def yatiml_savorize(cls, node: yatiml.Node) -> None:
         node.remove_attribute('subclass')
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.ClassNode) -> None:
+    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
         node.set_attribute('subclass', 'A2')
 
 
@@ -220,11 +221,11 @@ class SubB2(Super2):
         node.require_attribute_value('subclass', 'B2')
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.ClassNode) -> None:
+    def yatiml_savorize(cls, node: yatiml.Node) -> None:
         node.remove_attribute('subclass')
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.ClassNode) -> None:
+    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
         node.set_attribute('subclass', 'B2')
 
 
@@ -234,7 +235,7 @@ class Universal:
         self.b = b
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.ClassNode) -> None:
+    def yatiml_recognize(cls, node: yatiml.Node) -> None:
         # recognizes anything as being of this type
         pass
 
@@ -277,6 +278,29 @@ class ConstrainedString(UserString):
         super().__init__(seq)
         if not self.data.startswith('a'):   # type: ignore
             raise ValueError('ConstrainedString must start with an a')
+
+
+class Postcode:
+    def __init__(self, digits: int, letters: str) -> None:
+        self.digits = digits
+        self.letters = letters
+
+    @classmethod
+    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        node.require_scalar(str)
+
+    @classmethod
+    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+        text = str(node.get_value())
+        node.make_mapping()
+        node.set_attribute('digits', int(text[0:4]))
+        node.set_attribute('letters', text[5:7])
+
+    @classmethod
+    def yatiml_sweeten(self, node: yatiml.Node) -> None:
+        digits = node.get_attribute('digits').get_value()
+        letters = node.get_attribute('letters').get_value()
+        node.set_value('{} {}'.format(digits, letters))
 
 
 @pytest.fixture
@@ -485,6 +509,23 @@ def union_attribute_loader():
 
 
 @pytest.fixture
+def parsed_class_loader():
+    class ParsedClassLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(ParsedClassLoader, Postcode)
+    yatiml.set_document_type(ParsedClassLoader, Postcode)
+    return ParsedClassLoader
+
+
+@pytest.fixture
+def parsed_class_dumper():
+    class ParsedClassDumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(ParsedClassDumper, Postcode)
+    return ParsedClassDumper
+
+
+@pytest.fixture
 def yaml_seq_node():
     # A yaml.SequenceNode representing a sequence of mappings
     tag1 = 'tag:yaml.org,2002:map'
@@ -563,7 +604,13 @@ def yaml_node(yaml_seq_node, yaml_map_node):
 
 @pytest.fixture
 def class_node(yaml_node):
-    return yatiml.ClassNode(yaml_node)
+    return yatiml.Node(yaml_node)
+
+
+@pytest.fixture
+def scalar_node():
+    ynode = yaml.ScalarNode('tag:yaml.org,2002:int', '42')
+    return yatiml.Node(ynode)
 
 
 @pytest.fixture
@@ -573,7 +620,7 @@ def unknown_node(yaml_node):
 
 @pytest.fixture
 def class_node_dup_key():
-    # A ClassNode wrapping a yaml.SequenceNode representing a sequence of
+    # A Node wrapping a yaml.SequenceNode representing a sequence of
     # mappings with a duplicate key.
     tag1 = 'tag:yaml.org,2002:map'
     item1_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item_id')
@@ -593,4 +640,4 @@ def class_node_dup_key():
     list1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'dup_list')
     value = [(list1_key_node, seq_node)]
     map_node = yaml.MappingNode('tag:yaml.org,2002:map', value)
-    return yatiml.ClassNode(map_node)
+    return yatiml.Node(map_node)

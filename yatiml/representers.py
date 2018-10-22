@@ -4,7 +4,7 @@ from typing import Any, Type, TYPE_CHECKING
 
 from ruamel import yaml
 
-from yatiml.helpers import ClassNode, ScalarNode
+from yatiml.helpers import Node
 
 if TYPE_CHECKING:
     from yatiml.dumper import Dumper  # noqa: F401
@@ -70,14 +70,14 @@ class Representer:
                                                attributes)
 
         # sweeten
-        cnode = ClassNode(represented)
+        cnode = Node(represented)
         self.__sweeten(dumper, self.class_, cnode)
+        represented = cnode.yaml_node
 
         logger.debug('End representing {}'.format(data))
         return represented
 
-    def __sweeten(self, dumper: 'Dumper', class_: Type,
-                  represented_object: Any) -> None:
+    def __sweeten(self, dumper: 'Dumper', class_: Type, node: Node) -> None:
         """Applies the user's yatiml_sweeten() function(s), if any.
 
         Sweetening is done for the base classes first, then for the \
@@ -93,9 +93,9 @@ class Representer:
             if base_class in dumper.yaml_representers:
                 logger.debug('Sweetening for class {}'.format(
                     self.class_.__name__))
-                self.__sweeten(dumper, base_class, represented_object)
+                self.__sweeten(dumper, base_class, node)
         if hasattr(class_, 'yatiml_sweeten'):
-            class_.yatiml_sweeten(represented_object)
+            class_.yatiml_sweeten(node)
 
 
 class EnumRepresenter:
@@ -133,9 +133,10 @@ class EnumRepresenter:
         represented = dumper.represent_str(data.name)
 
         # sweeten
-        snode = ScalarNode(represented)
+        snode = Node(represented)
         if hasattr(self.class_, 'yatiml_sweeten'):
             self.class_.yatiml_sweeten(snode)
+            represented = snode.yaml_node
 
         logger.debug('End representing {}'.format(data))
         return represented
@@ -175,9 +176,10 @@ class UserStringRepresenter:
         represented = dumper.represent_str(str(data))
 
         # sweeten
-        snode = ScalarNode(represented)
+        snode = Node(represented)
         if hasattr(self.class_, 'yatiml_sweeten'):
             self.class_.yatiml_sweeten(snode)
+            represented = snode.yaml_node
 
         logger.debug('End representing {}'.format(data))
         return represented

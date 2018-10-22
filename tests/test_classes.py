@@ -10,8 +10,8 @@ import yatiml
 
 from .conftest import (BrokenPrivateAttributes, Circle, ConstrainedString,
                        Color, Color2, Document1, Document2, Extensible,
-                       PrivateAttributes, Rectangle, Shape, SubA, SubA2, Super,
-                       UnionAttribute, Universal, Vector2D)
+                       Postcode, PrivateAttributes, Rectangle, Shape, SubA,
+                       SubA2, Super, UnionAttribute, Universal, Vector2D)
 
 
 def test_load_class(document1_loader):
@@ -283,3 +283,17 @@ def test_dump_user_string(user_string_dumper):
     data = ConstrainedString('abc')
     text = yaml.dump(data, Dumper=user_string_dumper)
     assert text == 'abc\n...\n'
+
+
+def test_parsed_class(parsed_class_loader):
+    text = '1098 XG'
+    data = yaml.load(text, Loader=parsed_class_loader)
+    assert isinstance(data, Postcode)
+    assert data.digits == 1098
+    assert data.letters == 'XG'
+
+
+def test_dump_parsed_class(parsed_class_dumper):
+    data = Postcode(1098, 'XG')
+    text = yaml.dump(data, Dumper=parsed_class_dumper)
+    assert text == '1098 XG\n...\n'

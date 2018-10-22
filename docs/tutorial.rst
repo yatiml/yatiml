@@ -450,11 +450,11 @@ We have added a new ``yatiml_savorize()`` class method to our Submission class.
 This method will be called by YAtiML after the YAML text has been parsed, but
 before our Submission object has been generated. This method is passed the
 `node` representing the mapping that will become the object. The node is of
-type :class:`yatiml.ClassNode`, which in turn is a wrapper for an internal
+type :class:`yatiml.Node`, which in turn is a wrapper for an internal
 ruamel.yaml object. Note that this method needs to be a classmethod, since
 there is no object yet to call it with.
 
-The :class:`yatiml.ClassNode` class has a number of methods that you can use to
+The :class:`yatiml.Node` class has a number of methods that you can use to
 manipulate the node. In this case, we first check if there is an ``age``
 attribute at all, and if so, whether it has a string as its value. This is
 needed, because we are operating on the freshly-parsed YAML input, before any
@@ -463,12 +463,6 @@ Next, we get the attribute's value, and then try to convert it to an int and set
 it as the new value. If a string value was used that we do not know how to
 convert, we raise a :class:`yatiml.SeasoningError`, which is the appropriate way
 to signal an error during execution of ``yatiml_savorize()``.
-
-Note that a ``yatiml_savorize()`` class method for an enum has a slightly
-different signature: it takes a :class:`yatiml.ScalarNode` instead of
-:class:`yatiml.ClassNode`. Since enums are strings on the YAML text side,
-you need helper functions that can manipulate strings, and that's what
-ScalarNode provides.
 
 (At this point I should apologise for the language mix-up; the code uses
 North-American spelling because it's rare to use British spelling in code and so
@@ -484,12 +478,12 @@ classmethod:
   :language: python
 
 The ``yatiml_sweeten()`` method has the same signature as ``yatiml_savorize()``
-(with a ScalarNode for enums), but is called by a Dumper, not by a Loader. It
-gives you access to the YAML node that has been produced from a Submission
-object before it is written out to the YAML output. Here, we use the same
-functions as before to convert some of the int values back to strings. Since we
-converted all the strings to ints on loading above, we can assume that the value
-is indeed an int, and we do not have to check.
+but is called by a Dumper, not by a Loader. It gives you access to the YAML
+node that has been produced from a Submission object before it is written out
+to the YAML output. Here, we use the same functions as before to convert some
+of the int values back to strings. Since we converted all the strings to ints
+on loading above, we can assume that the value is indeed an int, and we do not
+have to check.
 
 Indeed, if we run this example, we get:
 
@@ -540,17 +534,17 @@ method to your class, like this:
 
 This is again a classmethod, with a single argument of type
 :class:`yatiml.UnknownNode` representing the node. Like
-:class:`yatiml.ClassNode`, :class:`yatiml.UnknownNode` wraps a YAML node,
-but this class has helper functions intended for writing recognition functions.
-Here, we use :meth:`require_attribute` to list the required attributes and their
+:class:`yatiml.Node`, :class:`yatiml.UnknownNode` wraps a YAML node, but this
+class has helper functions intended for writing recognition functions.  Here,
+we use :meth:`require_attribute` to list the required attributes and their
 types. Since ``tool`` is optional, it is not required, and not listed. The
 ``age`` attribute is specified with the Union type we used before. Now, any
 mapping that is in a place where we expect a Submission will be recognised as a
-Submission, as long as it has a ``name`` attribute with a string value, and an ``age``
-attribute that is either a string or an integer. If ``age`` is a string, the
-``yatiml_savorize()`` method will convert it to an int, after which a Submission
-object can be constructed without violating the type constraint in the
-``__init__()`` method.
+Submission, as long as it has a ``name`` attribute with a string value, and an
+``age`` attribute that is either a string or an integer. If ``age`` is a
+string, the ``yatiml_savorize()`` method will convert it to an int, after which
+a Submission object can be constructed without violating the type constraint in
+the ``__init__()`` method.
 
 In fact, the ``yatiml_recognize()`` method here could be even simpler. In every
 place in our document where a Submission can occur (namely the root), only a
