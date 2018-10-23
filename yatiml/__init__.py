@@ -15,7 +15,7 @@ __email__ = 'l.veen@esciencecenter.nl'
 from yatiml.exceptions import RecognitionError, SeasoningError
 from yatiml.loader import Loader, add_to_loader, set_document_type
 from yatiml.dumper import Dumper, add_to_dumper
-from yatiml.helpers import ClassNode, ScalarNode, UnknownNode
+from yatiml.helpers import Node, UnknownNode
 
 import logging
 
@@ -35,7 +35,6 @@ or for even more::
 """
 
 __all__ = [
-    'logger', 'RecognitionError', 'SeasoningError', 'ClassNode', 'ScalarNode',
-    'UnknownNode', 'Loader', 'add_to_loader', 'set_document_type', 'Dumper',
-    'add_to_dumper'
+    'logger', 'RecognitionError', 'SeasoningError', 'Node', 'UnknownNode',
+    'Loader', 'add_to_loader', 'set_document_type', 'Dumper', 'add_to_dumper'
 ]

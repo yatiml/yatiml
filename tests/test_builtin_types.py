@@ -6,7 +6,7 @@ import pytest
 import ruamel.yaml as yaml
 
 from collections import MutableMapping
-from typing import Dict, List
+from typing import Dict
 
 import yatiml
 
@@ -124,13 +124,14 @@ def test_load_nested_dict(nested_dict_loader):
     assert data == {'key1': {'key2': True, 'key3': False}, 'key4': {}}
 
 
-def test_load_mixed_dict_list():
-    class ListDictLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(ListDictLoader, List[Dict[str, int]])
+def test_load_mixed_dict_list(mixed_dict_list_loader):
     text = '[{key1: 10},{key2: 11, key3: 13}]'
-    data = yaml.load(text, Loader=ListDictLoader)
+    data = yaml.load(text, Loader=mixed_dict_list_loader)
     assert data == [{'key1': 10}, {'key2': 11, 'key3': 13}]
+
+    text = '[{key1: string}]'
+    with pytest.raises(yatiml.RecognitionError):
+        yaml.load(text, Loader=mixed_dict_list_loader)
 
 
 def test_load_dict_error(string_dict_loader):

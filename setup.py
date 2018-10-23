@@ -8,12 +8,13 @@ with open('README.rst') as readme_file:
 
 setup(
     name='yatiml',
-    version='0.2.0',
+    version='0.3.0',
     description="A library for making YAML-based file formats",
     long_description=readme + '\n\n',
     author="Lourens Veen",
     author_email='l.veen@esciencecenter.nl',
     url='https://github.com/yatiml/yatiml',
+    package_data={'yatiml': ['py.typed']},
     packages=[
         'yatiml',
     ],

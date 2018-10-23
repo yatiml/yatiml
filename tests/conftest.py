@@ -67,6 +67,14 @@ def nested_dict_loader():
 
 
 @pytest.fixture
+def mixed_dict_list_loader():
+    class MixedDictListLoader(yatiml.Loader):
+        pass
+    yatiml.set_document_type(MixedDictListLoader, List[Dict[str, int]])
+    return MixedDictListLoader
+
+
+@pytest.fixture
 def union_loader():
     class UnionLoader(yatiml.Loader):
         pass
@@ -151,19 +159,22 @@ class Color2(enum.Enum):
     BLUE = 5
 
     @classmethod
-    def yatiml_savorize(self, node: yatiml.ScalarNode) -> None:
-        node.to_upper()
+    def yatiml_savorize(self, node: yatiml.Node) -> None:
+        if node.is_scalar(str):
+            node.set_value(node.get_value().upper())  # type: ignore
 
     @classmethod
-    def yatiml_sweeten(self, node: yatiml.ScalarNode) -> None:
-        node.to_lower()
+    def yatiml_sweeten(self, node: yatiml.Node) -> None:
+        node.set_value(node.get_value().lower())  # type: ignore
 
 
 class Document2:
-    def __init__(self, cursor_at: Vector2D, shapes: List[Shape]=[]) -> None:
+    def __init__(self, cursor_at: Vector2D, shapes: List[Shape]=[],
+                 color: Color2=Color2.RED) -> None:
         # Yes, having [] as a default value is a bad idea, but ok here
         self.cursor_at = cursor_at
         self.shapes = shapes
+        self.color = color
 
 
 class Super:
@@ -203,11 +214,11 @@ class SubA2(Super2):
         node.require_attribute_value('subclass', 'A2')
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.ClassNode) -> None:
+    def yatiml_savorize(cls, node: yatiml.Node) -> None:
         node.remove_attribute('subclass')
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.ClassNode) -> None:
+    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
         node.set_attribute('subclass', 'A2')
 
 
@@ -220,11 +231,11 @@ class SubB2(Super2):
         node.require_attribute_value('subclass', 'B2')
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.ClassNode) -> None:
+    def yatiml_savorize(cls, node: yatiml.Node) -> None:
         node.remove_attribute('subclass')
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.ClassNode) -> None:
+    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
         node.set_attribute('subclass', 'B2')
 
 
@@ -234,7 +245,7 @@ class Universal:
         self.b = b
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.ClassNode) -> None:
+    def yatiml_recognize(cls, node: yatiml.Node) -> None:
         # recognizes anything as being of this type
         pass
 
@@ -272,11 +283,44 @@ class BrokenPrivateAttributes:
         self.__b = b
 
 
+class ComplexPrivateAttributes:
+    def __init__(self, a: Vector2D) -> None:
+        self.__a = a
+
+    def yatiml_attributes(self) -> OrderedDict:
+        attrs = OrderedDict()  # type: OrderedDict[str, Vector2D]
+        attrs['a'] = self.__a
+        return attrs
+
+
 class ConstrainedString(UserString):
     def __init__(self, seq: Any) -> None:
         super().__init__(seq)
         if not self.data.startswith('a'):   # type: ignore
             raise ValueError('ConstrainedString must start with an a')
+
+
+class Postcode:
+    def __init__(self, digits: int, letters: str) -> None:
+        self.digits = digits
+        self.letters = letters
+
+    @classmethod
+    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        node.require_scalar(str)
+
+    @classmethod
+    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+        text = str(node.get_value())
+        node.make_mapping()
+        node.set_attribute('digits', int(text[0:4]))
+        node.set_attribute('letters', text[5:7])
+
+    @classmethod
+    def yatiml_sweeten(self, node: yatiml.Node) -> None:
+        digits = node.get_attribute('digits').get_value()
+        letters = node.get_attribute('letters').get_value()
+        node.set_value('{} {}'.format(digits, letters))
 
 
 @pytest.fixture
@@ -331,7 +375,7 @@ def document2_loader():
         pass
     yatiml.add_to_loader(
             Document2Loader,
-            [Document2, Shape, Rectangle, Circle, Vector2D])
+            [Color2, Document2, Shape, Rectangle, Circle, Vector2D])
     yatiml.set_document_type(Document2Loader, Document2)
     return Document2Loader
 
@@ -342,7 +386,7 @@ def document2_dumper():
         pass
     yatiml.add_to_dumper(
             Document2Dumper,
-            [Document2, Shape, Rectangle, Circle, Vector2D])
+            [Color2, Document2, Shape, Rectangle, Circle, Vector2D])
     return Document2Dumper
 
 
@@ -476,12 +520,39 @@ def broken_private_attributes_dumper():
 
 
 @pytest.fixture
+def complex_private_attributes_dumper():
+    class ComplexPrivateAttributesDumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(ComplexPrivateAttributesDumper, Vector2D)
+    yatiml.add_to_dumper(
+            ComplexPrivateAttributesDumper, ComplexPrivateAttributes)
+    return ComplexPrivateAttributesDumper
+
+
+@pytest.fixture
 def union_attribute_loader():
     class UnionAttributeLoader(yatiml.Loader):
         pass
     yatiml.add_to_loader(UnionAttributeLoader, UnionAttribute)
     yatiml.set_document_type(UnionAttributeLoader, UnionAttribute)
     return UnionAttributeLoader
+
+
+@pytest.fixture
+def parsed_class_loader():
+    class ParsedClassLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(ParsedClassLoader, Postcode)
+    yatiml.set_document_type(ParsedClassLoader, Postcode)
+    return ParsedClassLoader
+
+
+@pytest.fixture
+def parsed_class_dumper():
+    class ParsedClassDumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(ParsedClassDumper, Postcode)
+    return ParsedClassDumper
 
 
 @pytest.fixture
@@ -546,11 +617,15 @@ def yaml_node(yaml_seq_node, yaml_map_node):
     attr1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'attr1')
     attr1_value_node = yaml.ScalarNode('tag:yaml.org,2002:int', 42)
 
+    null_attr_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'null_attr')
+    null_attr_value_node = yaml.ScalarNode('tag:yaml.org,2002:null', None)
+
     list1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'list1')
     dict1_key_node = yaml.ScalarNode('tag:yaml.org,2002:map', 'dict1')
 
     value = [
             (attr1_key_node, attr1_value_node),
+            (null_attr_key_node, null_attr_value_node),
             (list1_key_node, yaml_seq_node),
             (dict1_key_node, yaml_map_node)
             ]
@@ -559,7 +634,13 @@ def yaml_node(yaml_seq_node, yaml_map_node):
 
 @pytest.fixture
 def class_node(yaml_node):
-    return yatiml.ClassNode(yaml_node)
+    return yatiml.Node(yaml_node)
+
+
+@pytest.fixture
+def scalar_node():
+    ynode = yaml.ScalarNode('tag:yaml.org,2002:int', '42')
+    return yatiml.Node(ynode)
 
 
 @pytest.fixture
@@ -568,8 +649,20 @@ def unknown_node(yaml_node):
 
 
 @pytest.fixture
+def unknown_scalar_node():
+    ynode = yaml.ScalarNode('tag:yaml.org,2002:int', '23')
+    return yatiml.UnknownNode(Recognizer({}), ynode)
+
+
+@pytest.fixture
+def unknown_sequence_node():
+    ynode = yaml.SequenceNode('tag:yaml.org,2002:seq', [])
+    return yatiml.UnknownNode(Recognizer({}), ynode)
+
+
+@pytest.fixture
 def class_node_dup_key():
-    # A ClassNode wrapping a yaml.SequenceNode representing a sequence of
+    # A Node wrapping a yaml.SequenceNode representing a sequence of
     # mappings with a duplicate key.
     tag1 = 'tag:yaml.org,2002:map'
     item1_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item_id')
@@ -589,4 +682,4 @@ def class_node_dup_key():
     list1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'dup_list')
     value = [(list1_key_node, seq_node)]
     map_node = yaml.MappingNode('tag:yaml.org,2002:map', value)
-    return yatiml.ClassNode(map_node)
+    return yatiml.Node(map_node)

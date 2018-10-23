@@ -69,7 +69,7 @@ append additional commits to your pull request.
 
 
 Making a release
-****************
+----------------
 
 YAtiML uses Git on GitHub for version management, using the `Git Flow`_
 branching model. Making a release involves quite a few steps, so they're listed
@@ -77,7 +77,7 @@ here to help make the process more reliable; this information is really only
 useful for the maintainers.
 
 Make release branch
--------------------
+...................
 
 To start the release process, make a release branch
 
@@ -88,7 +88,7 @@ To start the release process, make a release branch
 YAtiML uses `Semantic Versioning`_, so name the new version accordingly.
 
 Update version
---------------
+..............
 
 Next, the version should be updated. There is a version tag in ``setup.py`` and
 two for the documentation in ``docs/conf.py`` (search for ``version`` and
@@ -97,7 +97,7 @@ the release branch, they should be set to ``x.y.z`` (or rather, the actual
 number of this release of course).
 
 Check documentation
--------------------
+...................
 
 Since we've just changed the documentation build configuration, the build should
 be run locally to test:
@@ -113,27 +113,41 @@ correctly. In particular, the new version number should be in the browser's
 title bar as well as in the blue box on the top left of the page.
 
 Run tests
----------
+.........
 
 Before we make a commit, the tests should be run, and this is a good idea anyway
 if we're making a release. So run ``python setup.py test`` and check that
 everything is in order.
 
 Commit the version update
--------------------------
+.........................
 
-That's easy:
+This is the usual Git poem:
 
 .. code-block:: bash
 
-  git commit -m 'Set release version'
-  git push
+  git add setup.py docs/conf.py
+  git commit -m 'Set release version to x.y.z'
+  git push --set-upstream origin release-x.y.z
 
 This will trigger the Continuous Integration, so check that that's not giving
 any errors while we're at it.
 
+Fix badges
+..........
+
+The badges in the README.rst normally point to the development branch versions
+of everything. For the master branch, they should point to the master version:
+
+.. code-block:: bash
+
+  # edit README.rst
+  git add README.rst
+  git commit -m 'Update badges to point to master'
+  git push
+
 Merge into the master branch
-----------------------------
+............................
 
 If all seems to be well, then we can merge the release branch into the master
 branch and tag it, thus making a release, at least as far as Git Flow is
@@ -147,7 +161,7 @@ concerned.
   git push
 
 Build and release to PyPI
--------------------------
+.........................
 
 Finally, the new version needs to be built and uploaded to PyPI, so that people
 can start using it. To build, use:
@@ -160,7 +174,7 @@ Then, we can upload to the test instance of PyPI:
 
 .. code-block:: bash
 
-  twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+  twine upload --repository-url https://test.pypi.org/legacy/ dist/yatiml-x.y.z*
 
 To test that we can install it, run this in a fresh virtualenv:
 
@@ -172,7 +186,7 @@ And if all seems well, we can upload to the real PyPI:
 
 .. code-block:: bash
 
-  twine upload dist/*
+  twine upload dist/yatiml-x.y.z*
 
 .. _`Git Flow`: http://nvie.com/posts/a-successful-git-branching-model/
 .. _`Semantic Versioning`: http://www.semver.org

@@ -8,8 +8,9 @@ import ruamel.yaml as yaml
 
 import yatiml
 
-from .conftest import (BrokenPrivateAttributes, Circle, ConstrainedString,
-                       Color, Color2, Document1, Document2, Extensible,
+from .conftest import (BrokenPrivateAttributes, Circle,
+                       ComplexPrivateAttributes, ConstrainedString, Color,
+                       Color2, Document1, Document2, Extensible, Postcode,
                        PrivateAttributes, Rectangle, Shape, SubA, SubA2, Super,
                        UnionAttribute, Universal, Vector2D)
 
@@ -190,10 +191,12 @@ def test_load_complex_document(document2_loader):
             '    y: -5.0\n'
             '  width: 3.0\n'
             '  height: 7.0\n'
+            'color: blue\n'
             )
     doc = yaml.load(text, Loader=document2_loader)
     assert isinstance(doc, Document2)
     assert isinstance(doc.shapes, list)
+    assert doc.color == Color2.BLUE
 
 
 def test_dump_complex_document(document2_dumper):
@@ -215,6 +218,7 @@ def test_dump_complex_document(document2_dumper):
             '    y: -5.0\n'
             '  width: 3.0\n'
             '  height: 7.0\n'
+            'color: red\n'
             )
 
 
@@ -234,6 +238,14 @@ def test_private_attributes(broken_private_attributes_dumper):
     data = BrokenPrivateAttributes(10, 42.0)
     with pytest.raises(AttributeError):
         yaml.dump(data, Dumper=broken_private_attributes_dumper)
+
+
+def test_complex_private_attributes(complex_private_attributes_dumper):
+    data = ComplexPrivateAttributes(Vector2D(1.0, 2.0))
+    text = yaml.dump(data, Dumper=complex_private_attributes_dumper)
+    assert text == ('a:\n'
+                    '  x: 1.0\n'
+                    '  y: 2.0\n')
 
 
 def test_enum_class(enum_loader):
@@ -283,3 +295,17 @@ def test_dump_user_string(user_string_dumper):
     data = ConstrainedString('abc')
     text = yaml.dump(data, Dumper=user_string_dumper)
     assert text == 'abc\n...\n'
+
+
+def test_parsed_class(parsed_class_loader):
+    text = '1098 XG'
+    data = yaml.load(text, Loader=parsed_class_loader)
+    assert isinstance(data, Postcode)
+    assert data.digits == 1098
+    assert data.letters == 'XG'
+
+
+def test_dump_parsed_class(parsed_class_dumper):
+    data = Postcode(1098, 'XG')
+    text = yaml.dump(data, Dumper=parsed_class_dumper)
+    assert text == '1098 XG\n...\n'
