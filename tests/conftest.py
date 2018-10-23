@@ -169,10 +169,12 @@ class Color2(enum.Enum):
 
 
 class Document2:
-    def __init__(self, cursor_at: Vector2D, shapes: List[Shape]=[]) -> None:
+    def __init__(self, cursor_at: Vector2D, shapes: List[Shape]=[],
+                 color: Color2=Color2.RED) -> None:
         # Yes, having [] as a default value is a bad idea, but ok here
         self.cursor_at = cursor_at
         self.shapes = shapes
+        self.color = color
 
 
 class Super:
@@ -373,7 +375,7 @@ def document2_loader():
         pass
     yatiml.add_to_loader(
             Document2Loader,
-            [Document2, Shape, Rectangle, Circle, Vector2D])
+            [Color2, Document2, Shape, Rectangle, Circle, Vector2D])
     yatiml.set_document_type(Document2Loader, Document2)
     return Document2Loader
 
@@ -384,7 +386,7 @@ def document2_dumper():
         pass
     yatiml.add_to_dumper(
             Document2Dumper,
-            [Document2, Shape, Rectangle, Circle, Vector2D])
+            [Color2, Document2, Shape, Rectangle, Circle, Vector2D])
     return Document2Dumper
 
 

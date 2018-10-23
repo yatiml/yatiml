@@ -185,9 +185,10 @@ class Loader(yaml.RoundTripLoader):
         recognized_type = recognized_types[0]
 
         # remove syntactic sugar
-        logger.debug('Savorizing node')
+        logger.debug('Savorizing node {}'.format(node))
         if recognized_type in self._registered_classes.values():
             node = self.__savorize(node, recognized_type)
+        logger.debug('Savorized, now {}'.format(node))
 
         # process subnodes
         logger.debug('Recursing into subnodes')
@@ -216,10 +217,12 @@ class Loader(yaml.RoundTripLoader):
                     cnode = Node(node)
                     if cnode.has_attribute(attr_name):
                         subnode = cnode.get_attribute(attr_name)
-                        self.__process_node(subnode.yaml_node, type_)
+                        new_subnode = self.__process_node(subnode.yaml_node,
+                                                          type_)
+                        cnode.set_attribute(attr_name, new_subnode)
 
-        logger.debug('Finished processing node {}'.format(node))
         node.tag = self.__type_to_tag(recognized_type)
+        logger.debug('Finished processing node {}'.format(node))
         return node
 
 

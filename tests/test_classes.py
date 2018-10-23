@@ -191,10 +191,12 @@ def test_load_complex_document(document2_loader):
             '    y: -5.0\n'
             '  width: 3.0\n'
             '  height: 7.0\n'
+            'color: blue\n'
             )
     doc = yaml.load(text, Loader=document2_loader)
     assert isinstance(doc, Document2)
     assert isinstance(doc.shapes, list)
+    assert doc.color == Color2.BLUE
 
 
 def test_dump_complex_document(document2_dumper):
@@ -216,6 +218,7 @@ def test_dump_complex_document(document2_dumper):
             '    y: -5.0\n'
             '  width: 3.0\n'
             '  height: 7.0\n'
+            'color: red\n'
             )
 
 
