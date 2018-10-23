@@ -619,6 +619,18 @@ def unknown_node(yaml_node):
 
 
 @pytest.fixture
+def unknown_scalar_node():
+    ynode = yaml.ScalarNode('tag:yaml.org,2002:int', '23')
+    return yatiml.UnknownNode(Recognizer({}), ynode)
+
+
+@pytest.fixture
+def unknown_sequence_node():
+    ynode = yaml.SequenceNode('tag:yaml.org,2002:seq', [])
+    return yatiml.UnknownNode(Recognizer({}), ynode)
+
+
+@pytest.fixture
 def class_node_dup_key():
     # A Node wrapping a yaml.SequenceNode representing a sequence of
     # mappings with a duplicate key.

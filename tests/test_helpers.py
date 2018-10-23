@@ -204,6 +204,24 @@ def test_unknown_node_str(unknown_node):
     assert str(unknown_node).startswith('UnknownNode')
 
 
+def test_require_scalar(unknown_node, unknown_scalar_node):
+    unknown_scalar_node.require_scalar()
+    with pytest.raises(yatiml.RecognitionError):
+        unknown_node.require_scalar()
+
+
+def test_require_mapping(unknown_node, unknown_scalar_node):
+    unknown_node.require_mapping()
+    with pytest.raises(yatiml.RecognitionError):
+        unknown_scalar_node.require_mapping()
+
+
+def test_require_sequence(unknown_node, unknown_sequence_node):
+    unknown_sequence_node.require_sequence()
+    with pytest.raises(yatiml.RecognitionError):
+        unknown_node.require_sequence()
+
+
 def test_require_attribute(unknown_node):
     unknown_node.require_attribute('attr1')
     with pytest.raises(yatiml.RecognitionError):
