@@ -518,10 +518,9 @@ class UnknownNode:
             for typ in args:
                 if node.is_scalar(typ):
                     return
-            else:
-                raise RecognitionError(
-                        ('{}{}A scalar of type {} is required').format(
-                            self.yaml_node.start_mark, os.linesep, args))
+            raise RecognitionError(
+                    ('{}{}A scalar of type {} is required').format(
+                        self.yaml_node.start_mark, os.linesep, args))
 
     def require_mapping(self) -> None:
         """Require the node to be a mapping."""
