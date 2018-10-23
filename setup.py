@@ -14,6 +14,7 @@ setup(
     author="Lourens Veen",
     author_email='l.veen@esciencecenter.nl',
     url='https://github.com/yatiml/yatiml',
+    package_data={'yatiml': ['py.typed']},
     packages=[
         'yatiml',
     ],
