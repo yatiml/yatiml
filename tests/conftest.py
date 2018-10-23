@@ -281,6 +281,16 @@ class BrokenPrivateAttributes:
         self.__b = b
 
 
+class ComplexPrivateAttributes:
+    def __init__(self, a: Vector2D) -> None:
+        self.__a = a
+
+    def yatiml_attributes(self) -> OrderedDict:
+        attrs = OrderedDict()  # type: OrderedDict[str, Vector2D]
+        attrs['a'] = self.__a
+        return attrs
+
+
 class ConstrainedString(UserString):
     def __init__(self, seq: Any) -> None:
         super().__init__(seq)
@@ -505,6 +515,16 @@ def broken_private_attributes_dumper():
             BrokenPrivateAttributesDumper,
             BrokenPrivateAttributes)
     return BrokenPrivateAttributesDumper
+
+
+@pytest.fixture
+def complex_private_attributes_dumper():
+    class ComplexPrivateAttributesDumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(ComplexPrivateAttributesDumper, Vector2D)
+    yatiml.add_to_dumper(
+            ComplexPrivateAttributesDumper, ComplexPrivateAttributes)
+    return ComplexPrivateAttributesDumper
 
 
 @pytest.fixture

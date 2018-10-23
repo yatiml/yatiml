@@ -8,10 +8,11 @@ import ruamel.yaml as yaml
 
 import yatiml
 
-from .conftest import (BrokenPrivateAttributes, Circle, ConstrainedString,
-                       Color, Color2, Document1, Document2, Extensible,
-                       Postcode, PrivateAttributes, Rectangle, Shape, SubA,
-                       SubA2, Super, UnionAttribute, Universal, Vector2D)
+from .conftest import (BrokenPrivateAttributes, Circle,
+                       ComplexPrivateAttributes, ConstrainedString, Color,
+                       Color2, Document1, Document2, Extensible, Postcode,
+                       PrivateAttributes, Rectangle, Shape, SubA, SubA2, Super,
+                       UnionAttribute, Universal, Vector2D)
 
 
 def test_load_class(document1_loader):
@@ -234,6 +235,14 @@ def test_private_attributes(broken_private_attributes_dumper):
     data = BrokenPrivateAttributes(10, 42.0)
     with pytest.raises(AttributeError):
         yaml.dump(data, Dumper=broken_private_attributes_dumper)
+
+
+def test_complex_private_attributes(complex_private_attributes_dumper):
+    data = ComplexPrivateAttributes(Vector2D(1.0, 2.0))
+    text = yaml.dump(data, Dumper=complex_private_attributes_dumper)
+    assert text == ('a:\n'
+                    '  x: 1.0\n'
+                    '  y: 2.0\n')
 
 
 def test_enum_class(enum_loader):
