@@ -67,6 +67,14 @@ def nested_dict_loader():
 
 
 @pytest.fixture
+def mixed_dict_list_loader():
+    class MixedDictListLoader(yatiml.Loader):
+        pass
+    yatiml.set_document_type(MixedDictListLoader, List[Dict[str, int]])
+    return MixedDictListLoader
+
+
+@pytest.fixture
 def union_loader():
     class UnionLoader(yatiml.Loader):
         pass
