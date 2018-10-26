@@ -284,7 +284,8 @@ class Node:
     def seq_attribute_to_map(self,
                              attribute: str,
                              key_attribute: str,
-                             strict: bool = True) -> None:
+                             value_attribute: Optional[str] = None,
+                             strict: Optional[bool] = True) -> None:
         """Converts a sequence attribute to a map.
 
         This function takes an attribute of this Node that is \
@@ -344,16 +345,13 @@ class Node:
         if not attr_node.is_sequence():
             return
 
+        start_mark = attr_node.yaml_node.start_mark
+        end_mark = attr_node.yaml_node.end_mark
+
         # check that all list items are mappings and that the keys are unique
         # strings
         seen_keys = set()  # type: Set[str]
         for item in attr_node.seq_items():
-            if not item.is_mapping():
-                if strict:
-                    raise SeasoningError(('Expected a sequence of mappings'
-                                          ' but got {}'.format(attr_node)))
-                return
-
             key_attr_node = item.get_attribute(key_attribute)
             if not key_attr_node.is_scalar(str):
                 raise SeasoningError(
@@ -374,24 +372,37 @@ class Node:
             # we've already checked that it's a SequenceNode above
             key_node = item.get_attribute(key_attribute).yaml_node
             item.remove_attribute(key_attribute)
-            mapping_values.append((key_node, item.yaml_node))
+            if value_attribute is not None:
+                value_node = item.get_attribute(value_attribute).yaml_node
+                if len(item.yaml_node.value) == 1:
+                    # no other attributes, use short form
+                    mapping_values.append((key_node, value_node))
+                else:
+                    mapping_values.append((key_node, item.yaml_node))
+            else:
+                mapping_values.append((key_node, item.yaml_node))
 
         # create mapping node
-        start_mark = StreamMark('generated node', 0, 0, 0)
-        end_mark = StreamMark('generated node', 0, 0, 0)
         mapping = yaml.MappingNode('tag:yaml.org,2002:map', mapping_values,
                                    start_mark, end_mark)
         self.set_attribute(attribute, mapping)
 
-    def map_attribute_to_seq(self, attribute: str, key_attribute: str) -> None:
+    def map_attribute_to_seq(self, attribute: str, key_attribute: str,
+                             value_attribute: Optional[str] = None) -> None:
         """Converts a mapping attribute to a sequence.
 
         This function takes an attribute of this Node whose value \
-        is a mapping of mappings and turns it into a sequence of \
-        mappings. It adds to each of the sub-mappings in the original \
-        mapping an attribute containing the value of the corresponding \
-        key in the outer mapping, then replace the outer mapping with a \
-        sequence containing all the inner mappings.
+        is a mapping or a mapping of mappings and turns it into a \
+        sequence of mappings. Each entry in the original mapping is \
+        converted to an entry in the list. If only a key attribute is \
+        given, then each entry in the original mapping must map to a \
+        (sub)mapping. This submapping becomes the corresponding list \
+        entry, with the key added to it as an additional attribute. If a \
+        value attribute is also given, then an entry in the original \
+        mapping may map to any object. If the mapped-to object is a \
+        mapping, the conversion is as before, otherwise a new \
+        submapping is created, and key and value are added using the \
+        given key and value attribute names.
 
         An example probably helps. If you have a Node representing \
         this piece of YAML::
@@ -418,8 +429,26 @@ class Node:
         which once converted to an object is often easier to deal with \
         in code.
 
-        If the attribute does not exist, or is not a mapping of \
-        mappings, this function will silently do nothing.
+        Slightly more complicated, this YAML::
+
+            items:
+              item1: Basic widget
+              item2:
+                description: Premium quality widget
+                price: 200.0
+
+        when passed through map_attribute_to_seq('items', 'item_id', \
+        'description'), will result in th equivalent of::
+
+            items:
+            - item_id: item1
+              description: Basic widget
+            - item_id: item2
+              description: Premium quality widget
+              price: 200.0
+
+        If the attribute does not exist, or is not a mapping, this \
+        function will silently do nothing.
 
         With thanks to the makers of the Common Workflow Language for \
         the idea.
@@ -427,6 +456,8 @@ class Node:
         Args:
             attribute: Name of the attribute whose value to modify.
             key_attribute: Name of the new attribute in each item to \
+                    add with the value of the key.
+            value_attribute: Name of the new attribute in each item to \
                     add with the value of the key.
         """
         if not self.has_attribute(attribute):
@@ -436,13 +467,20 @@ class Node:
         if not attr_node.is_mapping():
             return
 
+        start_mark = attr_node.yaml_node.start_mark
+        end_mark = attr_node.yaml_node.end_mark
         object_list = []
         for item_key, item_value in attr_node.yaml_node.value:
             item_value_node = Node(item_value)
+            if not item_value_node.is_mapping():
+                if value_attribute is None:
+                    return
+                ynode = item_value_node.yaml_node
+                item_value_node.make_mapping()
+                item_value_node.set_attribute(value_attribute, ynode)
+
             item_value_node.set_attribute(key_attribute, item_key.value)
             object_list.append(item_value_node.yaml_node)
-        start_mark = StreamMark('generated node', 0, 0, 0)
-        end_mark = StreamMark('generated node', 0, 0, 0)
         seq_node = yaml.SequenceNode('tag:yaml.org,2002:seq', object_list,
                                      start_mark, end_mark)
         self.set_attribute(attribute, seq_node)
