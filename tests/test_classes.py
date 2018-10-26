@@ -177,7 +177,7 @@ def test_dump_custom_attributes(extensible_dumper):
     assert text == 'a: 10\nb: 5\nc: 3\n'
 
 
-def test_load_complex_document(document2_loader):
+def test_load_complex_document(document2_loader, caplog):
     text = ('cursor_at:\n'
             '  x: 3.0\n'
             '  y: 4.0\n'
@@ -192,6 +192,11 @@ def test_load_complex_document(document2_loader):
             '  width: 3.0\n'
             '  height: 7.0\n'
             'color: blue\n'
+            'extra_shape:\n'
+            '  center:\n'
+            '    x: 7.0\n'
+            '    y: 8.0\n'
+            '  radius: 2.0\n'
             )
     doc = yaml.load(text, Loader=document2_loader)
     assert isinstance(doc, Document2)
@@ -219,6 +224,7 @@ def test_dump_complex_document(document2_dumper):
             '  width: 3.0\n'
             '  height: 7.0\n'
             'color: red\n'
+            'extra_shape:\n'
             )
 
 

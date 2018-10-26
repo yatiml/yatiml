@@ -213,13 +213,16 @@ class Loader(yaml.RoundTripLoader):
             if (not issubclass(recognized_type, enum.Enum)
                     and not issubclass(recognized_type, str)
                     and not issubclass(recognized_type, UserString)):
-                for attr_name, type_, _ in class_subobjects(expected_type):
+                for attr_name, type_, _ in class_subobjects(recognized_type):
                     cnode = Node(node)
                     if cnode.has_attribute(attr_name):
                         subnode = cnode.get_attribute(attr_name)
                         new_subnode = self.__process_node(subnode.yaml_node,
                                                           type_)
                         cnode.set_attribute(attr_name, new_subnode)
+        else:
+            logger.debug('Not a generic class or a user-defined class, not'
+                         ' recursing')
 
         node.tag = self.__type_to_tag(recognized_type)
         logger.debug('Finished processing node {}'.format(node))
