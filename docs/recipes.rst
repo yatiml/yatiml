@@ -37,3 +37,13 @@ string values using :meth:`yatiml.Node.get_value`, then joining them with
 periods and finally combining them with the name. Since we're only altering the
 top-level node here, we do not need to build a ``yaml.ScalarNode`` ourselves but
 can just use :meth:`yatiml.Node.set_value`.
+
+
+Timestamps and dates
+--------------------
+
+YAML has a `timestamp` type, which represents a point in time. The
+`ruamel.yaml` library parses this into a python `datetime.datetime` object, and
+will serialise such an object back to a YAML `timestamp`. YAtiML supports this
+as well, so all you need to do to use a timestamp or a date is to use
+`datetime.datetime` in your class definition.
