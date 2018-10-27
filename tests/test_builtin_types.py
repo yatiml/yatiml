@@ -6,6 +6,7 @@ import pytest
 import ruamel.yaml as yaml
 
 from collections import MutableMapping
+from datetime import datetime
 from typing import Dict
 
 import yatiml
@@ -67,6 +68,14 @@ def test_load_bool():
     data = yaml.load(text, Loader=BoolLoader)
     assert isinstance(data, bool)
     assert data is True
+
+
+def test_load_datetime(datetime_loader):
+    text = '2018-10-27T06:05:23Z'
+    data = yaml.load(text, Loader=datetime_loader)
+    assert isinstance(data, datetime)
+    assert data.year == 2018
+    assert data.second == 23
 
 
 def test_load_list(string_list_loader):
@@ -177,3 +186,9 @@ def test_dump_str(plain_dumper):
     data = 'test'
     text = yaml.dump(data, Dumper=plain_dumper)
     assert text == 'test\n...\n'
+
+
+def test_dump_datetime(plain_dumper):
+    data = datetime(2018, 10, 27)
+    text = yaml.dump(data, Dumper=plain_dumper)
+    assert text == '2018-10-27 00:00:00\n...\n'

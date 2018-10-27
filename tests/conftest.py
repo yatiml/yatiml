@@ -5,6 +5,7 @@ import pytest   # type: ignore
 from ruamel import yaml
 
 from collections import OrderedDict, UserString
+from datetime import datetime
 import enum
 import math
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
@@ -16,6 +17,14 @@ def string_loader():
         pass
     yatiml.set_document_type(StringLoader, str)
     return StringLoader
+
+
+@pytest.fixture
+def datetime_loader():
+    class DatetimeLoader(yatiml.Loader):
+        pass
+    yatiml.set_document_type(DatetimeLoader, datetime)
+    return DatetimeLoader
 
 
 @pytest.fixture

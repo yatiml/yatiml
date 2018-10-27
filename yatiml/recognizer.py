@@ -1,4 +1,5 @@
 from collections import UserString
+from datetime import datetime
 import enum
 import logging
 from typing import Dict, GenericMeta, List, Type
@@ -229,7 +230,8 @@ class Recognizer(IRecognizer):
         """
         logger.debug('Recognizing {} as a {}'.format(node, expected_type))
         recognized_types = None
-        if expected_type in [str, int, float, bool, None, type(None)]:
+        if expected_type in [str, int, float, bool, datetime, None,
+                             type(None)]:
             recognized_types = self.__recognize_scalar(node, expected_type)
         elif type(expected_type).__name__ in ['UnionMeta', '_Union']:
             recognized_types = self.__recognize_union(node, expected_type)
