@@ -334,6 +334,19 @@ class Postcode:
         node.set_value('{} {}'.format(digits, letters))
 
 
+class DashedAttribute:
+    def __init__(self, dashed_attribute: int) -> None:
+        self.dashed_attribute = dashed_attribute
+
+    @classmethod
+    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+        node.dashes_to_unders_in_keys()
+
+    @classmethod
+    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        node.unders_to_dashes_in_keys()
+
+
 @pytest.fixture
 def document1_loader():
     class Document1Loader(yatiml.Loader):
@@ -567,6 +580,23 @@ def parsed_class_dumper():
 
 
 @pytest.fixture
+def dashed_attribute_loader():
+    class DashedAttributeLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(DashedAttributeLoader, DashedAttribute)
+    yatiml.set_document_type(DashedAttributeLoader, DashedAttribute)
+    return DashedAttributeLoader
+
+
+@pytest.fixture
+def dashed_attribute_dumper():
+    class DashedAttributeDumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(DashedAttributeDumper, DashedAttribute)
+    return DashedAttributeDumper
+
+
+@pytest.fixture
 def yaml_seq_node():
     # A yaml.SequenceNode representing a sequence of mappings
     tag1 = 'tag:yaml.org,2002:map'
@@ -640,11 +670,19 @@ def yaml_node(yaml_seq_node, yaml_map_node):
     list1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'list1')
     dict1_key_node = yaml.ScalarNode('tag:yaml.org,2002:map', 'dict1')
 
+    dashed_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'dashed-attr')
+    dashed_value_node = yaml.ScalarNode('tag:yaml.org,2002:int', 13)
+
+    undered_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'undered_attr')
+    undered_value_node = yaml.ScalarNode('tag:yaml.org,2002:float', 13.0)
+
     value = [
             (attr1_key_node, attr1_value_node),
             (null_attr_key_node, null_attr_value_node),
             (list1_key_node, yaml_seq_node),
-            (dict1_key_node, yaml_map_node)
+            (dict1_key_node, yaml_map_node),
+            (dashed_key_node, dashed_value_node),
+            (undered_key_node, undered_value_node)
             ]
     return yaml.MappingNode(tag, value)
 

@@ -162,14 +162,18 @@ class Recognizer(IRecognizer):
                 for attr_name, type_, required in class_subobjects(
                         expected_type):
                     cnode = Node(node)
-                    if cnode.has_attribute(attr_name):
-                        subnode = cnode.get_attribute(attr_name)
-                        recognized_types = self.recognize(
-                                subnode.yaml_node, type_)
-                        if len(recognized_types) == 0:
+                    # try exact match first, dashes if that doesn't match
+                    for name in [attr_name, attr_name.replace('_', '-')]:
+                        if cnode.has_attribute(name):
+                            subnode = cnode.get_attribute(name)
+                            recognized_types = self.recognize(
+                                    subnode.yaml_node, type_)
+                            if len(recognized_types) == 0:
+                                return []
+                            break
+                    else:
+                        if required:
                             return []
-                    elif required:
-                        return []
 
             return [expected_type]
 

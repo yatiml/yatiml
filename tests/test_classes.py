@@ -10,9 +10,10 @@ import yatiml
 
 from .conftest import (BrokenPrivateAttributes, Circle,
                        ComplexPrivateAttributes, ConstrainedString, Color,
-                       Color2, Document1, Document2, Extensible, Postcode,
-                       PrivateAttributes, Rectangle, Shape, SubA, SubA2, Super,
-                       UnionAttribute, Universal, Vector2D)
+                       Color2, DashedAttribute, Document1, Document2,
+                       Extensible, Postcode, PrivateAttributes, Rectangle,
+                       Shape, SubA, SubA2, Super, UnionAttribute, Universal,
+                       Vector2D)
 
 
 def test_load_class(document1_loader):
@@ -162,6 +163,19 @@ def test_sweeten(super2_dumper):
     data = SubA2()
     text = yaml.dump(data, Dumper=super2_dumper)
     assert text == 'subclass: A2\n'
+
+
+def test_load_dashed_attribute(dashed_attribute_loader):
+    text = 'dashed-attribute: 23\n'
+    data = yaml.load(text, Loader=dashed_attribute_loader)
+    assert isinstance(data, DashedAttribute)
+    assert data.dashed_attribute == 23
+
+
+def test_dump_dashed_attribute(dashed_attribute_dumper):
+    data = DashedAttribute(34)
+    text = yaml.dump(data, Dumper=dashed_attribute_dumper)
+    assert text == 'dashed-attribute: 34\n'
 
 
 def test_dump_document1(document1_dumper):

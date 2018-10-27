@@ -209,6 +209,22 @@ def test_map_attribute_to_seq(class_node):
             (first_item_id == 'item2' and second_item_id == 'item1'))
 
 
+def test_unders_to_dashes_in_keys(class_node):
+    assert class_node.has_attribute('undered_attr')
+    assert class_node.has_attribute('attr1')
+    class_node.unders_to_dashes_in_keys()
+    assert class_node.has_attribute('undered-attr')
+    assert class_node.has_attribute('attr1')
+
+
+def test_dashes_to_unders_in_keys(class_node):
+    assert class_node.has_attribute('dashed-attr')
+    assert class_node.has_attribute('list1')
+    class_node.dashes_to_unders_in_keys()
+    assert class_node.has_attribute('dashed_attr')
+    assert class_node.has_attribute('list1')
+
+
 def test_unknown_node_str(unknown_node):
     assert str(unknown_node).startswith('UnknownNode')
 

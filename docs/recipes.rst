@@ -47,3 +47,32 @@ YAML has a `timestamp` type, which represents a point in time. The
 will serialise such an object back to a YAML `timestamp`. YAtiML supports this
 as well, so all you need to do to use a timestamp or a date is to use
 `datetime.datetime` in your class definition.
+
+
+Dashed keys
+-----------
+
+Some YAML-based formats (like CFF) use dashes in their mapping keys. This is a
+problem for YAtiML, because keys get mapped to parameters of ``__init__``,
+which are identifiers, and those are not allowed to contain dashes in Python. So
+some kind of conversion will have to be made. YAtiML's seasoning mechanism is
+just the way to do it: :class:`yatiml.Node` has two methods to convert all
+dashes in a mapping's keys to underscores and back:
+:meth:`unders_to_dashes_in_keys()` and :meth:`dashes_to_unders_in_keys()`, so
+all you need to do is use underscores instead of dashes when defining your
+classes, and add seasoning functions. Here's an example:
+
+.. literalinclude:: examples/dashed_keys.py
+  :caption: ``docs/examples/dashed_keys.py``
+  :language: python
+
+If you've been paying very close attention, then you may be wondering why this
+example passes through the recognition stage. After all, the names of the keys
+do not match those of the ``__init__`` parameters. YAtiML is a bit flexible in
+this regard, and will match a key to a parameter if it is identical after dashes
+have been replaced with underscores. The flexibility is only in the recognition
+stage, not in the type checking stage, so you do need the seasoning functions.
+(The reason to not completely automate this is that YAtiML cannot know if the
+YAML side should have dashes or underscores. So you need to specify this
+somehow in order to be able to dump correctly, and then it's better to specify
+it on loading as well for symmetry.)
