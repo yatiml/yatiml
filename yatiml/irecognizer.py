@@ -3,7 +3,6 @@ from typing import List, Tuple, Type
 
 from ruamel import yaml
 
-
 RecResult = Tuple[List[Type], str]
 """A recognition result.
 

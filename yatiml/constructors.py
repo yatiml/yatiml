@@ -2,8 +2,8 @@ import inspect
 import logging
 import os
 from collections import OrderedDict
-from typing import (Any, Dict, Generator, GenericMeta, List, Type,
-                    TYPE_CHECKING, Union)
+from typing import (TYPE_CHECKING, Any, Dict, Generator, GenericMeta, List,
+                    Type, Union)
 
 import ruamel.yaml as yaml
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
@@ -369,8 +369,8 @@ class EnumConstructor:
             new_obj = self.class_[node.value]
         except KeyError:
             raise RecognitionError(
-                    ('Expected a string matching a {}\n{}').format(
-                        self.class_.__name__, node.start_mark))
+                ('Expected a string matching a {}\n{}').format(
+                    self.class_.__name__, node.start_mark))
         yield new_obj
 
 

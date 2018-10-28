@@ -3,17 +3,17 @@
 
 """Tests for the yatiml module."""
 from collections import OrderedDict
-import pytest   # type: ignore
+
 import ruamel.yaml as yaml
 
+import pytest  # type: ignore
 import yatiml
 
-from .conftest import (BrokenPrivateAttributes, Circle,
-                       ComplexPrivateAttributes, ConstrainedString, Color,
-                       Color2, DashedAttribute, Document1, Document2,
-                       Extensible, Postcode, PrivateAttributes, Rectangle,
-                       Shape, SubA, SubA2, Super, UnionAttribute, Universal,
-                       Vector2D)
+from .conftest import (BrokenPrivateAttributes, Circle, Color, Color2,
+                       ComplexPrivateAttributes, ConstrainedString,
+                       DashedAttribute, Document1, Document2, Extensible,
+                       Postcode, PrivateAttributes, Rectangle, Shape, SubA,
+                       SubA2, Super, UnionAttribute, Universal, Vector2D)
 
 
 def test_load_class(document1_loader):

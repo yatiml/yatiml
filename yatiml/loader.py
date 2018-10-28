@@ -1,7 +1,7 @@
-from collections import UserString
 import enum
 import logging
 import os
+from collections import UserString
 from typing import Any, Dict, GenericMeta, List, Type
 
 import ruamel.yaml as yaml
@@ -123,7 +123,7 @@ class Loader(yaml.RoundTripLoader):
 
         # figure out how to interpret this node
         recognized_types, message = self.__recognizer.recognize(
-                node, expected_type)
+            node, expected_type)
 
         if len(recognized_types) != 1:
             raise RecognitionError(message)
@@ -163,8 +163,8 @@ class Loader(yaml.RoundTripLoader):
                     cnode = Node(node)
                     if cnode.has_attribute(attr_name):
                         subnode = cnode.get_attribute(attr_name)
-                        new_subnode = self.__process_node(subnode.yaml_node,
-                                                          type_)
+                        new_subnode = self.__process_node(
+                            subnode.yaml_node, type_)
                         cnode.set_attribute(attr_name, new_subnode)
         else:
             logger.debug('Not a generic class or a user-defined class, not'

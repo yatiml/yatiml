@@ -44,13 +44,11 @@ def type_to_desc(type_: Type) -> str:
             types = type_.__union_params__
         else:
             types = type_.__args__
-        return 'union of {}'.format(
-            [type_to_desc(t) for t in types])
+        return 'union of {}'.format([type_to_desc(t) for t in types])
 
     if isinstance(type_, GenericMeta):
         if type_.__origin__ == List:
-            return 'list of ({})'.format(
-                type_to_desc(type_.__args__[0]))
+            return 'list of ({})'.format(type_to_desc(type_.__args__[0]))
         if type_.__origin__ == Dict:
             return 'dict of string to ({})'.format(
                 type_to_desc(type_.__args__[1]))

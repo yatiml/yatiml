@@ -1,14 +1,14 @@
-import yatiml
-from yatiml.recognizer import Recognizer
-
-import pytest   # type: ignore
-from ruamel import yaml
-
-from collections import OrderedDict, UserString
-from datetime import datetime
 import enum
 import math
+from collections import OrderedDict, UserString
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
+
+from ruamel import yaml
+
+import pytest  # type: ignore
+import yatiml
+from yatiml.recognizer import Recognizer
 
 
 @pytest.fixture

@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """Tests for the yatiml module."""
-import pytest
-import ruamel.yaml as yaml
-
 from collections import MutableMapping
 from datetime import datetime
 from typing import Dict
 
+import ruamel.yaml as yaml
+
+import pytest
 import yatiml
 
 

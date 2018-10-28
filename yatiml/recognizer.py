@@ -1,8 +1,8 @@
-from collections import UserString
-from datetime import datetime
 import enum
 import logging
 import os
+from collections import UserString
+from datetime import datetime
 from textwrap import indent
 from typing import Dict, GenericMeta, List, Type
 
@@ -45,7 +45,7 @@ class Recognizer(IRecognizer):
                 and node.tag == scalar_type_to_tag[expected_type]):
             return [expected_type], ''
         message = 'Failed to recognize a {}\n{}\n'.format(
-                type_to_desc(expected_type), node.start_mark)
+            type_to_desc(expected_type), node.start_mark)
         return [], message
 
     def __recognize_list(self, node: yaml.Node,
@@ -63,7 +63,7 @@ class Recognizer(IRecognizer):
         logger.debug('Recognizing as a list')
         if not isinstance(node, yaml.SequenceNode):
             message = '{}{}Expected a list here.'.format(
-                    node.start_mark, os.linesep)
+                node.start_mark, os.linesep)
             return [], message
         item_type = expected_type.__args__[0]
         for item in node.value:
@@ -72,7 +72,9 @@ class Recognizer(IRecognizer):
                 return [], message
             if len(recognized_types) > 1:
                 recognized_types = [
-                        List[t] for t in recognized_types]  # type: ignore
+                    List[t]  # type: ignore
+                    for t in recognized_types
+                ]
                 return recognized_types, message
 
         return [expected_type], ''
@@ -94,7 +96,7 @@ class Recognizer(IRecognizer):
                 'YAtiML only supports dicts with strings as keys')
         if not isinstance(node, yaml.MappingNode):
             message = '{}{}Expected a dict/mapping here'.format(
-                    node.start_mark, os.linesep)
+                node.start_mark, os.linesep)
             return [], message
         value_type = expected_type.__args__[1]
         for key, value in node.value:
@@ -170,31 +172,31 @@ class Recognizer(IRecognizer):
                 if len(e.args) > 0:
                     message = ('Error recognizing a {}\n{}because of the'
                                ' following error(s): {}').format(
-                                    expected_type.__class__, loc_str,
-                                    indent(e.args[0], '    '))
+                                   expected_type.__class__, loc_str,
+                                   indent(e.args[0], '    '))
                 else:
                     message = 'Error recognizing a {}\n{}'.format(
-                            expected_type.__class__, loc_str)
+                        expected_type.__class__, loc_str)
                 return [], message
         else:
             if issubclass(expected_type, enum.Enum):
                 if (not isinstance(node, yaml.ScalarNode)
                         or node.tag != 'tag:yaml.org,2002:str'):
                     message = 'Expected an enum value from {}\n{}'.format(
-                            expected_type.__class__, loc_str)
+                        expected_type.__class__, loc_str)
                     return [], message
             elif (issubclass(expected_type, UserString)
                   or issubclass(expected_type, str)):
                 if (not isinstance(node, yaml.ScalarNode)
                         or node.tag != 'tag:yaml.org,2002:str'):
                     message = 'Expected a string matching {}\n{}'.format(
-                            expected_type.__class__, loc_str)
+                        expected_type.__class__, loc_str)
                     return [], message
             else:
                 # auto-recognize based on constructor signature
                 if not isinstance(node, yaml.MappingNode):
                     message = 'Expected a dict/mapping here\n{}'.format(
-                            loc_str)
+                        loc_str)
                     return [], message
 
                 for attr_name, type_, required in class_subobjects(
@@ -205,7 +207,7 @@ class Recognizer(IRecognizer):
                         if cnode.has_attribute(name):
                             subnode = cnode.get_attribute(name)
                             recognized_types, message = self.recognize(
-                                    subnode.yaml_node, type_)
+                                subnode.yaml_node, type_)
                             if len(recognized_types) == 0:
                                 message = ('Failed when checking attribute'
                                            ' {}:\n{}').format(
@@ -214,15 +216,14 @@ class Recognizer(IRecognizer):
                             break
                     else:
                         if required:
-                            message = ('Error recognizing a {}\n{}because it'
-                                       ' is missing an attribute named {}'
-                                       ).format(
-                                           expected_type.__name__,
-                                           loc_str, attr_name,
-                                           attr_name.replace('_', '-'))
+                            message = (
+                                'Error recognizing a {}\n{}because it'
+                                ' is missing an attribute named {}').format(
+                                    expected_type.__name__, loc_str, attr_name,
+                                    attr_name.replace('_', '-'))
                             if '_' in attr_name:
                                 message += ' or maybe {}.\n'.format(
-                                        attr_name.replace('_', '-'))
+                                    attr_name.replace('_', '-'))
                             else:
                                 message += '.\n'
                             return [], message
@@ -304,20 +305,22 @@ class Recognizer(IRecognizer):
         """
         logger.debug('Recognizing {} as a {}'.format(node, expected_type))
         recognized_types = None
-        if expected_type in [str, int, float, bool, datetime, None,
-                             type(None)]:
+        if expected_type in [
+                str, int, float, bool, datetime, None,
+                type(None)
+        ]:
             recognized_types, message = self.__recognize_scalar(
-                    node, expected_type)
+                node, expected_type)
         elif type(expected_type).__name__ in ['UnionMeta', '_Union']:
             recognized_types, message = self.__recognize_union(
-                    node, expected_type)
+                node, expected_type)
         elif isinstance(expected_type, GenericMeta):
             if expected_type.__origin__ == List:
                 recognized_types, message = self.__recognize_list(
-                        node, expected_type)
+                    node, expected_type)
             elif expected_type.__origin__ == Dict:
                 recognized_types, message = self.__recognize_dict(
-                        node, expected_type)
+                    node, expected_type)
         elif expected_type in self.__registered_classes.values():
             recognized_types, message = self.__recognize_user_classes(
                 node, expected_type)

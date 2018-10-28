@@ -1,7 +1,7 @@
-import yatiml
-
 from ruamel import yaml
+
 import pytest
+import yatiml
 
 
 def test_is_scalar(class_node):

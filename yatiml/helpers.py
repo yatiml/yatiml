@@ -1,14 +1,19 @@
 import os
-from typing import (cast, List, Optional, Set, Type, TypeVar,  # noqa: F401
-                    Union)
+from typing import (  # noqa: F401
+    List,
+    Optional,
+    Set,
+    Type,
+    TypeVar,
+    Union,
+    cast)
 
 from ruamel import yaml
 from ruamel.yaml.error import StreamMark
 
 from yatiml.exceptions import RecognitionError, SeasoningError
 from yatiml.irecognizer import IRecognizer
-from yatiml.util import scalar_type_to_tag, ScalarType
-
+from yatiml.util import ScalarType, scalar_type_to_tag
 
 _Any = TypeVar('_Any')
 
@@ -203,9 +208,8 @@ class Node:
                     matches))
         return Node(matches[0])
 
-    def set_attribute(
-            self, attribute: str,
-            value: Union[ScalarType, yaml.Node]) -> None:
+    def set_attribute(self, attribute: str,
+                      value: Union[ScalarType, yaml.Node]) -> None:
         """Sets the attribute to the given value.
 
         Use only if is_mapping() returns True.
@@ -409,7 +413,9 @@ class Node:
                                    start_mark, end_mark)
         self.set_attribute(attribute, mapping)
 
-    def map_attribute_to_seq(self, attribute: str, key_attribute: str,
+    def map_attribute_to_seq(self,
+                             attribute: str,
+                             key_attribute: str,
                              value_attribute: Optional[str] = None) -> None:
         """Converts a mapping attribute to a sequence.
 
@@ -538,8 +544,7 @@ class UnknownNode:
         yaml_node: The yaml.Node wrapped by this object.
     """
 
-    def __init__(self, recognizer: IRecognizer,
-                 node: yaml.Node) -> None:
+    def __init__(self, recognizer: IRecognizer, node: yaml.Node) -> None:
         """Create an UnknownNode for a particular mapping node.
 
         The member functions will act on the contained node.
@@ -571,33 +576,29 @@ class UnknownNode:
         node = Node(self.yaml_node)
         if len(args) == 0:
             if not node.is_scalar():
-                raise RecognitionError(
-                        ('{}{}A scalar is required').format(
-                            self.yaml_node.start_mark, os.linesep))
+                raise RecognitionError(('{}{}A scalar is required').format(
+                    self.yaml_node.start_mark, os.linesep))
         else:
             for typ in args:
                 if node.is_scalar(typ):
                     return
             raise RecognitionError(
-                    ('{}{}A scalar of type {} is required').format(
-                        self.yaml_node.start_mark, os.linesep, args))
+                ('{}{}A scalar of type {} is required').format(
+                    self.yaml_node.start_mark, os.linesep, args))
 
     def require_mapping(self) -> None:
         """Require the node to be a mapping."""
         if not isinstance(self.yaml_node, yaml.MappingNode):
-            raise RecognitionError(
-                    ('{}{}A mapping is required here').format(
-                        self.yaml_node.start_mark, os.linesep))
+            raise RecognitionError(('{}{}A mapping is required here').format(
+                self.yaml_node.start_mark, os.linesep))
 
     def require_sequence(self) -> None:
         """Require the node to be a sequence."""
         if not isinstance(self.yaml_node, yaml.SequenceNode):
-            raise RecognitionError(
-                    ('{}{}A sequence is required here').format(
-                        self.yaml_node.start_mark, os.linesep))
+            raise RecognitionError(('{}{}A sequence is required here').format(
+                self.yaml_node.start_mark, os.linesep))
 
-    def require_attribute(self, attribute: str,
-                          typ: Type = _Any) -> None:
+    def require_attribute(self, attribute: str, typ: Type = _Any) -> None:
         """Require an attribute on the node to exist.
 
         If `typ` is given, the attribute must have this type.
@@ -618,7 +619,7 @@ class UnknownNode:
 
         if typ != _Any:
             recognized_types, message = self.__recognizer.recognize(
-                    attr_node, cast(Type, typ))
+                attr_node, cast(Type, typ))
             if len(recognized_types) == 0:
                 raise RecognitionError(message)
 
