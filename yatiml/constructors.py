@@ -204,8 +204,7 @@ class Constructor:
                         return False
                     if not self.__type_matches(value, type_.__args__[1]):
                         return False
-                else:
-                    return True
+                return True
         else:
             return isinstance(obj, type_)
 

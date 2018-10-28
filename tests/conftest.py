@@ -178,12 +178,12 @@ class Color2(enum.Enum):
 
 
 class Document2:
-    def __init__(self, cursor_at: Vector2D, shapes: List[Shape]=[],
+    def __init__(self, cursor_at: Vector2D, shapes: List[Shape]=None,
                  color: Color2=Color2.RED, extra_shape: Optional[Shape] = None
                  ) -> None:
         # Yes, having [] as a default value is a bad idea, but ok here
         self.cursor_at = cursor_at
-        self.shapes = shapes
+        self.shapes = shapes if shapes is not None else list()
         self.color = color
         self.extra_shape = extra_shape
 
