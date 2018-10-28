@@ -275,7 +275,7 @@ def test_enum_class(enum_loader):
     assert data == Color.blue
 
     text = 'yelow\n'
-    with pytest.raises(KeyError):
+    with pytest.raises(yatiml.RecognitionError):
         data = yaml.load(text, Loader=enum_loader)
 
     text = '1\n'

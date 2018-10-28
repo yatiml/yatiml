@@ -365,7 +365,12 @@ class EnumConstructor:
 
         # ruamel.yaml expects us to yield an incomplete object, but enums are
         # immutable, so we'll have to make the whole thing right away.
-        new_obj = self.class_[node.value]
+        try:
+            new_obj = self.class_[node.value]
+        except KeyError:
+            raise RecognitionError(
+                    ('Expected a string matching a {}\n{}').format(
+                        self.class_.__name__, node.start_mark))
         yield new_obj
 
 
