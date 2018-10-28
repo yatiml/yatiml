@@ -3,16 +3,17 @@
 
 """Tests for the yatiml module."""
 from collections import OrderedDict
-import pytest   # type: ignore
+
 import ruamel.yaml as yaml
 
+import pytest  # type: ignore
 import yatiml
 
-from .conftest import (BrokenPrivateAttributes, Circle,
-                       ComplexPrivateAttributes, ConstrainedString, Color,
-                       Color2, Document1, Document2, Extensible, Postcode,
-                       PrivateAttributes, Rectangle, Shape, SubA, SubA2, Super,
-                       UnionAttribute, Universal, Vector2D)
+from .conftest import (BrokenPrivateAttributes, Circle, Color, Color2,
+                       ComplexPrivateAttributes, ConstrainedString,
+                       DashedAttribute, Document1, Document2, Extensible,
+                       Postcode, PrivateAttributes, Rectangle, Shape, SubA,
+                       SubA2, Super, UnionAttribute, Universal, Vector2D)
 
 
 def test_load_class(document1_loader):
@@ -164,6 +165,19 @@ def test_sweeten(super2_dumper):
     assert text == 'subclass: A2\n'
 
 
+def test_load_dashed_attribute(dashed_attribute_loader):
+    text = 'dashed-attribute: 23\n'
+    data = yaml.load(text, Loader=dashed_attribute_loader)
+    assert isinstance(data, DashedAttribute)
+    assert data.dashed_attribute == 23
+
+
+def test_dump_dashed_attribute(dashed_attribute_dumper):
+    data = DashedAttribute(34)
+    text = yaml.dump(data, Dumper=dashed_attribute_dumper)
+    assert text == 'dashed-attribute: 34\n'
+
+
 def test_dump_document1(document1_dumper):
     data = Document1('test')
     text = yaml.dump(data, Dumper=document1_dumper)
@@ -177,7 +191,7 @@ def test_dump_custom_attributes(extensible_dumper):
     assert text == 'a: 10\nb: 5\nc: 3\n'
 
 
-def test_load_complex_document(document2_loader):
+def test_load_complex_document(document2_loader, caplog):
     text = ('cursor_at:\n'
             '  x: 3.0\n'
             '  y: 4.0\n'
@@ -192,6 +206,11 @@ def test_load_complex_document(document2_loader):
             '  width: 3.0\n'
             '  height: 7.0\n'
             'color: blue\n'
+            'extra_shape:\n'
+            '  center:\n'
+            '    x: 7.0\n'
+            '    y: 8.0\n'
+            '  radius: 2.0\n'
             )
     doc = yaml.load(text, Loader=document2_loader)
     assert isinstance(doc, Document2)
@@ -219,6 +238,7 @@ def test_dump_complex_document(document2_dumper):
             '  width: 3.0\n'
             '  height: 7.0\n'
             'color: red\n'
+            'extra_shape:\n'
             )
 
 
@@ -255,7 +275,7 @@ def test_enum_class(enum_loader):
     assert data == Color.blue
 
     text = 'yelow\n'
-    with pytest.raises(KeyError):
+    with pytest.raises(yatiml.RecognitionError):
         data = yaml.load(text, Loader=enum_loader)
 
     text = '1\n'

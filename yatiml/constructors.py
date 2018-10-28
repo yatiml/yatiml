@@ -2,8 +2,8 @@ import inspect
 import logging
 import os
 from collections import OrderedDict
-from typing import (Any, Dict, Generator, GenericMeta, List, Type,
-                    TYPE_CHECKING, Union)
+from typing import (TYPE_CHECKING, Any, Dict, Generator, GenericMeta, List,
+                    Type, Union)
 
 import ruamel.yaml as yaml
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
@@ -195,8 +195,7 @@ class Constructor:
                 for item in obj:
                     if not self.__type_matches(item, type_.__args__[0]):
                         return False
-                else:
-                    return True
+                return True
             elif type_.__origin__ == Dict:
                 if not isinstance(obj, OrderedDict):
                     return False
@@ -205,8 +204,7 @@ class Constructor:
                         return False
                     if not self.__type_matches(value, type_.__args__[1]):
                         return False
-                else:
-                    return True
+                return True
         else:
             return isinstance(obj, type_)
 
@@ -365,7 +363,12 @@ class EnumConstructor:
 
         # ruamel.yaml expects us to yield an incomplete object, but enums are
         # immutable, so we'll have to make the whole thing right away.
-        new_obj = self.class_[node.value]
+        try:
+            new_obj = self.class_[node.value]
+        except KeyError:
+            raise RecognitionError(
+                ('Expected a string matching a {}\n{}').format(
+                    self.class_.__name__, node.start_mark))
         yield new_obj
 
 

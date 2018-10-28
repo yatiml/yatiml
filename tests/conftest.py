@@ -1,13 +1,14 @@
-import yatiml
-from yatiml.recognizer import Recognizer
-
-import pytest   # type: ignore
-from ruamel import yaml
-
-from collections import OrderedDict, UserString
 import enum
 import math
+from collections import OrderedDict, UserString
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
+
+from ruamel import yaml
+
+import pytest  # type: ignore
+import yatiml
+from yatiml.recognizer import Recognizer
 
 
 @pytest.fixture
@@ -16,6 +17,14 @@ def string_loader():
         pass
     yatiml.set_document_type(StringLoader, str)
     return StringLoader
+
+
+@pytest.fixture
+def datetime_loader():
+    class DatetimeLoader(yatiml.Loader):
+        pass
+    yatiml.set_document_type(DatetimeLoader, datetime)
+    return DatetimeLoader
 
 
 @pytest.fixture
@@ -169,12 +178,14 @@ class Color2(enum.Enum):
 
 
 class Document2:
-    def __init__(self, cursor_at: Vector2D, shapes: List[Shape]=[],
-                 color: Color2=Color2.RED) -> None:
+    def __init__(self, cursor_at: Vector2D, shapes: List[Shape]=None,
+                 color: Color2=Color2.RED, extra_shape: Optional[Shape] = None
+                 ) -> None:
         # Yes, having [] as a default value is a bad idea, but ok here
         self.cursor_at = cursor_at
-        self.shapes = shapes
+        self.shapes = shapes if shapes is not None else list()
         self.color = color
+        self.extra_shape = extra_shape
 
 
 class Super:
@@ -321,6 +332,19 @@ class Postcode:
         digits = node.get_attribute('digits').get_value()
         letters = node.get_attribute('letters').get_value()
         node.set_value('{} {}'.format(digits, letters))
+
+
+class DashedAttribute:
+    def __init__(self, dashed_attribute: int) -> None:
+        self.dashed_attribute = dashed_attribute
+
+    @classmethod
+    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+        node.dashes_to_unders_in_keys()
+
+    @classmethod
+    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        node.unders_to_dashes_in_keys()
 
 
 @pytest.fixture
@@ -556,6 +580,23 @@ def parsed_class_dumper():
 
 
 @pytest.fixture
+def dashed_attribute_loader():
+    class DashedAttributeLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(DashedAttributeLoader, DashedAttribute)
+    yatiml.set_document_type(DashedAttributeLoader, DashedAttribute)
+    return DashedAttributeLoader
+
+
+@pytest.fixture
+def dashed_attribute_dumper():
+    class DashedAttributeDumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(DashedAttributeDumper, DashedAttribute)
+    return DashedAttributeDumper
+
+
+@pytest.fixture
 def yaml_seq_node():
     # A yaml.SequenceNode representing a sequence of mappings
     tag1 = 'tag:yaml.org,2002:map'
@@ -575,9 +616,12 @@ def yaml_seq_node():
     item2_value1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item2')
     item2_key2_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'price')
     item2_value2_node = yaml.ScalarNode('tag:yaml.org,2002:float', 200.0)
+    item2_key3_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'on_sale')
+    item2_value3_node = yaml.ScalarNode('tag:yaml.org,2002:bool', 'True')
     value2 = [
             (item2_key1_node, item2_value1_node),
-            (item2_key2_node, item2_value2_node)
+            (item2_key2_node, item2_value2_node),
+            (item2_key3_node, item2_value3_node)
             ]
     item2 = yaml.MappingNode(tag2, value2)
 
@@ -603,7 +647,10 @@ def yaml_map_node():
     item2 = yaml.MappingNode(tag2, value2)
     key2 = yaml.ScalarNode('tag:yaml.org,2002:str', 'item2')
 
-    outer_map_value = [(key1, item1), (key2, item2)]
+    item3 = yaml.ScalarNode('tag:yaml.org,2002:float', 150.0)
+    key3 = yaml.ScalarNode('tag:yaml.org,2002:str', 'item3')
+
+    outer_map_value = [(key1, item1), (key2, item2), (key3, item3)]
     outer_tag = 'tag:yaml.org,2002:map'
     outer_map = yaml.MappingNode(outer_tag, outer_map_value)
 
@@ -623,11 +670,19 @@ def yaml_node(yaml_seq_node, yaml_map_node):
     list1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'list1')
     dict1_key_node = yaml.ScalarNode('tag:yaml.org,2002:map', 'dict1')
 
+    dashed_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'dashed-attr')
+    dashed_value_node = yaml.ScalarNode('tag:yaml.org,2002:int', 13)
+
+    undered_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'undered_attr')
+    undered_value_node = yaml.ScalarNode('tag:yaml.org,2002:float', 13.0)
+
     value = [
             (attr1_key_node, attr1_value_node),
             (null_attr_key_node, null_attr_value_node),
             (list1_key_node, yaml_seq_node),
-            (dict1_key_node, yaml_map_node)
+            (dict1_key_node, yaml_map_node),
+            (dashed_key_node, dashed_value_node),
+            (undered_key_node, undered_value_node)
             ]
     return yaml.MappingNode(tag, value)
 

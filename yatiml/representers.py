@@ -1,6 +1,6 @@
 import inspect
 import logging
-from typing import Any, Type, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Type
 
 from ruamel import yaml
 

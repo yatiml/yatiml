@@ -1,7 +1,15 @@
 import abc
-from typing import List, Type
+from typing import List, Tuple, Type
 
 from ruamel import yaml
+
+RecResult = Tuple[List[Type], str]
+"""A recognition result.
+
+The first list is a list of recognised types, the second list an error
+message to display if no type was recognised or more than one type was
+recognised.
+"""
 
 
 class IRecognizer(abc.ABC):
@@ -11,7 +19,7 @@ class IRecognizer(abc.ABC):
     needed one here to break an import cycle.
     """
 
-    def recognize(self, node: yaml.Node, expected_type: Type) -> List[Type]:
+    def recognize(self, node: yaml.Node, expected_type: Type) -> RecResult:
         """Figure out how to interpret this node.
 
         This is not quite a type check. This function makes a list of \

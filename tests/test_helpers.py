@@ -1,7 +1,7 @@
-import yatiml
-
 from ruamel import yaml
+
 import pytest
+import yatiml
 
 
 def test_is_scalar(class_node):
@@ -152,21 +152,21 @@ def test_seq_attribute_to_map(class_node, class_node_dup_key):
     assert class_node.has_attribute('list1')
     assert class_node.get_attribute('list1').is_sequence()
 
-    class_node.seq_attribute_to_map('list1', 'item_id')
+    class_node.seq_attribute_to_map('list1', 'item_id', 'price')
 
     assert class_node.has_attribute_type('list1', dict)
     attr_node = class_node.get_attribute('list1')
     assert attr_node.is_mapping()
 
-    assert attr_node.has_attribute_type('item1', dict)
+    assert attr_node.has_attribute_type('item1', float)
     item1_node = attr_node.get_attribute('item1')
-    assert not item1_node.has_attribute('item_id')
-    assert item1_node.has_attribute('price')
+    assert item1_node.get_value() == 100.0
 
     assert attr_node.has_attribute_type('item2', dict)
     item2_node = attr_node.get_attribute('item2')
     assert not item2_node.has_attribute('item_id')
     assert item2_node.has_attribute('price')
+    assert item2_node.has_attribute('on_sale')
 
     # check that it fails silently if the attribute is missing or not a list
     class_node.seq_attribute_to_map('non_existent_attribute', 'item_id')
@@ -180,12 +180,12 @@ def test_seq_attribute_to_map(class_node, class_node_dup_key):
 def test_map_attribute_to_seq(class_node):
     assert class_node.has_attribute_type('dict1', dict)
 
-    class_node.map_attribute_to_seq('dict1', 'item_id')
+    class_node.map_attribute_to_seq('dict1', 'item_id', 'price')
 
     assert class_node.has_attribute_type('dict1', list)
     attr_node = class_node.get_attribute('dict1')
 
-    assert len(attr_node.seq_items()) == 2
+    assert len(attr_node.seq_items()) == 3
     first_item_node = attr_node.seq_items()[0]
     assert first_item_node.has_attribute('item_id')
     assert first_item_node.has_attribute('price')
@@ -196,8 +196,33 @@ def test_map_attribute_to_seq(class_node):
     assert second_item_node.has_attribute('price')
     second_item_id = second_item_node.get_attribute('item_id').get_value()
 
+    third_item_node = attr_node.seq_items()[2]
+    assert third_item_node.has_attribute('item_id')
+    assert third_item_node.has_attribute('price')
+    third_item_id = third_item_node.get_attribute('item_id').get_value()
+
+    assert first_item_id == 'item1'
+    assert second_item_id == 'item2'
+    assert third_item_id == 'item3'
+
     assert ((first_item_id == 'item1' and second_item_id == 'item2') or
             (first_item_id == 'item2' and second_item_id == 'item1'))
+
+
+def test_unders_to_dashes_in_keys(class_node):
+    assert class_node.has_attribute('undered_attr')
+    assert class_node.has_attribute('attr1')
+    class_node.unders_to_dashes_in_keys()
+    assert class_node.has_attribute('undered-attr')
+    assert class_node.has_attribute('attr1')
+
+
+def test_dashes_to_unders_in_keys(class_node):
+    assert class_node.has_attribute('dashed-attr')
+    assert class_node.has_attribute('list1')
+    class_node.dashes_to_unders_in_keys()
+    assert class_node.has_attribute('dashed_attr')
+    assert class_node.has_attribute('list1')
 
 
 def test_unknown_node_str(unknown_node):

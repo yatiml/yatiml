@@ -1,11 +1,11 @@
-from collections import UserString
 import enum
 import logging
+from collections import UserString
 from typing import List, Type
 
 from ruamel import yaml
 
-from yatiml.representers import (Representer, EnumRepresenter,
+from yatiml.representers import (EnumRepresenter, Representer,
                                  UserStringRepresenter)
 
 logger = logging.getLogger(__name__)

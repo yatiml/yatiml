@@ -1,14 +1,19 @@
 import os
-from typing import (cast, List, Optional, Set, Type, TypeVar,  # noqa: F401
-                    Union)
+from typing import (  # noqa: F401
+    List,
+    Optional,
+    Set,
+    Type,
+    TypeVar,
+    Union,
+    cast)
 
 from ruamel import yaml
 from ruamel.yaml.error import StreamMark
 
 from yatiml.exceptions import RecognitionError, SeasoningError
 from yatiml.irecognizer import IRecognizer
-from yatiml.util import scalar_type_to_tag, ScalarType
-
+from yatiml.util import ScalarType, scalar_type_to_tag
 
 _Any = TypeVar('_Any')
 
@@ -90,8 +95,8 @@ class Node:
             value_str = 'true' if value else 'false'
         else:
             value_str = str(value)
-        start_mark = StreamMark('generated node', 0, 0, 0)
-        end_mark = StreamMark('generated node', 0, 0, 0)
+        start_mark = self.yaml_node.start_mark
+        end_mark = self.yaml_node.end_mark
         # If we're of a class type, then we want to keep that tag so that the
         # correct Constructor is called. If we're a built-in type, set the tag
         # to the appropriate YAML tag.
@@ -203,9 +208,8 @@ class Node:
                     matches))
         return Node(matches[0])
 
-    def set_attribute(
-            self, attribute: str,
-            value: Union[ScalarType, yaml.Node]) -> None:
+    def set_attribute(self, attribute: str,
+                      value: Union[ScalarType, yaml.Node]) -> None:
         """Sets the attribute to the given value.
 
         Use only if is_mapping() returns True.
@@ -276,15 +280,38 @@ class Node:
             attribute: The (old) name of the attribute to rename.
             new_name: The new name to rename it to.
         """
-        for key_node, value_node in self.yaml_node.value:
+        for key_node, _ in self.yaml_node.value:
             if key_node.value == attribute:
                 key_node.value = new_name
                 break
 
+    def unders_to_dashes_in_keys(self) -> None:
+        """Replaces underscores with dashes in key names.
+
+        For each attribute in a mapping, this replaces any underscores \
+        in its keys with dashes. Handy because Python does not \
+        accept dashes in identifiers, while some YAML-based formats use \
+        dashes in their keys.
+        """
+        for key_node, _ in self.yaml_node.value:
+            key_node.value = key_node.value.replace('_', '-')
+
+    def dashes_to_unders_in_keys(self) -> None:
+        """Replaces dashes with underscores in key names.
+
+        For each attribute in a mapping, this replaces any dashes in \
+        its keys with underscores. Handy because Python does not \
+        accept dashes in identifiers, while some YAML-based file \
+        formats use dashes in their keys.
+        """
+        for key_node, _ in self.yaml_node.value:
+            key_node.value = key_node.value.replace('-', '_')
+
     def seq_attribute_to_map(self,
                              attribute: str,
                              key_attribute: str,
-                             strict: bool = True) -> None:
+                             value_attribute: Optional[str] = None,
+                             strict: Optional[bool] = True) -> None:
         """Converts a sequence attribute to a map.
 
         This function takes an attribute of this Node that is \
@@ -344,16 +371,13 @@ class Node:
         if not attr_node.is_sequence():
             return
 
+        start_mark = attr_node.yaml_node.start_mark
+        end_mark = attr_node.yaml_node.end_mark
+
         # check that all list items are mappings and that the keys are unique
         # strings
         seen_keys = set()  # type: Set[str]
         for item in attr_node.seq_items():
-            if not item.is_mapping():
-                if strict:
-                    raise SeasoningError(('Expected a sequence of mappings'
-                                          ' but got {}'.format(attr_node)))
-                return
-
             key_attr_node = item.get_attribute(key_attribute)
             if not key_attr_node.is_scalar(str):
                 raise SeasoningError(
@@ -374,24 +398,39 @@ class Node:
             # we've already checked that it's a SequenceNode above
             key_node = item.get_attribute(key_attribute).yaml_node
             item.remove_attribute(key_attribute)
-            mapping_values.append((key_node, item.yaml_node))
+            if value_attribute is not None:
+                value_node = item.get_attribute(value_attribute).yaml_node
+                if len(item.yaml_node.value) == 1:
+                    # no other attributes, use short form
+                    mapping_values.append((key_node, value_node))
+                else:
+                    mapping_values.append((key_node, item.yaml_node))
+            else:
+                mapping_values.append((key_node, item.yaml_node))
 
         # create mapping node
-        start_mark = StreamMark('generated node', 0, 0, 0)
-        end_mark = StreamMark('generated node', 0, 0, 0)
         mapping = yaml.MappingNode('tag:yaml.org,2002:map', mapping_values,
                                    start_mark, end_mark)
         self.set_attribute(attribute, mapping)
 
-    def map_attribute_to_seq(self, attribute: str, key_attribute: str) -> None:
+    def map_attribute_to_seq(self,
+                             attribute: str,
+                             key_attribute: str,
+                             value_attribute: Optional[str] = None) -> None:
         """Converts a mapping attribute to a sequence.
 
         This function takes an attribute of this Node whose value \
-        is a mapping of mappings and turns it into a sequence of \
-        mappings. It adds to each of the sub-mappings in the original \
-        mapping an attribute containing the value of the corresponding \
-        key in the outer mapping, then replace the outer mapping with a \
-        sequence containing all the inner mappings.
+        is a mapping or a mapping of mappings and turns it into a \
+        sequence of mappings. Each entry in the original mapping is \
+        converted to an entry in the list. If only a key attribute is \
+        given, then each entry in the original mapping must map to a \
+        (sub)mapping. This submapping becomes the corresponding list \
+        entry, with the key added to it as an additional attribute. If a \
+        value attribute is also given, then an entry in the original \
+        mapping may map to any object. If the mapped-to object is a \
+        mapping, the conversion is as before, otherwise a new \
+        submapping is created, and key and value are added using the \
+        given key and value attribute names.
 
         An example probably helps. If you have a Node representing \
         this piece of YAML::
@@ -418,8 +457,26 @@ class Node:
         which once converted to an object is often easier to deal with \
         in code.
 
-        If the attribute does not exist, or is not a mapping of \
-        mappings, this function will silently do nothing.
+        Slightly more complicated, this YAML::
+
+            items:
+              item1: Basic widget
+              item2:
+                description: Premium quality widget
+                price: 200.0
+
+        when passed through map_attribute_to_seq('items', 'item_id', \
+        'description'), will result in th equivalent of::
+
+            items:
+            - item_id: item1
+              description: Basic widget
+            - item_id: item2
+              description: Premium quality widget
+              price: 200.0
+
+        If the attribute does not exist, or is not a mapping, this \
+        function will silently do nothing.
 
         With thanks to the makers of the Common Workflow Language for \
         the idea.
@@ -427,6 +484,8 @@ class Node:
         Args:
             attribute: Name of the attribute whose value to modify.
             key_attribute: Name of the new attribute in each item to \
+                    add with the value of the key.
+            value_attribute: Name of the new attribute in each item to \
                     add with the value of the key.
         """
         if not self.has_attribute(attribute):
@@ -436,13 +495,20 @@ class Node:
         if not attr_node.is_mapping():
             return
 
+        start_mark = attr_node.yaml_node.start_mark
+        end_mark = attr_node.yaml_node.end_mark
         object_list = []
         for item_key, item_value in attr_node.yaml_node.value:
             item_value_node = Node(item_value)
+            if not item_value_node.is_mapping():
+                if value_attribute is None:
+                    return
+                ynode = item_value_node.yaml_node
+                item_value_node.make_mapping()
+                item_value_node.set_attribute(value_attribute, ynode)
+
             item_value_node.set_attribute(key_attribute, item_key.value)
             object_list.append(item_value_node.yaml_node)
-        start_mark = StreamMark('generated node', 0, 0, 0)
-        end_mark = StreamMark('generated node', 0, 0, 0)
         seq_node = yaml.SequenceNode('tag:yaml.org,2002:seq', object_list,
                                      start_mark, end_mark)
         self.set_attribute(attribute, seq_node)
@@ -478,8 +544,7 @@ class UnknownNode:
         yaml_node: The yaml.Node wrapped by this object.
     """
 
-    def __init__(self, recognizer: IRecognizer,
-                 node: yaml.Node) -> None:
+    def __init__(self, recognizer: IRecognizer, node: yaml.Node) -> None:
         """Create an UnknownNode for a particular mapping node.
 
         The member functions will act on the contained node.
@@ -511,33 +576,29 @@ class UnknownNode:
         node = Node(self.yaml_node)
         if len(args) == 0:
             if not node.is_scalar():
-                raise RecognitionError(
-                        ('{}{}A scalar is required').format(
-                            self.yaml_node.start_mark, os.linesep))
+                raise RecognitionError(('{}{}A scalar is required').format(
+                    self.yaml_node.start_mark, os.linesep))
         else:
             for typ in args:
                 if node.is_scalar(typ):
                     return
             raise RecognitionError(
-                    ('{}{}A scalar of type {} is required').format(
-                        self.yaml_node.start_mark, os.linesep, args))
+                ('{}{}A scalar of type {} is required').format(
+                    self.yaml_node.start_mark, os.linesep, args))
 
     def require_mapping(self) -> None:
         """Require the node to be a mapping."""
         if not isinstance(self.yaml_node, yaml.MappingNode):
-            raise RecognitionError(
-                    ('{}{}A mapping is required here').format(
-                        self.yaml_node.start_mark, os.linesep))
+            raise RecognitionError(('{}{}A mapping is required here').format(
+                self.yaml_node.start_mark, os.linesep))
 
     def require_sequence(self) -> None:
         """Require the node to be a sequence."""
         if not isinstance(self.yaml_node, yaml.SequenceNode):
-            raise RecognitionError(
-                    ('{}{}A sequence is required here').format(
-                        self.yaml_node.start_mark, os.linesep))
+            raise RecognitionError(('{}{}A sequence is required here').format(
+                self.yaml_node.start_mark, os.linesep))
 
-    def require_attribute(self, attribute: str,
-                          typ: Type = _Any) -> None:
+    def require_attribute(self, attribute: str, typ: Type = _Any) -> None:
         """Require an attribute on the node to exist.
 
         If `typ` is given, the attribute must have this type.
@@ -557,13 +618,10 @@ class UnknownNode:
         attr_node = attr_nodes[0]
 
         if typ != _Any:
-            recognized_types = self.__recognizer.recognize(attr_node,
-                                                           cast(Type, typ))
+            recognized_types, message = self.__recognizer.recognize(
+                attr_node, cast(Type, typ))
             if len(recognized_types) == 0:
-                raise RecognitionError(('{}{}Attribute {} is not of required'
-                                        ' type {}').format(
-                                            self.yaml_node.start_mark,
-                                            os.linesep, attribute, typ))
+                raise RecognitionError(message)
 
     def require_attribute_value(
             self, attribute: str,

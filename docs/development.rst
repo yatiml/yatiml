@@ -41,10 +41,10 @@ process:
 #. (**important**) wait until some kind of consensus is reached about your idea
    being a good idea.
 #. If needed, fork the repository to your own Github profile and create your
-   own feature branch off of the latest master commit. While working on your
-   feature branch, make sure to stay up to date with the master branch by
-   pulling in changes, possibly from the 'upstream' repository (follow the
-   instructions `here
+   own feature branch off of the latest ``develop`` commit. While working on
+   your feature branch, make sure to stay up to date with the ``develop``
+   branch by pulling in changes, possibly from the 'upstream' repository
+   (follow the instructions `here
    <https://help.github.com/articles/configuring-a-remote-for-a-fork/>`__ and
    `here <https://help.github.com/articles/syncing-a-fork/>`__).
 #. Make sure the existing tests still work by running ``python setup.py test``.
@@ -57,7 +57,9 @@ process:
    to format and group your imports.
 
 #. `Push <http://rogerdudler.github.io/git-guide/>`_ your feature branch to
-   (your fork of) the YAtiML repository on GitHub; 1. create the pull request,
+   (your fork of) the YAtiML repository on GitHub.
+
+#. create the pull request,
    e.g. following the instructions `here
    <https://help.github.com/articles/creating-a-pull-request/>`_.
 
@@ -76,6 +78,26 @@ branching model. Making a release involves quite a few steps, so they're listed
 here to help make the process more reliable; this information is really only
 useful for the maintainers.
 
+Update the changelog
+....................
+
+Each release should have an entry in the CHANGELOG.rst describing the new
+features and fixed problems. Since we'll want to carry these entries forward,
+we'll make them first, on the develop branch. Use the git log to get a list of
+the changes, and switch to the development branch:
+
+.. code-block:: bash
+
+  git log <your favourite options>
+  git checkout develop
+
+and then edit CHANGELOG.rst and commit.
+
+.. code-block:: bash
+
+  git add CHANGELOG.rst
+  git commit -m 'Add version x.y.z to the change log'
+
 Make release branch
 ...................
 
@@ -92,8 +114,8 @@ Update version
 
 Next, the version should be updated. There is a version tag in ``setup.py`` and
 two for the documentation in ``docs/conf.py`` (search for ``version`` and
-``release``). On the development branch, these should be set to ``develop``. On
-the release branch, they should be set to ``x.y.z`` (or rather, the actual
+``release``). On the development branch, these should be set to ``0.0.0.dev0``.
+On the release branch, they should be set to ``x.y.z`` (or rather, the actual
 number of this release of course).
 
 Check documentation
@@ -137,7 +159,9 @@ Fix badges
 ..........
 
 The badges in the README.rst normally point to the development branch versions
-of everything. For the master branch, they should point to the master version:
+of everything. For the master branch, they should point to the master version.
+Note that for the ReadTheDocs badge, `develop` should be changed to `latest`,
+and that for Codacy there is only one badge, so no change is needed.
 
 .. code-block:: bash
 
@@ -151,14 +175,18 @@ Merge into the master branch
 
 If all seems to be well, then we can merge the release branch into the master
 branch and tag it, thus making a release, at least as far as Git Flow is
-concerned.
+concerned. We use the ``-X ours`` option here to resolve the merge conflict
+caused by the version update that was done for the previous release, which we
+don't have on this branch. The last command is to push the tag, which is
+important for GitHub and GitHub integrations.
 
 .. code-block:: bash
 
   git checkout master
-  git merge --no-ff release-x.y.z
+  git merge --no-ff -X ours release-x.y.z
   git tag -a x.y.z
   git push
+  git push origin x.y.z
 
 Build and release to PyPI
 .........................
