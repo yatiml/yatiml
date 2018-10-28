@@ -1,5 +1,5 @@
-.. image:: https://readthedocs.org/projects/yatiml/badge/?version=latest
-    :target: https://yatiml.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/yatiml/badge/?version=develop
+    :target: https://yatiml.readthedocs.io/en/latest/?badge=develop
     :alt: Documentation Build Status
 
 .. image:: https://api.travis-ci.org/yatiml/yatiml.svg?branch=develop
