@@ -175,7 +175,7 @@ Merge into the master branch
 
 If all seems to be well, then we can merge the release branch into the master
 branch and tag it, thus making a release, at least as far as Git Flow is
-concerned. We use the ``-X ours`` option here to resolve the merge conflict
+concerned. We use the ``-X theirs`` option here to resolve the merge conflict
 caused by the version update that was done for the previous release, which we
 don't have on this branch. The last command is to push the tag, which is
 important for GitHub and GitHub integrations.
@@ -183,8 +183,8 @@ important for GitHub and GitHub integrations.
 .. code-block:: bash
 
   git checkout master
-  git merge --no-ff -X ours release-x.y.z
-  git tag -a x.y.z
+  git merge --no-ff -X theirs release-x.y.z
+  git tag -a x.y.z -m 'Release x.y.z'
   git push
   git push origin x.y.z
 
