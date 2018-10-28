@@ -280,7 +280,7 @@ class Node:
             attribute: The (old) name of the attribute to rename.
             new_name: The new name to rename it to.
         """
-        for key_node, value_node in self.yaml_node.value:
+        for key_node, _ in self.yaml_node.value:
             if key_node.value == attribute:
                 key_node.value = new_name
                 break

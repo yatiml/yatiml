@@ -99,7 +99,7 @@ class Recognizer(IRecognizer):
                 node.start_mark, os.linesep)
             return [], message
         value_type = expected_type.__args__[1]
-        for key, value in node.value:
+        for _, value in node.value:
             recognized_value_types, message = self.recognize(value, value_type)
             if len(recognized_value_types) == 0:
                 return [], message
@@ -219,8 +219,7 @@ class Recognizer(IRecognizer):
                             message = (
                                 'Error recognizing a {}\n{}because it'
                                 ' is missing an attribute named {}').format(
-                                    expected_type.__name__, loc_str, attr_name,
-                                    attr_name.replace('_', '-'))
+                                    expected_type.__name__, loc_str, attr_name)
                             if '_' in attr_name:
                                 message += ' or maybe {}.\n'.format(
                                     attr_name.replace('_', '-'))

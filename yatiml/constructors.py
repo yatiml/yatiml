@@ -195,8 +195,7 @@ class Constructor:
                 for item in obj:
                     if not self.__type_matches(item, type_.__args__[0]):
                         return False
-                else:
-                    return True
+                return True
             elif type_.__origin__ == Dict:
                 if not isinstance(obj, OrderedDict):
                     return False
