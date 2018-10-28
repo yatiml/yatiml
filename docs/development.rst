@@ -41,10 +41,10 @@ process:
 #. (**important**) wait until some kind of consensus is reached about your idea
    being a good idea.
 #. If needed, fork the repository to your own Github profile and create your
-   own feature branch off of the latest master commit. While working on your
-   feature branch, make sure to stay up to date with the master branch by
-   pulling in changes, possibly from the 'upstream' repository (follow the
-   instructions `here
+   own feature branch off of the latest ``develop`` commit. While working on
+   your feature branch, make sure to stay up to date with the ``develop``
+   branch by pulling in changes, possibly from the 'upstream' repository
+   (follow the instructions `here
    <https://help.github.com/articles/configuring-a-remote-for-a-fork/>`__ and
    `here <https://help.github.com/articles/syncing-a-fork/>`__).
 #. Make sure the existing tests still work by running ``python setup.py test``.
@@ -57,7 +57,9 @@ process:
    to format and group your imports.
 
 #. `Push <http://rogerdudler.github.io/git-guide/>`_ your feature branch to
-   (your fork of) the YAtiML repository on GitHub; 1. create the pull request,
+   (your fork of) the YAtiML repository on GitHub.
+
+#. create the pull request,
    e.g. following the instructions `here
    <https://help.github.com/articles/creating-a-pull-request/>`_.
 
