@@ -12,7 +12,7 @@ from yatiml.exceptions import RecognitionError
 from yatiml.helpers import Node
 from yatiml.introspection import class_subobjects
 from yatiml.recognizer import Recognizer
-from yatiml.util import scalar_type_to_tag
+from yatiml.util import scalar_type_to_tag, type_to_desc
 
 logger = logging.getLogger(__name__)
 
@@ -51,54 +51,6 @@ class Loader(yaml.RoundTripLoader):
         if node is not None:
             node = self.__process_node(node, type(self).document_type)
         return node
-
-    def __type_to_desc(self, type_: Type) -> str:
-        """Convert a type to a human-readable description.
-
-        This is used for generating nice error messages. We want users \
-        to see a nice readable text, rather than something like \
-        "typing.List<~T>[str]".
-
-        Args:
-            type_: The type to represent.
-
-        Returns:
-            A human-readable description.
-        """
-        scalar_type_to_str = {
-            str: 'string',
-            int: 'int',
-            float: 'float',
-            bool: 'boolean',
-            None: 'null value',
-            type(None): 'null value'
-        }
-
-        if type_ in scalar_type_to_str:
-            return scalar_type_to_str[type_]
-
-        if type(type_).__name__ in ['UnionMeta', '_Union']:
-            if hasattr(type_, '__union_params__'):
-                types = type_.__union_params__
-            else:
-                types = type_.__args__
-            return 'union of {}'.format(
-                [self.__type_to_desc(t) for t in types])
-
-        if isinstance(type_, GenericMeta):
-            if type_.__origin__ == List:
-                return 'list of ({})'.format(
-                    self.__type_to_desc(type_.__args__[0]))
-            if type_.__origin__ == Dict:
-                return 'dict of string to ({})'.format(
-                    self.__type_to_desc(type_.__args__[1]))
-
-        if type_ in self._registered_classes.values():
-            return type_.__name__
-
-        raise RuntimeError((
-            'Unknown type {} in type_to_desc,'  # pragma: no cover
-            ' please report a YAtiML bug.').format(type_))
 
     def __type_to_tag(self, type_: Type) -> str:
         """Convert a type to the corresponding YAML tag.
@@ -170,17 +122,11 @@ class Loader(yaml.RoundTripLoader):
             node, expected_type))
 
         # figure out how to interpret this node
-        recognized_types = self.__recognizer.recognize(node, expected_type)
+        recognized_types, message = self.__recognizer.recognize(
+                node, expected_type)
 
-        if len(recognized_types) == 0:
-            raise RecognitionError('{}{}Type mismatch, expected a {}'.format(
-                node.start_mark, os.linesep,
-                self.__type_to_desc(expected_type)))
-        if len(recognized_types) > 1:
-            raise RecognitionError(
-                '{}{}Ambiguous value, could be any of {}'.format(
-                    node.start_mark, os.linesep,
-                    [self.__type_to_desc(t) for t in recognized_types]))
+        if len(recognized_types) != 1:
+            raise RecognitionError(message)
 
         recognized_type = recognized_types[0]
 
@@ -197,14 +143,14 @@ class Loader(yaml.RoundTripLoader):
                 if node.tag != 'tag:yaml.org,2002:seq':
                     raise RecognitionError('{}{}Expected a {} here'.format(
                         node.start_mark, os.linesep,
-                        self.__type_to_desc(expected_type)))
+                        type_to_desc(expected_type)))
                 for item in node.value:
                     self.__process_node(item, recognized_type.__args__[0])
             elif recognized_type.__origin__ == Dict:
                 if node.tag != 'tag:yaml.org,2002:map':
                     raise RecognitionError('{}{}Expected a {} here'.format(
                         node.start_mark, os.linesep,
-                        self.__type_to_desc(expected_type)))
+                        type_to_desc(expected_type)))
                 for _, value_node in node.value:
                     self.__process_node(value_node,
                                         recognized_type.__args__[1])

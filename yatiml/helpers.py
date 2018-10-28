@@ -90,8 +90,8 @@ class Node:
             value_str = 'true' if value else 'false'
         else:
             value_str = str(value)
-        start_mark = StreamMark('generated node', 0, 0, 0)
-        end_mark = StreamMark('generated node', 0, 0, 0)
+        start_mark = self.yaml_node.start_mark
+        end_mark = self.yaml_node.end_mark
         # If we're of a class type, then we want to keep that tag so that the
         # correct Constructor is called. If we're a built-in type, set the tag
         # to the appropriate YAML tag.
@@ -617,13 +617,10 @@ class UnknownNode:
         attr_node = attr_nodes[0]
 
         if typ != _Any:
-            recognized_types = self.__recognizer.recognize(attr_node,
-                                                           cast(Type, typ))
+            recognized_types, message = self.__recognizer.recognize(
+                    attr_node, cast(Type, typ))
             if len(recognized_types) == 0:
-                raise RecognitionError(('{}{}Attribute {} is not of required'
-                                        ' type {}').format(
-                                            self.yaml_node.start_mark,
-                                            os.linesep, attribute, typ))
+                raise RecognitionError(message)
 
     def require_attribute_value(
             self, attribute: str,
