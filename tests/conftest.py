@@ -603,7 +603,7 @@ def yaml_seq_node():
     item1_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item_id')
     item1_value1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item1')
     item1_key2_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'price')
-    item1_value2_node = yaml.ScalarNode('tag:yaml.org,2002:float', 100.0)
+    item1_value2_node = yaml.ScalarNode('tag:yaml.org,2002:float', '100.0')
     value1 = [
             (item1_key1_node, item1_value1_node),
             (item1_key2_node, item1_value2_node)
@@ -615,7 +615,7 @@ def yaml_seq_node():
     item2_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item_id')
     item2_value1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item2')
     item2_key2_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'price')
-    item2_value2_node = yaml.ScalarNode('tag:yaml.org,2002:float', 200.0)
+    item2_value2_node = yaml.ScalarNode('tag:yaml.org,2002:float', '200.0')
     item2_key3_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'on_sale')
     item2_value3_node = yaml.ScalarNode('tag:yaml.org,2002:bool', 'True')
     value2 = [
@@ -633,7 +633,7 @@ def yaml_map_node():
     # A yaml.MappingNode representing a mapping of mappings
     tag1 = 'tag:yaml.org,2002:map'
     item1_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'price')
-    item1_value1_node = yaml.ScalarNode('tag:yaml.org,2002:float', 100.0)
+    item1_value1_node = yaml.ScalarNode('tag:yaml.org,2002:float', '100.0')
     value1 = [(item1_key1_node, item1_value1_node)]
 
     item1 = yaml.MappingNode(tag1, value1)
@@ -641,13 +641,13 @@ def yaml_map_node():
 
     tag2 = 'tag:yaml.org,2002:map'
     item2_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'price')
-    item2_value1_node = yaml.ScalarNode('tag:yaml.org,2002:float', 200.0)
+    item2_value1_node = yaml.ScalarNode('tag:yaml.org,2002:float', '200.0')
     value2 = [(item2_key1_node, item2_value1_node)]
 
     item2 = yaml.MappingNode(tag2, value2)
     key2 = yaml.ScalarNode('tag:yaml.org,2002:str', 'item2')
 
-    item3 = yaml.ScalarNode('tag:yaml.org,2002:float', 150.0)
+    item3 = yaml.ScalarNode('tag:yaml.org,2002:float', '150.0')
     key3 = yaml.ScalarNode('tag:yaml.org,2002:str', 'item3')
 
     outer_map_value = [(key1, item1), (key2, item2), (key3, item3)]
@@ -662,19 +662,19 @@ def yaml_node(yaml_seq_node, yaml_map_node):
     tag = 'tag:yaml.org,2002:map'
 
     attr1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'attr1')
-    attr1_value_node = yaml.ScalarNode('tag:yaml.org,2002:int', 42)
+    attr1_value_node = yaml.ScalarNode('tag:yaml.org,2002:int', '42')
 
     null_attr_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'null_attr')
-    null_attr_value_node = yaml.ScalarNode('tag:yaml.org,2002:null', None)
+    null_attr_value_node = yaml.ScalarNode('tag:yaml.org,2002:null', '')
 
     list1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'list1')
     dict1_key_node = yaml.ScalarNode('tag:yaml.org,2002:map', 'dict1')
 
     dashed_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'dashed-attr')
-    dashed_value_node = yaml.ScalarNode('tag:yaml.org,2002:int', 13)
+    dashed_value_node = yaml.ScalarNode('tag:yaml.org,2002:int', '13')
 
     undered_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'undered_attr')
-    undered_value_node = yaml.ScalarNode('tag:yaml.org,2002:float', 13.0)
+    undered_value_node = yaml.ScalarNode('tag:yaml.org,2002:float', '13.0')
 
     value = [
             (attr1_key_node, attr1_value_node),

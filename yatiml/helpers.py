@@ -80,7 +80,18 @@ class Node:
 
         Use is_scalar(type) to check which type the node has.
         """
-        return self.yaml_node.value
+        if self.yaml_node.tag == 'tag:yaml.org,2002:str':
+            return self.yaml_node.value
+        if self.yaml_node.tag == 'tag:yaml.org,2002:int':
+            return int(self.yaml_node.value)
+        if self.yaml_node.tag == 'tag:yaml.org,2002:float':
+            return float(self.yaml_node.value)
+        if self.yaml_node.tag == 'tag:yaml.org,2002:bool':
+            return self.yaml_node.value in ['TRUE', 'True', 'true']
+        if self.yaml_node.tag == 'tag:yaml.org,2002:null':
+            return None
+        raise RuntimeError('This node with tag {} is not of the right type'
+                           ' for get_value()'.format(self.yaml_node.tag))
 
     def set_value(self, value: ScalarType) -> None:
         """Sets the value of the node to a scalar value.
@@ -646,7 +657,14 @@ class UnknownNode:
             if (key_node.tag == 'tag:yaml.org,2002:str'
                     and key_node.value == attribute):
                 found = True
-                if value_node.value != value:
+                node = Node(value_node)
+                if not node.is_scalar(type(value)):
+                    raise RecognitionError(
+                            ('{}{}Incorrect attribute type where value {}'
+                             ' of type {} was required').format(
+                                self.yaml_node.start_mark, os.linesep,
+                                value, type(value)))
+                if node.get_value() != value:
                     raise RecognitionError(
                         ('{}{}Incorrect attribute value'
                          ' {} where {} was required').format(
