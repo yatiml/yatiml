@@ -12,7 +12,7 @@ from yatiml.exceptions import RecognitionError
 from yatiml.helpers import Node, UnknownNode
 from yatiml.introspection import class_subobjects
 from yatiml.irecognizer import IRecognizer, RecResult
-from yatiml.util import scalar_type_to_tag, type_to_desc
+from yatiml.util import scalar_type_to_tag, type_to_desc, bool_union_fix
 
 logger = logging.getLogger(__name__)
 
@@ -305,7 +305,7 @@ class Recognizer(IRecognizer):
         logger.debug('Recognizing {} as a {}'.format(node, expected_type))
         recognized_types = None
         if expected_type in [
-                str, int, float, bool, datetime, None,
+                str, int, float, bool, bool_union_fix, datetime, None,
                 type(None)
         ]:
             recognized_types, message = self.__recognize_scalar(

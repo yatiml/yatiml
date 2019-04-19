@@ -1,11 +1,15 @@
 from datetime import datetime
-from typing import Dict, GenericMeta, List, Type, Union
+from typing import Dict, GenericMeta, List, NewType, Type, Union
+
+
+bool_union_fix = NewType('bool_union_fix', bool)
 
 scalar_type_to_tag = {
     str: 'tag:yaml.org,2002:str',
     int: 'tag:yaml.org,2002:int',
     float: 'tag:yaml.org,2002:float',
     bool: 'tag:yaml.org,2002:bool',
+    bool_union_fix: 'tag:yaml.org,2002:bool',
     None: 'tag:yaml.org,2002:null',
     type(None): 'tag:yaml.org,2002:null',
     datetime: 'tag:yaml.org,2002:timestamp'

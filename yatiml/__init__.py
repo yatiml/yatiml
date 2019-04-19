@@ -16,6 +16,7 @@ from yatiml.exceptions import RecognitionError, SeasoningError
 from yatiml.loader import Loader, add_to_loader, set_document_type
 from yatiml.dumper import Dumper, add_to_dumper
 from yatiml.helpers import Node, UnknownNode
+from yatiml.util import bool_union_fix
 
 import logging
 
@@ -36,5 +37,6 @@ or for even more::
 
 __all__ = [
     'logger', 'RecognitionError', 'SeasoningError', 'Node', 'UnknownNode',
-    'Loader', 'add_to_loader', 'set_document_type', 'Dumper', 'add_to_dumper'
+    'Loader', 'add_to_loader', 'set_document_type', 'Dumper', 'add_to_dumper',
+    'bool_union_fix'
 ]
