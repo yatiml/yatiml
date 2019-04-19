@@ -1,9 +1,11 @@
 # Config file for automatic testing at travis-ci.org
 language: python
+dist: xenial
 python:
   - "3.4"
   - "3.5"
   - "3.6"
+  - "3.7"
 
 # Travis comes with an old pytest that does not work with pytest-flake8.
 # So upgrade that first.
