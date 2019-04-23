@@ -1,8 +1,8 @@
-.. image:: https://readthedocs.org/projects/yatiml/badge/?version=develop
-    :target: https://yatiml.readthedocs.io/en/latest/?badge=develop
+.. image:: https://readthedocs.org/projects/yatiml/badge/?version=latest
+    :target: https://yatiml.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Build Status
 
-.. image:: https://api.travis-ci.org/yatiml/yatiml.svg?branch=develop
+.. image:: https://api.travis-ci.org/yatiml/yatiml.svg?branch=master
     :target: https://travis-ci.org/yatiml/yatiml
     :alt: Build Status
 
@@ -14,8 +14,8 @@
     :target: https://www.codacy.com/app/LourensVeen/yatiml
     :alt: Code Coverage
 
-.. image:: https://requires.io/github/yatiml/yatiml/requirements.svg?branch=develop
-    :target: https://requires.io/github/yatiml/yatiml/requirements/?branch=develop
+.. image:: https://requires.io/github/yatiml/yatiml/requirements.svg?branch=master
+    :target: https://requires.io/github/yatiml/yatiml/requirements/?branch=master
     :alt: Requirements Status
 
 ################################################################################
