@@ -5,6 +5,21 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+
+0.4.1
+*****
+
+New functionality
+-----------------
+
+* Added fix_union_bool type for fixing Union[int, bool] on Python < 3.7
+* Added support for Python 3.7
+
+Fixes
+-----
+
+* Return scalar values with the correct type
+
 0.4.0
 *****
 
