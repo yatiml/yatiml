@@ -135,6 +135,9 @@ class Recognizer(IRecognizer):
                 message += msg
             recognized_types.extend(recognized_type)
         recognized_types = list(set(recognized_types))
+        if bool in recognized_types and bool_union_fix in recognized_types:
+            recognized_types.remove(bool_union_fix)
+
         if len(recognized_types) == 0:
             return recognized_types, message
         elif len(recognized_types) > 1:
