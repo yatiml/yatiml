@@ -4,7 +4,7 @@ import os
 from collections import UserString
 from datetime import datetime
 from textwrap import indent
-from typing import Dict, GenericMeta, List, Type
+from typing import Dict, List, Type
 
 from ruamel import yaml
 
@@ -12,7 +12,9 @@ from yatiml.exceptions import RecognitionError
 from yatiml.helpers import Node, UnknownNode
 from yatiml.introspection import class_subobjects
 from yatiml.irecognizer import IRecognizer, RecResult
-from yatiml.util import scalar_type_to_tag, type_to_desc
+from yatiml.util import (generic_type_args, is_generic_dict, is_generic_list,
+                         is_generic_union, scalar_type_to_tag, type_to_desc,
+                         bool_union_fix)
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +67,7 @@ class Recognizer(IRecognizer):
             message = '{}{}Expected a list here.'.format(
                 node.start_mark, os.linesep)
             return [], message
-        item_type = expected_type.__args__[0]
+        item_type = generic_type_args(expected_type)[0]
         for item in node.value:
             recognized_types, message = self.recognize(item, item_type)
             if len(recognized_types) == 0:
@@ -91,14 +93,14 @@ class Recognizer(IRecognizer):
             expected_type if it was recognized, [] otherwise.
         """
         logger.debug('Recognizing as a dict')
-        if not issubclass(expected_type.__args__[0], str):
+        if not issubclass(generic_type_args(expected_type)[0], str):
             raise RuntimeError(
                 'YAtiML only supports dicts with strings as keys')
         if not isinstance(node, yaml.MappingNode):
             message = '{}{}Expected a dict/mapping here'.format(
                 node.start_mark, os.linesep)
             return [], message
-        value_type = expected_type.__args__[1]
+        value_type = generic_type_args(expected_type)[1]
         for _, value in node.value:
             recognized_value_types, message = self.recognize(value, value_type)
             if len(recognized_value_types) == 0:
@@ -125,10 +127,7 @@ class Recognizer(IRecognizer):
         logger.debug('Recognizing as a union')
         recognized_types = []
         message = ''
-        if hasattr(expected_type, '__union_set_params__'):
-            union_types = expected_type.__union_set_params__
-        else:
-            union_types = expected_type.__args__
+        union_types = generic_type_args(expected_type)
         logger.debug('Union types {}'.format(union_types))
         for possible_type in union_types:
             recognized_type, msg = self.recognize(node, possible_type)
@@ -136,6 +135,9 @@ class Recognizer(IRecognizer):
                 message += msg
             recognized_types.extend(recognized_type)
         recognized_types = list(set(recognized_types))
+        if bool in recognized_types and bool_union_fix in recognized_types:
+            recognized_types.remove(bool_union_fix)
+
         if len(recognized_types) == 0:
             return recognized_types, message
         elif len(recognized_types) > 1:
@@ -305,21 +307,20 @@ class Recognizer(IRecognizer):
         logger.debug('Recognizing {} as a {}'.format(node, expected_type))
         recognized_types = None
         if expected_type in [
-                str, int, float, bool, datetime, None,
+                str, int, float, bool, bool_union_fix, datetime, None,
                 type(None)
         ]:
             recognized_types, message = self.__recognize_scalar(
                 node, expected_type)
-        elif type(expected_type).__name__ in ['UnionMeta', '_Union']:
+        elif is_generic_union(expected_type):
             recognized_types, message = self.__recognize_union(
                 node, expected_type)
-        elif isinstance(expected_type, GenericMeta):
-            if expected_type.__origin__ == List:
-                recognized_types, message = self.__recognize_list(
-                    node, expected_type)
-            elif expected_type.__origin__ == Dict:
-                recognized_types, message = self.__recognize_dict(
-                    node, expected_type)
+        elif is_generic_list(expected_type):
+            recognized_types, message = self.__recognize_list(
+                node, expected_type)
+        elif is_generic_dict(expected_type):
+            recognized_types, message = self.__recognize_dict(
+                node, expected_type)
         elif expected_type in self.__registered_classes.values():
             recognized_types, message = self.__recognize_user_classes(
                 node, expected_type)

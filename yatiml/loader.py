@@ -2,7 +2,7 @@ import enum
 import logging
 import os
 from collections import UserString
-from typing import Any, Dict, GenericMeta, List, Type
+from typing import Any, List, Type
 
 import ruamel.yaml as yaml
 
@@ -12,7 +12,8 @@ from yatiml.exceptions import RecognitionError
 from yatiml.helpers import Node
 from yatiml.introspection import class_subobjects
 from yatiml.recognizer import Recognizer
-from yatiml.util import scalar_type_to_tag, type_to_desc
+from yatiml.util import (generic_type_args, is_generic_list, is_generic_dict,
+                         scalar_type_to_tag, type_to_desc)
 
 logger = logging.getLogger(__name__)
 
@@ -64,11 +65,11 @@ class Loader(yaml.RoundTripLoader):
         if type_ in scalar_type_to_tag:
             return scalar_type_to_tag[type_]
 
-        if isinstance(type_, GenericMeta):
-            if type_.__origin__ == List:
-                return 'tag:yaml.org,2002:seq'
-            elif type_.__origin__ == Dict:
-                return 'tag:yaml.org,2002:map'
+        if is_generic_list(type_):
+            return 'tag:yaml.org,2002:seq'
+
+        if is_generic_dict(type_):
+            return 'tag:yaml.org,2002:map'
 
         if type_ in self._registered_classes.values():
             return '!{}'.format(type_.__name__)
@@ -138,22 +139,22 @@ class Loader(yaml.RoundTripLoader):
 
         # process subnodes
         logger.debug('Recursing into subnodes')
-        if isinstance(recognized_type, GenericMeta):
-            if recognized_type.__origin__ == List:
-                if node.tag != 'tag:yaml.org,2002:seq':
-                    raise RecognitionError('{}{}Expected a {} here'.format(
-                        node.start_mark, os.linesep,
-                        type_to_desc(expected_type)))
-                for item in node.value:
-                    self.__process_node(item, recognized_type.__args__[0])
-            elif recognized_type.__origin__ == Dict:
-                if node.tag != 'tag:yaml.org,2002:map':
-                    raise RecognitionError('{}{}Expected a {} here'.format(
-                        node.start_mark, os.linesep,
-                        type_to_desc(expected_type)))
-                for _, value_node in node.value:
-                    self.__process_node(value_node,
-                                        recognized_type.__args__[1])
+        if is_generic_list(recognized_type):
+            if node.tag != 'tag:yaml.org,2002:seq':
+                raise RecognitionError('{}{}Expected a {} here'.format(
+                    node.start_mark, os.linesep,
+                    type_to_desc(expected_type)))
+            for item in node.value:
+                self.__process_node(item,
+                                    generic_type_args(recognized_type)[0])
+        elif is_generic_dict(recognized_type):
+            if node.tag != 'tag:yaml.org,2002:map':
+                raise RecognitionError('{}{}Expected a {} here'.format(
+                    node.start_mark, os.linesep,
+                    type_to_desc(expected_type)))
+            for _, value_node in node.value:
+                self.__process_node(value_node,
+                                    generic_type_args(recognized_type)[1])
 
         elif recognized_type in self._registered_classes.values():
             if (not issubclass(recognized_type, enum.Enum)

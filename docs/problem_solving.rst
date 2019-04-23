@@ -29,7 +29,88 @@ probably a good explanation and a better fix for this. If you know, please
 contribute.
 
 In order to understand how to interpret the output, it helps to have an idea of
-how YAtiML processes a YAML file into Python objects.
+how YAtiML processes a YAML file into Python objects. See `The YAtiML
+pipeline`_ below for more on that.
+
+Unions with bool
+----------------
+
+While defining your classes, you may want to have an attribute that can be of
+multiple types. As described in the tutorial, you would use a ``Union`` for
+this. For example something like
+
+.. code-block:: python
+
+  class Setting:
+      def __init__(name: str,
+                   value: Union[str, int, float, bool]
+                   ) -> None:
+          self.name = name
+          self.value = value
+
+is likely to occur in many YAML-based configuration file formats.
+
+There is a problem with the above code, in that it will give an error message if
+you try to read the following input on Python < 3.7, saying that it could not
+recognise the bool value:
+
+.. code-block:: yaml
+
+  name: test
+  value: true
+
+(Scroll down for the fix, if you don't care for the explanation.)
+
+Arguably, this is a bug in Python's type handling, and the developers of
+Python's ``typing`` module seem to agree, because they have fixed this in Python
+3.7. What happens here is that in Python, ``bool`` is a subtype of ``int``, in
+other words, any ``bool`` value is also an ``int`` value. Furthermore, the
+``Union`` class will automatically normalise the types it is passed by removing
+redundant types. If you put in a type twice then one copy will be removed for
+instance, and also, if you put in a type and also a subtype of that type, then
+the subtype will be removed. This makes some sense: if every ``bool`` is an
+``int``, then just ``int`` will already match boolean values, and ``bool`` is
+redundant.
+
+While this works for Python, it's problematic in YAML, where ``bool`` and
+``int`` are unrelated types. Indeed, YAtiML will not accept a boolean value in
+the YAML file if you declare the attribute to be an ``int``. And that's where
+we get into trouble: Python normalises the above Union to ``Union[str, int,
+float]``, and YAtiML reads this and generates an error if you feed it a boolean.
+
+In Python 3.7, the behaviour of Union has changed. While mypy still does the
+normalisation internally when checking types, the runtime Union object no longer
+normalises. Since the runtime object is what YAtiML reads, this problem does
+not occur on Python 3.7 (and hopefully versions after that, the `typing` module
+is not entirely stable yet).
+
+A fix for Python < 3.7
+''''''''''''''''''''''
+
+So, this is fixed in Python 3.7, but what if you're running on an older version?
+In that case you need a work-around, and YAtiML provides one called
+``bool_union_fix``. It works like this:
+
+.. code-block:: python
+
+  from yatiml import bool_union_fix
+
+  class Setting:
+      def __init__(name: str,
+                   value: Union[str, int, float, bool, bool_union_fix]
+                   ) -> None:
+          self.name = name
+          self.value = value
+
+All you need to do is import ``bool_union_fix`` and add it to the list of types
+in the ``Union``, and now things will work as expected (also in Python 3.7).
+
+``bool_union_fix`` is essentially a dummy type that is recognised by YAtiML and
+treated just like ``bool``. Since it's a separate type, it isn't merged into the
+``int``, so it'll still be there for YAtiML to read. Note that you do need the
+``bool`` in there as well, to avoid mypy complaining if you try to create a
+Setting object in your code with a bool for the value attribute.
+
 
 The YAtiML pipeline
 -------------------

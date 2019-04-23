@@ -62,7 +62,7 @@ def test_has_attribute_type(class_node):
 
 
 def test_get_attribute(class_node):
-    assert class_node.get_attribute('attr1').yaml_node.value == 42
+    assert class_node.get_attribute('attr1').yaml_node.value == '42'
     with pytest.raises(yatiml.SeasoningError):
         class_node.get_attribute('non_existent_attribute')
 
