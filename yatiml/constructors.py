@@ -9,8 +9,8 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from yatiml.exceptions import RecognitionError
 from yatiml.introspection import class_subobjects
-from yatiml.util import (is_generic_list, is_generic_dict, is_generic_union,
-                         generic_type_args)
+from yatiml.util import (bool_union_fix, generic_type_args, is_generic_list,
+                         is_generic_dict, is_generic_union)
 
 if TYPE_CHECKING:
     from yatiml.loader import Loader  # noqa: F401
@@ -200,6 +200,8 @@ class Constructor:
                 if not self.__type_matches(value, generic_type_args(type_)[1]):
                     return False
             return True
+        elif type_ is bool_union_fix:
+            return isinstance(obj, bool)
         else:
             return isinstance(obj, type_)
 

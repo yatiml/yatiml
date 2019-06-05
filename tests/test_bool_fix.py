@@ -33,11 +33,11 @@ def bool_union_loader():
 
 @pytest.fixture
 def bool_fix_union_loader():
-    class BoolUnionFixLoader(yatiml.Loader):
+    class BoolFixUnionLoader(yatiml.Loader):
         pass
-    yatiml.set_document_type(BoolUnionFixLoader, Union[
-            int, bool, yatiml.bool_union_fix])
-    return BoolUnionFixLoader
+    yatiml.set_document_type(BoolFixUnionLoader, Union[
+            int, yatiml.bool_union_fix, bool])
+    return BoolFixUnionLoader
 
 
 class BoolTester:
@@ -55,7 +55,12 @@ def bool_tester_loader():
 
 
 class BoolFixTester:
-    def __init__(self, x: Union[int, bool, yatiml.bool_union_fix]) -> None:
+    # Note the order of the Union arguments: we had a bug that only
+    # showed up if a non-bool type was listed after the bool_union_fix,
+    # and only for attributes.
+    # So don't rearrange this unless you add another regression test for
+    # that.
+    def __init__(self, x: Union[bool, yatiml.bool_union_fix, int]) -> None:
         self.x = x
 
 
