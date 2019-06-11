@@ -115,7 +115,7 @@ class EnumRepresenter:
         """
         self.class_ = class_
 
-    def __call__(self, dumper: 'Dumper', data: Any) -> yaml.MappingNode:
+    def __call__(self, dumper: 'Dumper', data: Any) -> yaml.ScalarNode:
         """Represents the class as a ScalarNode.
 
         Args:
