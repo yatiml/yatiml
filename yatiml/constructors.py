@@ -284,6 +284,11 @@ class Constructor:
             known_attrs: The attributes to not strip
         """
         known_keys = list(known_attrs)
+        if 'self' not in known_keys:
+            raise RuntimeError('The __init__ method of {} does not have a'
+                               ' "self" attribute! Please add one, this is'
+                               ' not a valid constructor.'.format(
+                                   self.class_.__name__))
         known_keys.remove('self')
         if 'yatiml_extra' in known_keys:
             known_keys.remove('yatiml_extra')
