@@ -368,6 +368,9 @@ class Node:
             attribute: Name of the attribute whose value to modify.
             key_attribute: Name of the attribute in each item to use \
                     as a key for the new mapping.
+            value_attribute: Name of the attribute in each item to use \
+                    for the value in the new mapping, if only a key and \
+                    value have been given.
             strict: Whether to give an error if the intended keys are \
                     not unique.
 
