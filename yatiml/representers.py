@@ -130,7 +130,10 @@ class EnumRepresenter:
             data, self.class_.__name__))
 
         # convert to a yaml.ScalarNode
-        represented = dumper.represent_str(data.name)
+        start_mark = yaml.error.StreamMark('Generated node', 0, 0, 0)
+        end_mark = start_mark
+        represented = yaml.nodes.ScalarNode(
+                'tag:yaml.org,2002:str', data.name, start_mark, end_mark)
 
         # sweeten
         snode = Node(represented)

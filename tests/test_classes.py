@@ -288,6 +288,13 @@ def test_dump_enum(enum_dumper):
     assert text == 'green\n...\n'
 
 
+def test_dump_enum2(enum_dumper):
+    # check that we don't generate cross-references for enum values
+    # regression test
+    text = yaml.dump([Color.blue, Color.blue], Dumper=enum_dumper)
+    assert text == '- blue\n- blue\n'
+
+
 def test_enum_savorize(enum_loader2):
     text = 'blue\n'
     data = yaml.load(text, Loader=enum_loader2)
