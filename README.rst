@@ -102,10 +102,10 @@ If you have a question that the documentation does not answer for you, then you
 have found a bug in the documentation. We'd love to fix it, but we need a bit of
 help from you to do so. Please do the following:
 
-1. use the search functionality `here <https://github.com/yatiml/yatiml/issues>`_
+#. use the `search functionality <https://github.com/yatiml/yatiml/issues>`_
    to see if someone already filed the same issue;
-1. if your issue search did not yield any relevant results, make a new issue;
-1. apply the "Question" label; apply other labels when relevant.
+#. if your issue search did not yield any relevant results, make a new issue;
+#. apply the "Question" label; apply other labels when relevant.
 
 We'll answer your question, and improve the documentation where necessary.
 
@@ -115,17 +115,21 @@ Bugs
 Like most software, YAtiML is made by humans, and we make mistakes. If you think
 you've found a bug in YAtiML, please let us know! Reporting bugs goes as follows.
 
-1. Use the search functionality `here <https://github.com/yatiml/yatiml/issues>`_
-  to see if someone already filed the same issue.
-1. If your issue search did not yield any relevant results, make a new issue.
+#. Use the `search functionality`_ to see if someone already filed the same
+   issue.
+
+#. If your issue search did not yield any relevant results, make a new issue.
+
    Please explain:
     - what you were trying to achieve,
     - what you did to make that happen,
     - what you expected the result to be,
     - what happened instead.
+
   It really helps to have the actual code for a simple example that demonstrates
   the issue, but excerpts and error messages and a description are welcome too.
-1. Finally, apply any relevant labels to the newly created issue.
+
+#. Finally, apply any relevant labels to the newly created issue.
 
 With that, we should be able to fix the problem.
 
