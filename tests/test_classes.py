@@ -11,9 +11,10 @@ import yatiml
 
 from .conftest import (BrokenPrivateAttributes, Circle, Color, Color2,
                        ComplexPrivateAttributes, ConstrainedString,
-                       DashedAttribute, Document1, Document2, Extensible,
-                       Postcode, PrivateAttributes, Rectangle, Shape, SubA,
-                       SubA2, Super, UnionAttribute, Universal, Vector2D)
+                       DashedAttribute, DictAttribute, Document1, Document2,
+                       Extensible, Postcode, PrivateAttributes, Rectangle,
+                       Shape, SubA, SubA2, Super, UnionAttribute, Universal,
+                       Vector2D)
 
 
 def test_load_class(document1_loader):
@@ -69,6 +70,17 @@ def test_union_attribute(union_attribute_loader):
     text = 'a: 10'
     data = yaml.load(text, Loader=union_attribute_loader)
     assert isinstance(data, UnionAttribute)
+
+
+def test_dict_attribute(dict_attribute_loader):
+    text = ('a:\n'
+            '  b: 10\n'
+            '  c: 20\n')
+    data = yaml.load(text, Loader=dict_attribute_loader)
+    assert isinstance(data, DictAttribute)
+    assert isinstance(data.a, OrderedDict)
+    assert data.a['b'] == 10
+    assert data.a['c'] == 20
 
 
 def test_custom_recognize(super_loader):

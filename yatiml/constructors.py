@@ -194,7 +194,7 @@ class Constructor:
         elif is_generic_dict(type_):
             if not isinstance(obj, OrderedDict):
                 return False
-            for key, value in obj:
+            for key, value in obj.items():
                 if not isinstance(key, generic_type_args(type_)[0]):
                     return False
                 if not self.__type_matches(value, generic_type_args(type_)[1]):
