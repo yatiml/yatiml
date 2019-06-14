@@ -615,12 +615,15 @@ class UnknownNode:
     def require_attribute(self, attribute: str, typ: Type = _Any) -> None:
         """Require an attribute on the node to exist.
 
+        This implies that the node must be a mapping.
+
         If `typ` is given, the attribute must have this type.
 
         Args:
             attribute: The name of the attribute / mapping key.
             typ: The type the attribute must have.
         """
+        self.require_mapping()
         attr_nodes = [
             value_node for key_node, value_node in self.yaml_node.value
             if key_node.value == attribute
