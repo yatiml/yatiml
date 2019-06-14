@@ -11,9 +11,10 @@ import yatiml
 
 from .conftest import (BrokenPrivateAttributes, Circle, Color, Color2,
                        ComplexPrivateAttributes, ConstrainedString,
-                       DashedAttribute, Document1, Document2, Extensible,
-                       Postcode, PrivateAttributes, Rectangle, Shape, SubA,
-                       SubA2, Super, UnionAttribute, Universal, Vector2D)
+                       DashedAttribute, DictAttribute, Document1, Document2,
+                       Extensible, Postcode, PrivateAttributes, Rectangle,
+                       Shape, SubA, SubA2, Super, UnionAttribute, Universal,
+                       Vector2D)
 
 
 def test_load_class(document1_loader):
@@ -69,6 +70,17 @@ def test_union_attribute(union_attribute_loader):
     text = 'a: 10'
     data = yaml.load(text, Loader=union_attribute_loader)
     assert isinstance(data, UnionAttribute)
+
+
+def test_dict_attribute(dict_attribute_loader):
+    text = ('a:\n'
+            '  b: 10\n'
+            '  c: 20\n')
+    data = yaml.load(text, Loader=dict_attribute_loader)
+    assert isinstance(data, DictAttribute)
+    assert isinstance(data.a, OrderedDict)
+    assert data.a['b'] == 10
+    assert data.a['c'] == 20
 
 
 def test_custom_recognize(super_loader):
@@ -286,6 +298,13 @@ def test_enum_class(enum_loader):
 def test_dump_enum(enum_dumper):
     text = yaml.dump(Color.green, Dumper=enum_dumper)
     assert text == 'green\n...\n'
+
+
+def test_dump_enum2(enum_dumper):
+    # check that we don't generate cross-references for enum values
+    # regression test
+    text = yaml.dump([Color.blue, Color.blue], Dumper=enum_dumper)
+    assert text == '- blue\n- blue\n'
 
 
 def test_enum_savorize(enum_loader2):

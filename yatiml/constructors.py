@@ -9,8 +9,8 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from yatiml.exceptions import RecognitionError
 from yatiml.introspection import class_subobjects
-from yatiml.util import (is_generic_list, is_generic_dict, is_generic_union,
-                         generic_type_args)
+from yatiml.util import (bool_union_fix, generic_type_args, is_generic_list,
+                         is_generic_dict, is_generic_union)
 
 if TYPE_CHECKING:
     from yatiml.loader import Loader  # noqa: F401
@@ -194,12 +194,14 @@ class Constructor:
         elif is_generic_dict(type_):
             if not isinstance(obj, OrderedDict):
                 return False
-            for key, value in obj:
+            for key, value in obj.items():
                 if not isinstance(key, generic_type_args(type_)[0]):
                     return False
                 if not self.__type_matches(value, generic_type_args(type_)[1]):
                     return False
             return True
+        elif type_ is bool_union_fix:
+            return isinstance(obj, bool)
         else:
             return isinstance(obj, type_)
 
@@ -282,6 +284,11 @@ class Constructor:
             known_attrs: The attributes to not strip
         """
         known_keys = list(known_attrs)
+        if 'self' not in known_keys:
+            raise RuntimeError('The __init__ method of {} does not have a'
+                               ' "self" attribute! Please add one, this is'
+                               ' not a valid constructor.'.format(
+                                   self.class_.__name__))
         known_keys.remove('self')
         if 'yatiml_extra' in known_keys:
             known_keys.remove('yatiml_extra')

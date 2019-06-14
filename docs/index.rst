@@ -33,7 +33,7 @@ Using YAtiML
 .. toctree::
   :maxdepth: 1
 
-   API reference <apidocs/yatiml.rst>
+   API reference <api.rst>
 
 
 Development

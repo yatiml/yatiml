@@ -115,7 +115,7 @@ class EnumRepresenter:
         """
         self.class_ = class_
 
-    def __call__(self, dumper: 'Dumper', data: Any) -> yaml.MappingNode:
+    def __call__(self, dumper: 'Dumper', data: Any) -> yaml.ScalarNode:
         """Represents the class as a ScalarNode.
 
         Args:
@@ -130,7 +130,10 @@ class EnumRepresenter:
             data, self.class_.__name__))
 
         # convert to a yaml.ScalarNode
-        represented = dumper.represent_str(data.name)
+        start_mark = yaml.error.StreamMark('Generated node', 0, 0, 0)
+        end_mark = start_mark
+        represented = yaml.nodes.ScalarNode(
+                'tag:yaml.org,2002:str', data.name, start_mark, end_mark)
 
         # sweeten
         snode = Node(represented)

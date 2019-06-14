@@ -276,6 +276,11 @@ class UnionAttribute:
         self.a = a
 
 
+class DictAttribute:
+    def __init__(self, a: Dict[str, int]) -> None:
+        self.a = a
+
+
 class PrivateAttributes:
     def __init__(self, a: int, b: float) -> None:
         self.__a = a
@@ -560,6 +565,15 @@ def union_attribute_loader():
     yatiml.add_to_loader(UnionAttributeLoader, UnionAttribute)
     yatiml.set_document_type(UnionAttributeLoader, UnionAttribute)
     return UnionAttributeLoader
+
+
+@pytest.fixture
+def dict_attribute_loader():
+    class DictAttributeLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(DictAttributeLoader, DictAttribute)
+    yatiml.set_document_type(DictAttributeLoader, DictAttribute)
+    return DictAttributeLoader
 
 
 @pytest.fixture

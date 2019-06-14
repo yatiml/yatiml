@@ -46,7 +46,7 @@ def is_generic_dict(type_: Type) -> bool:
     """Determines whether a type is a Dict[...].
 
     How to do this varies for different Python versions, due to the
-    typing library not having a stable API. This functions smooths
+    typing library not having a stable API. This functions smoothes
     over the differences.
 
     Args:

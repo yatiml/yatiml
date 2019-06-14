@@ -368,6 +368,9 @@ class Node:
             attribute: Name of the attribute whose value to modify.
             key_attribute: Name of the attribute in each item to use \
                     as a key for the new mapping.
+            value_attribute: Name of the attribute in each item to use \
+                    for the value in the new mapping, if only a key and \
+                    value have been given.
             strict: Whether to give an error if the intended keys are \
                     not unique.
 
@@ -612,12 +615,15 @@ class UnknownNode:
     def require_attribute(self, attribute: str, typ: Type = _Any) -> None:
         """Require an attribute on the node to exist.
 
+        This implies that the node must be a mapping.
+
         If `typ` is given, the attribute must have this type.
 
         Args:
             attribute: The name of the attribute / mapping key.
             typ: The type the attribute must have.
         """
+        self.require_mapping()
         attr_nodes = [
             value_node for key_node, value_node in self.yaml_node.value
             if key_node.value == attribute
