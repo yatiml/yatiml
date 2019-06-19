@@ -18,6 +18,9 @@
     :target: https://requires.io/github/yatiml/yatiml/requirements/?branch=develop
     :alt: Requirements Status
 
+.. image:: https://zenodo.org/badge/147202299.svg
+   :target: https://zenodo.org/badge/latestdoi/147202299
+
 ################################################################################
 YAtiML
 ################################################################################
