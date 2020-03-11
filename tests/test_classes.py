@@ -319,6 +319,27 @@ def test_enum_sweeten(enum_dumper2):
     assert text == 'yellow\n...\n'
 
 
+def test_enum_list(enum_list_loader):
+    text = ('- blue\n'
+            '- yellow\n')
+    data = yaml.load(text, Loader=enum_list_loader)
+    assert isinstance(data[0], Color2)
+    assert data[0] == Color2.BLUE
+    assert data[1] == Color2.YELLOW
+
+
+def test_enum_dict(enum_dict_loader):
+    text = ('x: red\n'
+            'y: orange\n')
+    data = yaml.load(text, Loader=enum_dict_loader)
+    assert 'x' in data
+    assert isinstance(data['x'], Color2)
+    assert data['x'] == Color2.RED
+    assert 'y' in data
+    assert isinstance(data['y'], Color2)
+    assert data['y'] == Color2.ORANGE
+
+
 def test_user_string(user_string_loader):
     text = 'abcd\n'
     data = yaml.load(text, Loader=user_string_loader)

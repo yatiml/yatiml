@@ -144,17 +144,20 @@ class Loader(yaml.RoundTripLoader):
                 raise RecognitionError('{}{}Expected a {} here'.format(
                     node.start_mark, os.linesep,
                     type_to_desc(expected_type)))
-            for item in node.value:
-                self.__process_node(item,
-                                    generic_type_args(recognized_type)[0])
+            node.value = [
+                    self.__process_node(
+                        item, generic_type_args(recognized_type)[0])
+                    for item in node.value]
+
         elif is_generic_dict(recognized_type):
             if node.tag != 'tag:yaml.org,2002:map':
                 raise RecognitionError('{}{}Expected a {} here'.format(
                     node.start_mark, os.linesep,
                     type_to_desc(expected_type)))
-            for _, value_node in node.value:
-                self.__process_node(value_node,
-                                    generic_type_args(recognized_type)[1])
+            node.value = [
+                    (key, self.__process_node(
+                        value_node, generic_type_args(recognized_type)[1]))
+                    for key, value_node in node.value]
 
         elif recognized_type in self._registered_classes.values():
             if (not issubclass(recognized_type, enum.Enum)

@@ -454,6 +454,24 @@ def enum_dumper2():
 
 
 @pytest.fixture
+def enum_list_loader():
+    class EnumListLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(EnumListLoader, Color2)
+    yatiml.set_document_type(EnumListLoader, List[Color2])
+    return EnumListLoader
+
+
+@pytest.fixture
+def enum_dict_loader():
+    class EnumDictLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(EnumDictLoader, Color2)
+    yatiml.set_document_type(EnumDictLoader, Dict[str, Color2])
+    return EnumDictLoader
+
+
+@pytest.fixture
 def user_string_loader():
     class UserStringLoader(yatiml.Loader):
         pass
