@@ -259,9 +259,10 @@ class Constructor:
                                             node.start_mark, os.linesep))
             if key not in argspec.args and '_yatiml_extra' not in argspec.args:
                 raise RecognitionError(
-                    ('{}{}Found additional attributes'
+                    ('{}{}Found additional attributes ({})'
                      ' and {} does not support those').format(
-                         node.start_mark, os.linesep, self.class_.__name__))
+                         node.start_mark, os.linesep, key,
+                         self.class_.__name__))
 
             if key in argspec.args and not self.__type_matches(
                     value, argspec.annotations[key]):
