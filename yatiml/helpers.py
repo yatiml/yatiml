@@ -239,8 +239,9 @@ class Node:
         start_mark = StreamMark('generated node', 0, 0, 0)
         end_mark = StreamMark('generated node', 0, 0, 0)
         if isinstance(value, str):
-            value_node = yaml.ScalarNode('tag:yaml.org,2002:str', value,
-                                         start_mark, end_mark)
+            value_node = yaml.ScalarNode(
+                    'tag:yaml.org,2002:str', value,
+                    start_mark, end_mark)  # type: yaml.Node
         elif isinstance(value, bool):
             value_str = 'true' if value else 'false'
             value_node = yaml.ScalarNode('tag:yaml.org,2002:bool', value_str,

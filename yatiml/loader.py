@@ -2,7 +2,8 @@ import enum
 import logging
 import os
 from collections import UserString
-from typing import Any, List, Type
+from typing import Any, Dict, List, Type    # noqa
+from typing_extensions import ClassVar      # noqa
 
 import ruamel.yaml as yaml
 
@@ -19,6 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 class Loader(yaml.RoundTripLoader):
+    _registered_classes = None      # type: ClassVar[Dict[str, Type]]
+    document_type = type(None)      # type: ClassVar[Type]
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.__recognizer = Recognizer(self._registered_classes)
@@ -188,7 +192,7 @@ def set_document_type(loader_cls: Type, type_: Type) -> None:
     """
     loader_cls.document_type = type_
 
-    if not hasattr(loader_cls, '_registered_classes'):
+    if loader_cls._registered_classes is None:
         loader_cls._registered_classes = dict()
 
 
@@ -218,6 +222,6 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
         else:
             loader_cls.add_constructor(tag, Constructor(class_))
 
-        if not hasattr(loader_cls, '_registered_classes'):
+        if loader_cls._registered_classes is None:
             loader_cls._registered_classes = dict()
         loader_cls._registered_classes[tag] = class_

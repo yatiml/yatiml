@@ -37,7 +37,8 @@ setup(
     ],
     install_requires=[
         'ruamel.yaml<=0.15.64',
-        'typing>=3.6; python_version<"3.5"'
+        'typing>=3.6; python_version<"3.5"',
+        'typing_extensions'
     ],
     test_suite='tests',
     setup_requires=[
