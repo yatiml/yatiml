@@ -62,7 +62,7 @@ class Constructor:
         if not isinstance(node, yaml.MappingNode):
             raise RecognitionError(
                 ('{}{}Expected a MappingNode. There'
-                 ' is probably something wrong with your yatiml_savorize()'
+                 ' is probably something wrong with your _yatiml_savorize()'
                  ' function.').format(node.start_mark, os.linesep))
 
         # figure out which keys are extra and strip them of tags
@@ -91,7 +91,7 @@ class Constructor:
         # construct object, this should work now
         try:
             logger.debug('Calling __init__')
-            if 'yatiml_extra' in argspec.args:
+            if '_yatiml_extra' in argspec.args:
                 attrs = self.__split_off_extra_attributes(
                     mapping, argspec.args)
                 new_obj.__init__(**attrs)
@@ -140,17 +140,17 @@ class Constructor:
 
     def __split_off_extra_attributes(self, mapping: CommentedMap,
                                      known_attrs: List[str]) -> CommentedMap:
-        """Separates the extra attributes in mapping into yatiml_extra.
+        """Separates the extra attributes in mapping into _yatiml_extra.
 
         This returns a mapping containing all key-value pairs from \
         mapping whose key is in known_attrs, and an additional key \
-        yatiml_extra which maps to a dict containing the remaining \
+        _yatiml_extra which maps to a dict containing the remaining \
         key-value pairs.
 
         Args:
             mapping: The mapping to split
             known_attrs: Attributes that should be kept in the main \
-                    map, and not moved to yatiml_extra.
+                    map, and not moved to _yatiml_extra.
 
         Returns:
             A map with attributes reorganised as described above.
@@ -159,11 +159,11 @@ class Constructor:
         main_attrs = mapping.copy()
         extra_attrs = OrderedDict(mapping.items())
         for name in attr_names:
-            if name not in known_attrs or name == 'yatiml_extra':
+            if name not in known_attrs or name == '_yatiml_extra':
                 del (main_attrs[name])
             else:
                 del (extra_attrs[name])
-        main_attrs['yatiml_extra'] = extra_attrs
+        main_attrs['_yatiml_extra'] = extra_attrs
         return main_attrs
 
     def __type_matches(self, obj: Any, type_: Type) -> bool:
@@ -239,14 +239,14 @@ class Constructor:
         This checks that there is a constructor argument with a \
         matching type for each existing attribute.
 
-        If the class has a yatiml_extra attribute, then extra \
+        If the class has a _yatiml_extra attribute, then extra \
         attributes are okay and no error will be raised if they exist.
 
         Args:
             node: The node we're processing
             mapping: The mapping with constructed subobjects
             constructor_attrs: The attributes of the constructor, \
-                    including self and yatiml_extra, if applicable
+                    including self and _yatiml_extra, if applicable
         """
         logger.debug('Checking for extraneous attributes')
         logger.debug('Constructor arguments: {}, mapping: {}'.format(
@@ -256,7 +256,7 @@ class Constructor:
                 raise RecognitionError(('{}{}YAtiML only supports strings'
                                         ' for mapping keys').format(
                                             node.start_mark, os.linesep))
-            if key not in argspec.args and 'yatiml_extra' not in argspec.args:
+            if key not in argspec.args and '_yatiml_extra' not in argspec.args:
                 raise RecognitionError(
                     ('{}{}Found additional attributes'
                      ' and {} does not support those').format(
@@ -290,8 +290,8 @@ class Constructor:
                                ' not a valid constructor.'.format(
                                    self.class_.__name__))
         known_keys.remove('self')
-        if 'yatiml_extra' in known_keys:
-            known_keys.remove('yatiml_extra')
+        if '_yatiml_extra' in known_keys:
+            known_keys.remove('_yatiml_extra')
 
         for key_node, value_node in node.value:
             if (not isinstance(key_node, yaml.ScalarNode)

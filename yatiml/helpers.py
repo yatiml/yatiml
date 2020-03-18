@@ -22,7 +22,7 @@ class Node:
     """A wrapper class for yaml Nodes that provides utility functions.
 
     This class defines a number of helper function for you to use \
-    when writing yatiml_sweeten() and yatiml_savorize() functions. It \
+    when writing _yatiml_sweeten() and _yatiml_savorize() functions. It \
     also gives access to the underlying `yaml.Node`, so you can do \
     anything ruamel.yaml can do if you're willing to dive into its \
     internals.
@@ -123,7 +123,7 @@ class Node:
         """Replaces the node with a new, empty mapping.
 
         Note that this will work on the Node object that is passed to \
-        a yatiml_savorize() or yatiml_sweeten() function, but not on \
+        a _yatiml_savorize() or _yatiml_sweeten() function, but not on \
         any of its attributes or items. If you need to set an attribute \
         to a complex value, build a yaml.Node representing it and use \
         set_attribute with that.
@@ -552,7 +552,7 @@ class UnknownNode:
     """Utility functions for recognizing nodes.
 
     This class defines a number of helper function for you to use \
-    when writing yatiml_recognize() functions.
+    when writing _yatiml_recognize() functions.
 
     Attributes:
         yaml_node: The yaml.Node wrapped by this object.
@@ -646,7 +646,7 @@ class UnknownNode:
         """Require an attribute on the node to have a particular value.
 
         This requires the attribute to exist, and to have the given value \
-        and corresponding type. Handy for in your yatiml_recognize() \
+        and corresponding type. Handy for in your _yatiml_recognize() \
         function.
 
         Args:

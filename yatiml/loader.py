@@ -81,7 +81,7 @@ class Loader(yaml.RoundTripLoader):
     def __savorize(self, node: yaml.Node, expected_type: Type) -> yaml.Node:
         """Removes syntactic sugar from the node.
 
-        This calls yatiml_savorize(), first on the class's base \
+        This calls _yatiml_savorize(), first on the class's base \
         classes, then on the class itself.
 
         Args:
@@ -95,11 +95,11 @@ class Loader(yaml.RoundTripLoader):
             if base_class in self._registered_classes.values():
                 node = self.__savorize(node, base_class)
 
-        if hasattr(expected_type, 'yatiml_savorize'):
-            logger.debug('Calling {}.yatiml_savorize()'.format(
+        if hasattr(expected_type, '_yatiml_savorize'):
+            logger.debug('Calling {}._yatiml_savorize()'.format(
                 expected_type.__name__))
             cnode = Node(node)
-            expected_type.yatiml_savorize(cnode)
+            expected_type._yatiml_savorize(cnode)
             node = cnode.yaml_node
         return node
 

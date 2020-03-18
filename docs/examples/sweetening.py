@@ -16,7 +16,7 @@ class Submission:
         self.tool = tool
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         int_to_str = {
                 5: 'five',
                 6: 'six',
