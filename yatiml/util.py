@@ -1,6 +1,7 @@
 from datetime import datetime
 import typing
-from typing import Any, cast, Dict, List, NewType, Type, Union
+from typing import Any, cast, Dict, List, Union
+from typing_extensions import NewType, Type
 
 
 bool_union_fix = NewType('bool_union_fix', bool)

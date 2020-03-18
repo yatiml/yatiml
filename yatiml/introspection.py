@@ -1,5 +1,6 @@
 import inspect
-from typing import Any, Generator, Tuple, Type
+from typing import Any, Generator, Tuple
+from typing_extensions import Type
 
 
 def class_subobjects(

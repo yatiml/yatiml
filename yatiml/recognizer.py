@@ -4,7 +4,8 @@ import os
 from collections import UserString
 from datetime import datetime
 from textwrap import indent
-from typing import Dict, List, Type
+from typing import Dict, List
+from typing_extensions import Type
 
 from ruamel import yaml
 

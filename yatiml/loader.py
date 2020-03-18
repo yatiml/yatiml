@@ -2,8 +2,8 @@ import enum
 import logging
 import os
 from collections import UserString
-from typing import Any, Dict, List, Type    # noqa
-from typing_extensions import ClassVar      # noqa
+from typing import Any, Dict, List              # noqa
+from typing_extensions import ClassVar, Type    # noqa
 
 import ruamel.yaml as yaml
 

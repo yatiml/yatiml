@@ -2,7 +2,8 @@ import inspect
 import logging
 import os
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Any, Generator, List, Type, Union
+from typing import Any, Generator, List, Union
+from typing_extensions import TYPE_CHECKING, Type
 
 import ruamel.yaml as yaml
 from ruamel.yaml.comments import CommentedMap, CommentedSeq

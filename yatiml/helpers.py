@@ -3,10 +3,10 @@ from typing import (  # noqa: F401
     List,
     Optional,
     Set,
-    Type,
     TypeVar,
     Union,
     cast)
+from typing_extensions import Type
 
 from ruamel import yaml
 from ruamel.yaml.error import StreamMark
