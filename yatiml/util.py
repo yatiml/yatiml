@@ -1,10 +1,12 @@
 from datetime import datetime
 import typing
 from typing import Any, cast, Dict, List, Union
-from typing_extensions import NewType, Type
+from typing_extensions import Type
 
 
-bool_union_fix = NewType('bool_union_fix', bool)
+class bool_union_fix:
+    pass
+
 
 scalar_type_to_tag = {
     str: 'tag:yaml.org,2002:str',

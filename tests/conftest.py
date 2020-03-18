@@ -2,7 +2,8 @@ import enum
 import math
 from collections import OrderedDict, UserString
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
+from typing_extensions import Type
 
 from ruamel import yaml
 
