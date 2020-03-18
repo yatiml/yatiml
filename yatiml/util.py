@@ -62,7 +62,7 @@ def is_generic_dict(type_: Type) -> bool:
     else:
         # 3.6 and earlier
         return (isinstance(type_, typing.GenericMeta) and
-                type_.__origin__ is Dict)
+                cast(Any, type_).__origin__ is Dict)
 
 
 def is_generic_union(type_: Type) -> bool:
