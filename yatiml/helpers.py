@@ -268,6 +268,7 @@ class Node:
             key_node = yaml.ScalarNode('tag:yaml.org,2002:str', attribute,
                                        start_mark, end_mark)
             self.yaml_node.value.append((key_node, value_node))
+            self.yaml_node.flow_style = False
 
     def remove_attribute(self, attribute: str) -> None:
         """Remove an attribute from the node.
