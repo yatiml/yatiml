@@ -1,6 +1,6 @@
 from datetime import datetime
 import typing
-from typing import Any, cast, Dict, List, GenericMeta, NewType, Type, Union
+from typing import Any, cast, Dict, List, NewType, Type, Union
 
 
 bool_union_fix = NewType('bool_union_fix', bool)
@@ -34,11 +34,17 @@ def is_generic_list(type_: Type) -> bool:
     """
     if hasattr(typing, '_GenericAlias'):
         # 3.7
+        # _GenericAlias cannot be imported from typing, because it doesn't
+        # exist in all versions, and it will fail the type check in those
+        # versions as well, so we ignore it.
         return (isinstance(type_, typing._GenericAlias) and     # type: ignore
                 type_.__origin__ is list)
     else:
         # 3.6 and earlier
-        return (isinstance(type_, GenericMeta) and
+        # GenericMeta cannot be imported from typing, because it doesn't
+        # exist in all versions, and it will fail the type check in those
+        # versions as well, so we ignore it.
+        return (isinstance(type_, typing.GenericMeta) and
                 cast(Any, type_).__origin__ is List)
 
 
