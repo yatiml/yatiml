@@ -1,6 +1,6 @@
 from datetime import datetime
 import typing
-from typing import Dict, List, NewType, Type, Union
+from typing import Any, cast, Dict, List, GenericMeta, NewType, Type, Union
 
 
 bool_union_fix = NewType('bool_union_fix', bool)
@@ -38,8 +38,8 @@ def is_generic_list(type_: Type) -> bool:
                 type_.__origin__ is list)
     else:
         # 3.6 and earlier
-        return (isinstance(type_, typing.GenericMeta) and
-                type_.__origin__ is List)
+        return (isinstance(type_, GenericMeta) and
+                cast(Any, type_).__origin__ is List)
 
 
 def is_generic_dict(type_: Type) -> bool:
