@@ -3,10 +3,10 @@ from typing import (  # noqa: F401
     List,
     Optional,
     Set,
-    Type,
     TypeVar,
     Union,
     cast)
+from typing_extensions import Type
 
 from ruamel import yaml
 from ruamel.yaml.error import StreamMark
@@ -22,7 +22,7 @@ class Node:
     """A wrapper class for yaml Nodes that provides utility functions.
 
     This class defines a number of helper function for you to use \
-    when writing yatiml_sweeten() and yatiml_savorize() functions. It \
+    when writing _yatiml_sweeten() and _yatiml_savorize() functions. It \
     also gives access to the underlying `yaml.Node`, so you can do \
     anything ruamel.yaml can do if you're willing to dive into its \
     internals.
@@ -123,7 +123,7 @@ class Node:
         """Replaces the node with a new, empty mapping.
 
         Note that this will work on the Node object that is passed to \
-        a yatiml_savorize() or yatiml_sweeten() function, but not on \
+        a _yatiml_savorize() or _yatiml_sweeten() function, but not on \
         any of its attributes or items. If you need to set an attribute \
         to a complex value, build a yaml.Node representing it and use \
         set_attribute with that.
@@ -239,8 +239,9 @@ class Node:
         start_mark = StreamMark('generated node', 0, 0, 0)
         end_mark = StreamMark('generated node', 0, 0, 0)
         if isinstance(value, str):
-            value_node = yaml.ScalarNode('tag:yaml.org,2002:str', value,
-                                         start_mark, end_mark)
+            value_node = yaml.ScalarNode(
+                    'tag:yaml.org,2002:str', value,
+                    start_mark, end_mark)  # type: yaml.Node
         elif isinstance(value, bool):
             value_str = 'true' if value else 'false'
             value_node = yaml.ScalarNode('tag:yaml.org,2002:bool', value_str,
@@ -267,6 +268,8 @@ class Node:
             key_node = yaml.ScalarNode('tag:yaml.org,2002:str', attribute,
                                        start_mark, end_mark)
             self.yaml_node.value.append((key_node, value_node))
+            if isinstance(self.yaml_node, yaml.MappingNode):
+                self.yaml_node.flow_style = False
 
     def remove_attribute(self, attribute: str) -> None:
         """Remove an attribute from the node.
@@ -552,7 +555,7 @@ class UnknownNode:
     """Utility functions for recognizing nodes.
 
     This class defines a number of helper function for you to use \
-    when writing yatiml_recognize() functions.
+    when writing _yatiml_recognize() functions.
 
     Attributes:
         yaml_node: The yaml.Node wrapped by this object.
@@ -646,7 +649,7 @@ class UnknownNode:
         """Require an attribute on the node to have a particular value.
 
         This requires the attribute to exist, and to have the given value \
-        and corresponding type. Handy for in your yatiml_recognize() \
+        and corresponding type. Handy for in your _yatiml_recognize() \
         function.
 
         Args:

@@ -16,7 +16,7 @@ class Submission:
         self.tool = tool
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         str_to_int = {
                 'five': 5,
                 'six': 6,

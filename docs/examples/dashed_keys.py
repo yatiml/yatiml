@@ -10,11 +10,11 @@ class Dashed:
         self.another_attribute = another_attribute
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         node.dashes_to_unders_in_keys()
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         node.unders_to_dashes_in_keys()
 
 

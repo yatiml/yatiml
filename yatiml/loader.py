@@ -2,7 +2,8 @@ import enum
 import logging
 import os
 from collections import UserString
-from typing import Any, List, Type
+from typing import Any, Dict, List              # noqa
+from typing_extensions import ClassVar, Type    # noqa
 
 import ruamel.yaml as yaml
 
@@ -19,6 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 class Loader(yaml.RoundTripLoader):
+    _registered_classes = None      # type: ClassVar[Dict[str, Type]]
+    document_type = type(None)      # type: ClassVar[Type]
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.__recognizer = Recognizer(self._registered_classes)
@@ -81,7 +85,7 @@ class Loader(yaml.RoundTripLoader):
     def __savorize(self, node: yaml.Node, expected_type: Type) -> yaml.Node:
         """Removes syntactic sugar from the node.
 
-        This calls yatiml_savorize(), first on the class's base \
+        This calls _yatiml_savorize(), first on the class's base \
         classes, then on the class itself.
 
         Args:
@@ -95,11 +99,11 @@ class Loader(yaml.RoundTripLoader):
             if base_class in self._registered_classes.values():
                 node = self.__savorize(node, base_class)
 
-        if hasattr(expected_type, 'yatiml_savorize'):
-            logger.debug('Calling {}.yatiml_savorize()'.format(
+        if hasattr(expected_type, '_yatiml_savorize'):
+            logger.debug('Calling {}._yatiml_savorize()'.format(
                 expected_type.__name__))
             cnode = Node(node)
-            expected_type.yatiml_savorize(cnode)
+            expected_type._yatiml_savorize(cnode)
             node = cnode.yaml_node
         return node
 
@@ -144,17 +148,20 @@ class Loader(yaml.RoundTripLoader):
                 raise RecognitionError('{}{}Expected a {} here'.format(
                     node.start_mark, os.linesep,
                     type_to_desc(expected_type)))
-            for item in node.value:
-                self.__process_node(item,
-                                    generic_type_args(recognized_type)[0])
+            node.value = [
+                    self.__process_node(
+                        item, generic_type_args(recognized_type)[0])
+                    for item in node.value]
+
         elif is_generic_dict(recognized_type):
             if node.tag != 'tag:yaml.org,2002:map':
                 raise RecognitionError('{}{}Expected a {} here'.format(
                     node.start_mark, os.linesep,
                     type_to_desc(expected_type)))
-            for _, value_node in node.value:
-                self.__process_node(value_node,
-                                    generic_type_args(recognized_type)[1])
+            node.value = [
+                    (key, self.__process_node(
+                        value_node, generic_type_args(recognized_type)[1]))
+                    for key, value_node in node.value]
 
         elif recognized_type in self._registered_classes.values():
             if (not issubclass(recognized_type, enum.Enum)
@@ -185,7 +192,7 @@ def set_document_type(loader_cls: Type, type_: Type) -> None:
     """
     loader_cls.document_type = type_
 
-    if not hasattr(loader_cls, '_registered_classes'):
+    if loader_cls._registered_classes is None:
         loader_cls._registered_classes = dict()
 
 
@@ -215,6 +222,6 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
         else:
             loader_cls.add_constructor(tag, Constructor(class_))
 
-        if not hasattr(loader_cls, '_registered_classes'):
+        if loader_cls._registered_classes is None:
             loader_cls._registered_classes = dict()
         loader_cls._registered_classes[tag] = class_

@@ -13,7 +13,7 @@ class Submission:
     def __str__(self) -> str:
         return '{}\n{}'.format(self.__name, self.__age)
 
-    def yatiml_attributes(self) -> OrderedDict:
+    def _yatiml_attributes(self) -> OrderedDict:
         return OrderedDict([
             ('name', self.__name),
             ('age', self.__age)])

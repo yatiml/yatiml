@@ -446,7 +446,7 @@ So let's add a savourising function to convert strings to int on loading:
   :caption: ``docs/examples/savorizing.py``
   :language: python
 
-We have added a new ``yatiml_savorize()`` class method to our Submission class.
+We have added a new ``_yatiml_savorize()`` class method to our Submission class.
 This method will be called by YAtiML after the YAML text has been parsed, but
 before our Submission object has been generated. This method is passed the
 `node` representing the mapping that will become the object. The node is of
@@ -462,7 +462,7 @@ type checks have taken place. In other words, that node may contain anything.
 Next, we get the attribute's value, and then try to convert it to an int and set
 it as the new value. If a string value was used that we do not know how to
 convert, we raise a :class:`yatiml.SeasoningError`, which is the appropriate way
-to signal an error during execution of ``yatiml_savorize()``.
+to signal an error during execution of ``_yatiml_savorize()``.
 
 (At this point I should apologise for the language mix-up; the code uses
 North-American spelling because it's rare to use British spelling in code and so
@@ -470,20 +470,20 @@ it would confuse everyone, while the documentation uses British spelling because
 it's what its author is used to.)
 
 When saving a Submission, we may want to apply the opposite transformation, and
-convert some ints back to strings. That can be done with a ``yatiml_sweeten``
+convert some ints back to strings. That can be done with a ``_yatiml_sweeten``
 classmethod:
 
 .. literalinclude:: examples/sweetening.py
   :caption: ``docs/examples/sweetening.py``
   :language: python
 
-The ``yatiml_sweeten()`` method has the same signature as ``yatiml_savorize()``
-but is called by a Dumper, not by a Loader. It gives you access to the YAML
-node that has been produced from a Submission object before it is written out
-to the YAML output. Here, we use the same functions as before to convert some
-of the int values back to strings. Since we converted all the strings to ints
-on loading above, we can assume that the value is indeed an int, and we do not
-have to check.
+The ``_yatiml_sweeten()`` method has the same signature as
+``_yatiml_savorize()`` but is called by a Dumper, not by a Loader. It gives you
+access to the YAML node that has been produced from a Submission object before
+it is written out to the YAML output. Here, we use the same functions as before
+to convert some of the int values back to strings. Since we converted all the
+strings to ints on loading above, we can assume that the value is indeed an
+int, and we do not have to check.
 
 Indeed, if we run this example, we get:
 
@@ -498,7 +498,7 @@ of YAtiML to give the user the freedom to write ages either as words or as
 numbers, while always giving the programmer ints to work with. However, the
 programmer could still accidentally put a string into the age field when
 constructing a Submission directly in the code, as the type annotation allows
-it. This would then crash the ``yatiml_sweeten()`` method when trying to dump
+it. This would then crash the ``_yatiml_sweeten()`` method when trying to dump
 the object.
 
 The solution, of course, is to change the type on the ``age`` attribute of
@@ -525,8 +525,8 @@ recognise both ``int`` and ``str`` values for ``age``.
 Customising recognition
 -----------------------
 
-Customising the recognition function is done by adding a ``yatiml_recognize()``
-method to your class, like this:
+Customising the recognition function is done by adding a
+``_yatiml_recognize()`` method to your class, like this:
 
 .. literalinclude:: examples/custom_recognition.py
   :caption: ``docs/examples/custom_recognition.py``
@@ -542,24 +542,24 @@ types. Since ``tool`` is optional, it is not required, and not listed. The
 mapping that is in a place where we expect a Submission will be recognised as a
 Submission, as long as it has a ``name`` attribute with a string value, and an
 ``age`` attribute that is either a string or an integer. If ``age`` is a
-string, the ``yatiml_savorize()`` method will convert it to an int, after which
-a Submission object can be constructed without violating the type constraint in
-the ``__init__()`` method.
+string, the ``_yatiml_savorize()`` method will convert it to an int, after
+which a Submission object can be constructed without violating the type
+constraint in the ``__init__()`` method.
 
-In fact, the ``yatiml_recognize()`` method here could be even simpler. In every
-place in our document where a Submission can occur (namely the root), only a
-Submission can occur. The Submission class does not have descendants, and it is
-never part of a Union. So there is never any doubt as to how to treat the
-mapping, and in fact, the following will also work:
+In fact, the ``_yatiml_recognize()`` method here could be even simpler. In
+every place in our document where a Submission can occur (namely the root),
+only a Submission can occur. The Submission class does not have descendants,
+and it is never part of a Union. So there is never any doubt as to how to treat
+the mapping, and in fact, the following will also work:
 
 .. code-block:: python
 
   @classmethod
-  def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+  def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
       pass
 
 Now, if you try to read a document with, say, a float argument to ``age``, it
-will be recognised as a Submission, the ``yatiml_savorize()`` method will do
+will be recognised as a Submission, the ``_yatiml_savorize()`` method will do
 nothing with it, and you'll get an error message at the type check just before a
 Submission is constructed.
 
@@ -586,13 +586,13 @@ ordering information, since ``**kwargs`` is a plain unordered dict (although
 this is in the process of changing in newer versions of Python). Also, there
 wouldn't be an obvious way of saving such extra attributes again.
 
-So, instead, extra attributes are sent to a ``yatiml_extra`` parameter of type
+So, instead, extra attributes are sent to a ``_yatiml_extra`` parameter of type
 ``OrderedDict`` on ``__init__``, if there is one. You put this value into a
-``yatiml_extra`` public attribute, whose contents YAtiML will then dump appended
-to the normal attributes. If you want to be able to add extra attributes when
-constructing an object using keyword arguments, then you can add a ``**kwargs``
-parameter as well, and put any key-value pairs in it into ``self.yatiml_extra``
-in your favourite order yourself.
+``_yatiml_extra`` public attribute, whose contents YAtiML will then dump
+appended to the normal attributes. If you want to be able to add extra
+attributes when constructing an object using keyword arguments, then you can
+add a ``**kwargs`` parameter as well, and put any key-value pairs in it into
+``self._yatiml_extra`` in your favourite order yourself.
 
 Here is an example:
 
@@ -601,8 +601,8 @@ Here is an example:
   :language: python
 
 In this example, we use the ``tool`` attribute again, but with this code, we
-could add any attribute, and it would show up in ``yatiml_extra`` with no errors
-generated.
+could add any attribute, and it would show up in ``_yatiml_extra`` with no
+errors generated.
 
 Note that any explicit YAML tags on any mapping values of the extra attributes
 or anywhere beneath them in the YAML tree will be stripped, so that this tree
@@ -619,15 +619,16 @@ Hiding attributes
 By default, YAtiML assumes that your classes have a public attribute
 corresponding to each parameter of their ``__init__`` method. If this
 arrangement does not work for you, then you can override it by creating a
-``yatiml_attributes()`` method. This is `not` a classmethod, but an ordinary
+``_yatiml_attributes()`` method. This is `not` a classmethod, but an ordinary
 method, because it is used for saving a particular instance of your class, to
-which it needs access. If your custom class has a ``yatiml_attributes()`` method
-defined, YAtiML will call that method instead of looking for public attributes.
-It should return an ``OrderedDict`` with names and values of the attributes.
+which it needs access. If your custom class has a ``_yatiml_attributes()``
+method defined, YAtiML will call that method instead of looking for public
+attributes.  It should return an ``OrderedDict`` with names and values of the
+attributes.
 
 So far, we have been printing the values of public attributes to see the results
 of our work. It would be better encapsulation to use private attributes instead,
-with a ``__str__`` method to help printing. With ``yatiml_attributes()``, that
+with a ``__str__`` method to help printing. With ``_yatiml_attributes()``, that
 can be done:
 
 .. literalinclude:: examples/private_attributes.py

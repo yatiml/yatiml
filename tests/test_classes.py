@@ -114,8 +114,8 @@ def test_yatiml_extra(extensible_loader):
     data = yaml.load(text, Loader=extensible_loader)
     assert isinstance(data, Extensible)
     assert data.a == 10
-    assert data.yatiml_extra['b'] == 'test1'
-    assert data.yatiml_extra['c'] == 42
+    assert data._yatiml_extra['b'] == 'test1'
+    assert data._yatiml_extra['c'] == 42
 
 
 def test_yatiml_extra_empty(extensible_loader):
@@ -123,7 +123,7 @@ def test_yatiml_extra_empty(extensible_loader):
     data = yaml.load(text, Loader=extensible_loader)
     assert isinstance(data, Extensible)
     assert data.a == 10
-    assert len(data.yatiml_extra) == 0
+    assert len(data._yatiml_extra) == 0
 
 
 def test_yatiml_extra_strip(extensible_loader):
@@ -135,11 +135,11 @@ def test_yatiml_extra_strip(extensible_loader):
     data = yaml.load(text, Loader=extensible_loader)
     assert isinstance(data, Extensible)
     assert data.a == 10
-    assert data.yatiml_extra['b'] == 'test1'
-    assert not isinstance(data.yatiml_extra['c'], Extensible)
-    assert isinstance(data.yatiml_extra['c'], OrderedDict)
-    assert data.yatiml_extra['c']['a'] == 12
-    assert data.yatiml_extra['c']['b'] == 'test2'
+    assert data._yatiml_extra['b'] == 'test1'
+    assert not isinstance(data._yatiml_extra['c'], Extensible)
+    assert isinstance(data._yatiml_extra['c'], OrderedDict)
+    assert data._yatiml_extra['c']['a'] == 12
+    assert data._yatiml_extra['c']['b'] == 'test2'
 
 
 def test_missing_class(missing_circle_loader):
@@ -198,7 +198,7 @@ def test_dump_document1(document1_dumper):
 
 def test_dump_custom_attributes(extensible_dumper):
     extra_attributes = OrderedDict([('b', 5), ('c', 3)])
-    data = Extensible(10, yatiml_extra=extra_attributes)
+    data = Extensible(10, _yatiml_extra=extra_attributes)
     text = yaml.dump(data, Dumper=extensible_dumper)
     assert text == 'a: 10\nb: 5\nc: 3\n'
 
@@ -317,6 +317,27 @@ def test_enum_savorize(enum_loader2):
 def test_enum_sweeten(enum_dumper2):
     text = yaml.dump(Color2.YELLOW, Dumper=enum_dumper2)
     assert text == 'yellow\n...\n'
+
+
+def test_enum_list(enum_list_loader):
+    text = ('- blue\n'
+            '- yellow\n')
+    data = yaml.load(text, Loader=enum_list_loader)
+    assert isinstance(data[0], Color2)
+    assert data[0] == Color2.BLUE
+    assert data[1] == Color2.YELLOW
+
+
+def test_enum_dict(enum_dict_loader):
+    text = ('x: red\n'
+            'y: orange\n')
+    data = yaml.load(text, Loader=enum_dict_loader)
+    assert 'x' in data
+    assert isinstance(data['x'], Color2)
+    assert data['x'] == Color2.RED
+    assert 'y' in data
+    assert isinstance(data['y'], Color2)
+    assert data['y'] == Color2.ORANGE
 
 
 def test_user_string(user_string_loader):

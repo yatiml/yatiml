@@ -2,7 +2,8 @@ import enum
 import math
 from collections import OrderedDict, UserString
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
+from typing_extensions import Type
 
 from ruamel import yaml
 
@@ -146,7 +147,7 @@ class Ellipse(Shape):
         self.eccentricity = math.sqrt(1.0 - semi_minor**2 / semi_major**2)
 
     @classmethod
-    def yatiml_subobjects(cls) -> List[Tuple[str, Type, bool]]:
+    def _yatiml_subobjects(cls) -> List[Tuple[str, Type, bool]]:
         return [('semi_major', float, True),
                 ('semi_minor', float, True)
                 ]
@@ -168,12 +169,12 @@ class Color2(enum.Enum):
     BLUE = 5
 
     @classmethod
-    def yatiml_savorize(self, node: yatiml.Node) -> None:
+    def _yatiml_savorize(self, node: yatiml.Node) -> None:
         if node.is_scalar(str):
             node.set_value(node.get_value().upper())  # type: ignore
 
     @classmethod
-    def yatiml_sweeten(self, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(self, node: yatiml.Node) -> None:
         node.set_value(node.get_value().lower())  # type: ignore
 
 
@@ -198,7 +199,7 @@ class SubA(Super):
         super().__init__(subclass)
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_attribute_value('subclass', 'A')
 
 
@@ -207,7 +208,7 @@ class SubB(Super):
         super().__init__(subclass)
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_attribute_value('subclass', 'B')
 
 
@@ -221,15 +222,15 @@ class SubA2(Super2):
         pass
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_attribute_value('subclass', 'A2')
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         node.remove_attribute('subclass')
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         node.set_attribute('subclass', 'A2')
 
 
@@ -238,15 +239,15 @@ class SubB2(Super2):
         pass
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_attribute_value('subclass', 'B2')
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         node.remove_attribute('subclass')
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         node.set_attribute('subclass', 'B2')
 
 
@@ -256,19 +257,19 @@ class Universal:
         self.b = b
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.Node) -> None:
+    def _yatiml_recognize(cls, node: yatiml.Node) -> None:
         # recognizes anything as being of this type
         pass
 
-    def yatiml_attributes(self) -> None:    # type: ignore
+    def _yatiml_attributes(self) -> None:    # type: ignore
         # intentionally broken
         pass
 
 
 class Extensible:
-    def __init__(self, a: int, yatiml_extra: OrderedDict) -> None:
+    def __init__(self, a: int, _yatiml_extra: OrderedDict) -> None:
         self.a = a
-        self.yatiml_extra = yatiml_extra
+        self._yatiml_extra = _yatiml_extra
 
 
 class UnionAttribute:
@@ -286,7 +287,7 @@ class PrivateAttributes:
         self.__a = a
         self.__b = b
 
-    def yatiml_attributes(self) -> OrderedDict:
+    def _yatiml_attributes(self) -> OrderedDict:
         attrs = OrderedDict()   # type: OrderedDict
         attrs['a'] = self.__a
         attrs['b'] = self.__b
@@ -303,7 +304,7 @@ class ComplexPrivateAttributes:
     def __init__(self, a: Vector2D) -> None:
         self.__a = a
 
-    def yatiml_attributes(self) -> OrderedDict:
+    def _yatiml_attributes(self) -> OrderedDict:
         attrs = OrderedDict()  # type: OrderedDict[str, Vector2D]
         attrs['a'] = self.__a
         return attrs
@@ -322,18 +323,18 @@ class Postcode:
         self.letters = letters
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_scalar(str)
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         text = str(node.get_value())
         node.make_mapping()
         node.set_attribute('digits', int(text[0:4]))
         node.set_attribute('letters', text[5:7])
 
     @classmethod
-    def yatiml_sweeten(self, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(self, node: yatiml.Node) -> None:
         digits = node.get_attribute('digits').get_value()
         letters = node.get_attribute('letters').get_value()
         node.set_value('{} {}'.format(digits, letters))
@@ -344,11 +345,11 @@ class DashedAttribute:
         self.dashed_attribute = dashed_attribute
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         node.dashes_to_unders_in_keys()
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         node.unders_to_dashes_in_keys()
 
 
@@ -451,6 +452,24 @@ def enum_dumper2():
         pass
     yatiml.add_to_dumper(EnumDumper2, Color2)
     return EnumDumper2
+
+
+@pytest.fixture
+def enum_list_loader():
+    class EnumListLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(EnumListLoader, Color2)
+    yatiml.set_document_type(EnumListLoader, List[Color2])
+    return EnumListLoader
+
+
+@pytest.fixture
+def enum_dict_loader():
+    class EnumDictLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(EnumDictLoader, Color2)
+    yatiml.set_document_type(EnumDictLoader, Dict[str, Color2])
+    return EnumDictLoader
 
 
 @pytest.fixture

@@ -1,9 +1,12 @@
 from datetime import datetime
 import typing
-from typing import Dict, List, NewType, Type, Union
+from typing import Any, cast, Dict, List, Union
+from typing_extensions import Type
 
 
-bool_union_fix = NewType('bool_union_fix', bool)
+class bool_union_fix:
+    pass
+
 
 scalar_type_to_tag = {
     str: 'tag:yaml.org,2002:str',
@@ -34,12 +37,18 @@ def is_generic_list(type_: Type) -> bool:
     """
     if hasattr(typing, '_GenericAlias'):
         # 3.7
+        # _GenericAlias cannot be imported from typing, because it doesn't
+        # exist in all versions, and it will fail the type check in those
+        # versions as well, so we ignore it.
         return (isinstance(type_, typing._GenericAlias) and     # type: ignore
                 type_.__origin__ is list)
     else:
         # 3.6 and earlier
+        # GenericMeta cannot be imported from typing, because it doesn't
+        # exist in all versions, and it will fail the type check in those
+        # versions as well, so we ignore it.
         return (isinstance(type_, typing.GenericMeta) and
-                type_.__origin__ is List)
+                cast(Any, type_).__origin__ is List)
 
 
 def is_generic_dict(type_: Type) -> bool:
@@ -62,7 +71,7 @@ def is_generic_dict(type_: Type) -> bool:
     else:
         # 3.6 and earlier
         return (isinstance(type_, typing.GenericMeta) and
-                type_.__origin__ is Dict)
+                cast(Any, type_).__origin__ is Dict)
 
 
 def is_generic_union(type_: Type) -> bool:

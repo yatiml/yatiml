@@ -1,6 +1,7 @@
 import inspect
 import logging
-from typing import TYPE_CHECKING, Any, Type
+from typing import Any
+from typing_extensions import TYPE_CHECKING, Type
 
 from ruamel import yaml
 
@@ -42,27 +43,28 @@ class Representer:
         # make a dict with attributes
         logger.info('Representing {} of class {}'.format(
             data, self.class_.__name__))
-        if hasattr(data, 'yatiml_attributes'):
-            logger.debug('Found yatiml_attributes()')
-            attributes = data.yatiml_attributes()
+        if hasattr(data, '_yatiml_attributes'):
+            logger.debug('Found _yatiml_attributes()')
+            attributes = data._yatiml_attributes()
             if attributes is None:
-                raise RuntimeError(('{}.yatiml_attributes() returned None,'
+                raise RuntimeError(('{}._yatiml_attributes() returned None,'
                                     ' where a dict was expected.').format(
                                         self.class_.__name__))
         else:
             logger.debug(
-                'No yatiml_attributes() found, using public attributes')
+                'No _yatiml_attributes() found, using public attributes')
             argspec = inspect.getfullargspec(data.__init__)
             attribute_names = list(argspec.args[1:])
             attrs = [(name, getattr(data, name)) for name in attribute_names
-                     if name != 'yatiml_extra']
-            if 'yatiml_extra' in attribute_names:
-                if not hasattr(data, 'yatiml_extra'):
+                     if name != '_yatiml_extra']
+            if '_yatiml_extra' in attribute_names:
+                if not hasattr(data, '_yatiml_extra'):
                     raise RuntimeError(
-                        ('Class {} takes yatiml_extra but has '
-                         ' no yatiml_extra attribute, and no '
-                         ' yatiml_attributes().').format(self.class_.__name__))
-                attrs.extend(data.yatiml_extra.items())
+                        ('Class {} takes _yatiml_extra but has '
+                         ' no _yatiml_extra attribute, and no '
+                         ' _yatiml_attributes().').format(
+                             self.class_.__name__))
+                attrs.extend(data._yatiml_extra.items())
             attributes = yaml.comments.CommentedMap(attrs)
 
         # convert to a yaml.MappingNode
@@ -78,7 +80,7 @@ class Representer:
         return represented
 
     def __sweeten(self, dumper: 'Dumper', class_: Type, node: Node) -> None:
-        """Applies the user's yatiml_sweeten() function(s), if any.
+        """Applies the user's _yatiml_sweeten() function(s), if any.
 
         Sweetening is done for the base classes first, then for the \
         derived classes, down the hierarchy to the class we're \
@@ -94,8 +96,8 @@ class Representer:
                 logger.debug('Sweetening for class {}'.format(
                     self.class_.__name__))
                 self.__sweeten(dumper, base_class, node)
-        if hasattr(class_, 'yatiml_sweeten'):
-            class_.yatiml_sweeten(node)
+        if hasattr(class_, '_yatiml_sweeten'):
+            class_._yatiml_sweeten(node)
 
 
 class EnumRepresenter:
@@ -115,7 +117,7 @@ class EnumRepresenter:
         """
         self.class_ = class_
 
-    def __call__(self, dumper: 'Dumper', data: Any) -> yaml.ScalarNode:
+    def __call__(self, dumper: 'Dumper', data: Any) -> yaml.Node:
         """Represents the class as a ScalarNode.
 
         Args:
@@ -132,13 +134,14 @@ class EnumRepresenter:
         # convert to a yaml.ScalarNode
         start_mark = yaml.error.StreamMark('Generated node', 0, 0, 0)
         end_mark = start_mark
-        represented = yaml.nodes.ScalarNode(
-                'tag:yaml.org,2002:str', data.name, start_mark, end_mark)
+        represented = yaml.ScalarNode(
+                'tag:yaml.org,2002:str',
+                data.name, start_mark, end_mark)    # type: yaml.Node
 
         # sweeten
         snode = Node(represented)
-        if hasattr(self.class_, 'yatiml_sweeten'):
-            self.class_.yatiml_sweeten(snode)
+        if hasattr(self.class_, '_yatiml_sweeten'):
+            self.class_._yatiml_sweeten(snode)
             represented = snode.yaml_node
 
         logger.debug('End representing {}'.format(data))
@@ -180,8 +183,8 @@ class UserStringRepresenter:
 
         # sweeten
         snode = Node(represented)
-        if hasattr(self.class_, 'yatiml_sweeten'):
-            self.class_.yatiml_sweeten(snode)
+        if hasattr(self.class_, '_yatiml_sweeten'):
+            self.class_._yatiml_sweeten(snode)
             represented = snode.yaml_node
 
         logger.debug('End representing {}'.format(data))

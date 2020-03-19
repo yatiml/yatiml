@@ -16,12 +16,12 @@ class Submission:
         self.tool = tool
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_attribute('name', str)
         node.require_attribute('age', Union[int, str])
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         str_to_int = {
                 'five': 5,
                 'six': 6,

@@ -142,7 +142,7 @@ subclass are matched, the node is recognised as being of the subclass, i.e.
 the recognition process prefers the most derived class. If there are multiple
 matching sibling subclasses, the node is declared ambiguous and an error is
 raised. Recognition for a custom class can be overridden using a
-``yatiml_recognize()`` method.
+``_yatiml_recognize()`` method.
 
 Incidentally, a technical term for what the recognition process does is `type
 inference`, which explains the name YAtiML: it inserts type inference in the
@@ -150,7 +150,7 @@ middle of the YAML processing pipeline.
 
 The second and third stages, savourising and type checking, only apply to custom
 classes. To savourise a recognised node, YAtiML calls that node's
-``yatiml_savorize()`` method, after calling those of its base classes, if any.
+``_yatiml_savorize()`` method, after calling those of its base classes, if any.
 Savourising is entirely defined by the custom class, the default is to do
 nothing. After savourising, the resulting mapping is type checked against the
 ``__init__`` signature, since Python does not do run-time type checking itself.

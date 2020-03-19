@@ -1,5 +1,6 @@
 import abc
-from typing import List, Tuple, Type
+from typing import List, Tuple
+from typing_extensions import Type
 
 from ruamel import yaml
 

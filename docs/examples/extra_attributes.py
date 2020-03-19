@@ -10,11 +10,11 @@ class Submission:
             self,
             name: str,
             age: int,
-            yatiml_extra: OrderedDict
+            _yatiml_extra: OrderedDict
             ) -> None:
         self.name = name
         self.age = age
-        self.yatiml_extra = yatiml_extra
+        self._yatiml_extra = _yatiml_extra
 
 
 # Create loader
@@ -32,4 +32,4 @@ doc = yaml.load(yaml_text, Loader=MyLoader)
 
 print(doc.name)
 print(doc.age)
-print(doc.yatiml_extra['tool'])
+print(doc._yatiml_extra['tool'])

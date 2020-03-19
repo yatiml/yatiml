@@ -8,7 +8,7 @@ with open('README.rst') as readme_file:
 
 setup(
     name='yatiml',
-    version='0.4.2',
+    version='0.5.0',
     description="A library for making YAML-based file formats",
     long_description=readme + '\n\n',
     author="Lourens Veen",
@@ -25,19 +25,19 @@ setup(
     zip_safe=False,
     keywords='yatiml',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
     install_requires=[
-        'ruamel.yaml<=0.15.64',
-        'typing>=3.6; python_version<"3.5"'
+        'ruamel.yaml>=0.15.71,<=0.16.10',
+        'typing>=3.6; python_version<"3.5"',
+        'typing_extensions'
     ],
     test_suite='tests',
     setup_requires=[

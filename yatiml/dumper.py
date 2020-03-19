@@ -1,7 +1,8 @@
 import enum
 import logging
 from collections import UserString
-from typing import List, Type
+from typing import List
+from typing_extensions import Type
 
 from ruamel import yaml
 

@@ -11,11 +11,11 @@ class Identifier:
         self.name = name
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_scalar(str)
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         text = str(node.get_value())
         parts = text.split('.')
         node.make_mapping()
@@ -34,7 +34,7 @@ class Identifier:
         node.set_attribute('name', parts[-1])
 
     @classmethod
-    def yatiml_sweeten(self, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(self, node: yatiml.Node) -> None:
         namespace_nodes = node.get_attribute('namespaces').seq_items()
         namespaces = list(map(yatiml.Node.get_value, namespace_nodes))
         namespace_str = '.'.join(namespaces)

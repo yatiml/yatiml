@@ -4,7 +4,8 @@ import os
 from collections import UserString
 from datetime import datetime
 from textwrap import indent
-from typing import Dict, List, Type
+from typing import Dict, List
+from typing_extensions import Type
 
 from ruamel import yaml
 
@@ -165,10 +166,10 @@ class Recognizer(IRecognizer):
         """
         logger.debug('Recognizing as a user-defined class')
         loc_str = '{}{}'.format(node.start_mark, os.linesep)
-        if hasattr(expected_type, 'yatiml_recognize'):
+        if hasattr(expected_type, '_yatiml_recognize'):
             try:
                 unode = UnknownNode(self, node)
-                expected_type.yatiml_recognize(unode)
+                expected_type._yatiml_recognize(unode)
                 return [expected_type], ''
             except RecognitionError as e:
                 if len(e.args) > 0:
