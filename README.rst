@@ -21,6 +21,9 @@
 .. image:: https://zenodo.org/badge/147202299.svg
    :target: https://zenodo.org/badge/latestdoi/147202299
 
+.. image:: https://img.shields.io/badge/rsd-yatiml-00a3e3.svg
+   :target: https://www.research-software.nl/software/yatiml
+
 ################################################################################
 YAtiML
 ################################################################################
