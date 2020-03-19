@@ -5,6 +5,22 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.5.0
+*****
+
+Incompatible changes
+--------------------
+
+* yatiml_* methods should now be called _yatiml_*
+* Dropped support for Python 3.4, which is end-of-life
+
+Fixes
+-----
+
+* Savourised classes in lists and dicts now load correctly
+* Fixed compatibility with the latest versions of ruamel.yaml
+* Fixed support for Python 3.5.1
+
 0.4.2
 *****
 
