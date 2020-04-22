@@ -120,10 +120,11 @@ def generic_type_args(type_: Type) -> List[Type]:
     if hasattr(type_, '__union_params__'):
         # 3.5 Union
         return list(type_.__union_params__)
-    if hasattr(type_, '__parameters__'):
-        # 3.5 Dict or List
-        return list(type_.__parameters__)
-    return list(type_.__args__)
+    if hasattr(type_, '__args__'):
+        # >3.5
+        return list(type_.__args__)
+    # 3.5
+    return list(type_.__parameters__)
 
 
 def type_to_desc(type_: Type) -> str:
