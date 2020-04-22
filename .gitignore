@@ -11,7 +11,7 @@ build
 
 htmlcov
 .coverage
-coverage.xml
+cobertura.xml
 
 docs/_build
 docs/apidocs
