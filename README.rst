@@ -36,9 +36,8 @@ need an extra library for that). However, YAtiML does solve the same kind of
 problems, and more, so if you are looking for a schema language for YAML, YAtiML
 may actually be what you need.
 
-If you use YAtiML for scientific work, we ask that you cite it. We have provided
-a CITATION.cff file to help you do so quickly and easily.
-
+If you use YAtiML for scientific work, we ask that you cite it. Click the
+`rsd` badge above to download a citation file in your favourite format.
 
 How it works
 ************
