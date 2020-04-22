@@ -8,7 +8,7 @@ with open('README.rst') as readme_file:
 
 setup(
     name='yatiml',
-    version='0.5.0',
+    version='0.5.1',
     description="A library for making YAML-based file formats",
     long_description=readme + '\n\n',
     author="Lourens Veen",
@@ -50,13 +50,14 @@ setup(
     ],
     tests_require=[
         'coverage<5',
-        'flake8<3.6',
+        'flake8',
         'mypy',
         'pytest>=3.5',
         'pytest-cov',
-        'pycodestyle>=2.0.0,<2.4.0',
+        'pycodestyle',
+        'pyflakes<2.2.0',
         'pytest-flake8',
-        'pytest-mypy'
+        'pytest-mypy>=0.4.0'
     ],
     extras_require={
         'dev':  ['yapf', 'isort'],

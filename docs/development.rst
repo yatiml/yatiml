@@ -216,5 +216,25 @@ And if all seems well, we can upload to the real PyPI:
 
   twine upload dist/yatiml-x.y.z*
 
+Make a GitHub Release
+.....................
+
+Go to Releases on the GitHub page and make a new release from the tag. For the
+release notes, copy-paste from the CHANGELOG and convert from RST to Markdown.
+
+Merge release branch back into develop
+......................................
+
+To continue developing, merge the release branch back into develop
+
+.. code-block:: bash
+
+  git checkout develop
+  git merge --no-commit release-x.y.z
+
+Make sure that the badges are set to develop, and that the version number is
+set to the next expected version x.y.{z+1}.dev (it's fine if x.{y+1}.0 is what
+ends up being released eventually). Then you can commit and continue developing.
+
 .. _`Git Flow`: http://nvie.com/posts/a-successful-git-branching-model/
 .. _`Semantic Versioning`: http://www.semver.org

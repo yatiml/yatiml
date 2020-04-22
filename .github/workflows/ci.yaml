@@ -1,0 +1,20 @@
+# Run Continuous Integration on every push
+name: continuous_integration
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Run the test suite
+      run: |
+        cd $GITHUB_WORKSPACE
+        pip3 install pip setuptools wheel
+        python3 setup.py test
+
+    - name: Upload coverage report to Codacy
+      uses: codacy/codacy-coverage-reporter-action@master
+      with:
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}

@@ -1,0 +1,5 @@
+[run]
+source = yatiml
+
+[xml]
+output = cobertura.xml

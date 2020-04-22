@@ -2,8 +2,8 @@
     :target: https://yatiml.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Build Status
 
-.. image:: https://api.travis-ci.org/yatiml/yatiml.svg?branch=master
-    :target: https://travis-ci.org/yatiml/yatiml
+.. image:: https://github.com/yatiml/yatiml/workflows/continuous_integration/badge.svg
+    :target: https://github.com/yatiml/yatiml/actions
     :alt: Build Status
 
 .. image:: https://api.codacy.com/project/badge/Grade/e9cf088f3f6d44cc82fd6aead08202e1
@@ -21,6 +21,9 @@
 .. image:: https://zenodo.org/badge/147202299.svg
    :target: https://zenodo.org/badge/latestdoi/147202299
 
+.. image:: https://img.shields.io/badge/rsd-yatiml-00a3e3.svg
+   :target: https://www.research-software.nl/software/yatiml
+
 ################################################################################
 YAtiML
 ################################################################################
@@ -33,9 +36,8 @@ need an extra library for that). However, YAtiML does solve the same kind of
 problems, and more, so if you are looking for a schema language for YAML, YAtiML
 may actually be what you need.
 
-If you use YAtiML for scientific work, we ask that you cite it. We have provided
-a CITATION.cff file to help you do so quickly and easily.
-
+If you use YAtiML for scientific work, we ask that you cite it. Click the
+`rsd` badge above to download a citation file in your favourite format.
 
 How it works
 ************
@@ -81,7 +83,7 @@ attributes will be written out in the order in which you've defined them, rather
 than in random order, which really improves the readability of the result
 (assuming that the order of your definition is logical, of course.)
 
-YAtiML supports Python 3.4 and later.
+YAtiML supports Python 3.5 and later.
 
 
 Documentation and Help
