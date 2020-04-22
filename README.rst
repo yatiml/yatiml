@@ -2,8 +2,8 @@
     :target: https://yatiml.readthedocs.io/en/latest/?badge=develop
     :alt: Documentation Build Status
 
-.. image:: https://api.travis-ci.org/yatiml/yatiml.svg?branch=develop
-    :target: https://travis-ci.org/yatiml/yatiml
+.. image:: https://github.com/yatiml/yatiml/workflows/continuous_integration/badge.svg
+    :target: https://github.com/yatiml/yatiml/actions
     :alt: Build Status
 
 .. image:: https://api.codacy.com/project/badge/Grade/e9cf088f3f6d44cc82fd6aead08202e1
