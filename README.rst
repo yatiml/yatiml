@@ -108,6 +108,8 @@ have found a bug in the documentation. We'd love to fix it, but we need a bit of
 help from you to do so. Please do the following:
 
 #. use the `search functionality <https://github.com/yatiml/yatiml/issues>`_
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fyatiml%2Fyatiml.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fyatiml%2Fyatiml?ref=badge_shield)
+
    to see if someone already filed the same issue;
 #. if your issue search did not yield any relevant results, make a new issue;
 #. apply the "Question" label; apply other labels when relevant.
@@ -145,3 +147,7 @@ YAtiML is Copyright 2018, Netherlands eScience Center, University of Amsterdam,
 and VU University Amsterdam
 
 Distributed under the Apache Software License 2.0.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fyatiml%2Fyatiml.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fyatiml%2Fyatiml?ref=badge_large)
