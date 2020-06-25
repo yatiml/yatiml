@@ -1,0 +1,9 @@
+version: 2
+analyze:
+  modules:
+  - name: github.com/yatiml/yatiml
+    type: pip
+    target: .
+    path: .
+    options:
+      strategy: setuptools
