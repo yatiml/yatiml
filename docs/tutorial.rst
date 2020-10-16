@@ -333,6 +333,31 @@ which is not nearly as nice to read or write. (To be fair, ruamel.yaml can do a
 bit nicer than this with its RoundTripDumper, which YAtiML uses, but the tag
 with the exclamation marks remains.)
 
+Saving to JSON
+--------------
+
+YAML is a superset of JSON, so ruamel.yaml and YAtiML can read JSON files.
+Wouldn't it be nice if you could save to JSON as well? ruamel.yaml does not
+support this, but with YAtiML, you can do it:
+
+.. code-block:: python
+
+  # Create dumper
+  class MyDumper(yatiml.Dumper):
+      output_format = 'json'
+
+
+If you already have a class ``MyYamlDumper`` which dumps YAML, and you also want a
+dumper with the same classes but which outputs JSON, then you can inherit from
+it:
+
+.. code-block:: python
+
+  # Create JSON dumper from YAML dumper
+  class MyJsonDumper(MyYamlDumper):
+      output_format = 'json'
+
+
 Class hierarchies
 -----------------
 
