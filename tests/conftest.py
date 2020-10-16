@@ -107,6 +107,14 @@ def plain_dumper():
     return PlainDumper
 
 
+@pytest.fixture
+def plain_json_dumper(plain_dumper):
+    class PlainJsonDumper(plain_dumper):
+        output_format = 'json'
+
+    return PlainJsonDumper
+
+
 class Document1:
     def __init__(self, attr1: str) -> None:
         self.attr1 = attr1
@@ -372,6 +380,13 @@ def document1_dumper():
 
 
 @pytest.fixture
+def document1_json_dumper(document1_dumper):
+    class Document1JsonDumper(document1_dumper):
+        output_format = 'json'
+    return Document1JsonDumper
+
+
+@pytest.fixture
 def vector_loader():
     class VectorLoader(yatiml.Loader):
         pass
@@ -422,6 +437,14 @@ def document2_dumper():
 
 
 @pytest.fixture
+def document2_json_dumper(document2_dumper):
+    class Document2JsonDumper(document2_dumper):
+        output_format = 'json'
+
+    return Document2JsonDumper
+
+
+@pytest.fixture
 def enum_loader():
     class EnumLoader(yatiml.Loader):
         pass
@@ -439,6 +462,13 @@ def enum_dumper():
 
 
 @pytest.fixture
+def enum_json_dumper(enum_dumper):
+    class EnumJsonDumper(enum_dumper):
+        output_format = 'json'
+    return EnumJsonDumper
+
+
+@pytest.fixture
 def enum_loader2():
     class EnumLoader2(yatiml.Loader):
         pass
@@ -453,6 +483,13 @@ def enum_dumper2():
         pass
     yatiml.add_to_dumper(EnumDumper2, Color2)
     return EnumDumper2
+
+
+@pytest.fixture
+def enum_json_dumper2(enum_dumper2):
+    class EnumJsonDumper2(enum_dumper2):
+        output_format = 'json'
+    return EnumJsonDumper2
 
 
 @pytest.fixture
@@ -491,6 +528,13 @@ def user_string_dumper():
 
 
 @pytest.fixture
+def user_string_json_dumper(user_string_dumper):
+    class UserStringJsonDumper(user_string_dumper):
+        output_format = 'json'
+    return UserStringJsonDumper
+
+
+@pytest.fixture
 def super_loader():
     class SuperLoader(yatiml.Loader):
         pass
@@ -517,6 +561,13 @@ def super2_dumper():
 
 
 @pytest.fixture
+def super2_json_dumper(super2_dumper):
+    class Super2JsonDumper(super2_dumper):
+        output_format = 'json'
+    return Super2JsonDumper
+
+
+@pytest.fixture
 def universal_loader():
     class UniversalLoader(yatiml.Loader):
         pass
@@ -531,6 +582,13 @@ def universal_dumper():
         pass
     yatiml.add_to_dumper(UniversalDumper, Universal)
     return UniversalDumper
+
+
+@pytest.fixture
+def universal_json_dumper(universal_dumper):
+    class UniversalJsonDumper(universal_dumper):
+        output_format = 'json'
+    return UniversalJsonDumper
 
 
 @pytest.fixture
@@ -551,11 +609,25 @@ def extensible_dumper():
 
 
 @pytest.fixture
+def extensible_json_dumper(extensible_dumper):
+    class ExtensibleJsonDumper(extensible_dumper):
+        output_format = 'json'
+    return ExtensibleJsonDumper
+
+
+@pytest.fixture
 def private_attributes_dumper():
     class PrivateAttributesDumper(yatiml.Dumper):
         pass
     yatiml.add_to_dumper(PrivateAttributesDumper, PrivateAttributes)
     return PrivateAttributesDumper
+
+
+@pytest.fixture
+def private_attributes_json_dumper(private_attributes_dumper):
+    class PrivateAttributesJsonDumper(private_attributes_dumper):
+        output_format = 'json'
+    return PrivateAttributesJsonDumper
 
 
 @pytest.fixture
@@ -566,6 +638,13 @@ def broken_private_attributes_dumper():
             BrokenPrivateAttributesDumper,
             BrokenPrivateAttributes)
     return BrokenPrivateAttributesDumper
+
+
+@pytest.fixture
+def broken_private_attributes_json_dumper(broken_private_attributes_dumper):
+    class BrokenPrivateAttributesJsonDumper(broken_private_attributes_dumper):
+        output_format = 'json'
+    return BrokenPrivateAttributesJsonDumper
 
 
 @pytest.fixture
@@ -614,6 +693,13 @@ def parsed_class_dumper():
 
 
 @pytest.fixture
+def parsed_class_json_dumper(parsed_class_dumper):
+    class ParsedClassJsonDumper(parsed_class_dumper):
+        output_format = 'json'
+    return ParsedClassJsonDumper
+
+
+@pytest.fixture
 def dashed_attribute_loader():
     class DashedAttributeLoader(yatiml.Loader):
         pass
@@ -628,6 +714,13 @@ def dashed_attribute_dumper():
         pass
     yatiml.add_to_dumper(DashedAttributeDumper, DashedAttribute)
     return DashedAttributeDumper
+
+
+@pytest.fixture
+def dashed_attribute_json_dumper(dashed_attribute_dumper):
+    class DashedAttributeJsonDumper(dashed_attribute_dumper):
+        output_format = 'json'
+    return DashedAttributeJsonDumper
 
 
 @pytest.fixture

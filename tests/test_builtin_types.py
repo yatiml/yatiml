@@ -188,7 +188,39 @@ def test_dump_str(plain_dumper):
     assert text == 'test\n...\n'
 
 
+def test_dump_str_json(plain_json_dumper):
+    data = 'test'
+    text = yaml.dump(data, Dumper=plain_json_dumper)
+    assert text == '"test"'
+
+
 def test_dump_datetime(plain_dumper):
     data = datetime(2018, 10, 27)
     text = yaml.dump(data, Dumper=plain_dumper)
     assert text == '2018-10-27 00:00:00\n...\n'
+
+
+def test_dump_datetime_json(plain_json_dumper):
+    data = datetime(2020, 10, 16)
+    text = yaml.dump(data, Dumper=plain_json_dumper)
+    assert text == '"2020-10-16 00:00:00"'
+
+
+def test_dump_int_json(plain_json_dumper):
+    text = yaml.dump(data=42, Dumper=plain_json_dumper)
+    assert text == '42'
+
+
+def test_dump_float_json(plain_json_dumper):
+    text = yaml.dump(data=13.5, Dumper=plain_json_dumper)
+    assert text == '13.5'
+
+
+def test_dump_bool_json(plain_json_dumper):
+    text = yaml.dump(data=True, Dumper=plain_json_dumper)
+    assert text == 'true'
+
+
+def test_dump_null_json(plain_json_dumper):
+    text = yaml.dump(data=None, Dumper=plain_json_dumper)
+    assert text == 'null'

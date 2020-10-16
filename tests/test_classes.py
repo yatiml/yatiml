@@ -177,6 +177,12 @@ def test_sweeten(super2_dumper):
     assert text == 'subclass: A2\n'
 
 
+def test_sweeten_json(super2_json_dumper):
+    data = SubA2()
+    text = yaml.dump(data, Dumper=super2_json_dumper)
+    assert text == '{"subclass":"A2"}'
+
+
 def test_load_dashed_attribute(dashed_attribute_loader):
     text = 'dashed-attribute: 23\n'
     data = yaml.load(text, Loader=dashed_attribute_loader)
@@ -190,10 +196,22 @@ def test_dump_dashed_attribute(dashed_attribute_dumper):
     assert text == 'dashed-attribute: 34\n'
 
 
+def test_dump_dashed_attribute_json(dashed_attribute_json_dumper):
+    data = DashedAttribute(34)
+    text = yaml.dump(data, Dumper=dashed_attribute_json_dumper)
+    assert text == '{"dashed-attribute":34}'
+
+
 def test_dump_document1(document1_dumper):
     data = Document1('test')
     text = yaml.dump(data, Dumper=document1_dumper)
     assert text == 'attr1: test\n'
+
+
+def test_dump_document1_json(document1_json_dumper):
+    data = Document1('test')
+    text = yaml.dump(data, Dumper=document1_json_dumper)
+    assert text == '{"attr1":"test"}'
 
 
 def test_dump_custom_attributes(extensible_dumper):
@@ -201,6 +219,18 @@ def test_dump_custom_attributes(extensible_dumper):
     data = Extensible(10, _yatiml_extra=extra_attributes)
     text = yaml.dump(data, Dumper=extensible_dumper)
     assert text == 'a: 10\nb: 5\nc: 3\n'
+
+
+def test_dump_custom_attributes_json(extensible_json_dumper):
+    extra_attributes = OrderedDict([('b', 5), ('c', 3)])
+    data = Extensible(10, _yatiml_extra=extra_attributes)
+    text = yaml.dump(data, Dumper=extensible_json_dumper, indent=2)
+    assert text == (
+            '{\n'
+            '  "a": 10,\n'
+            '  "b": 5,\n'
+            '  "c": 3\n'
+            '}\n')
 
 
 def test_load_complex_document(document2_loader, caplog):
@@ -254,10 +284,51 @@ def test_dump_complex_document(document2_dumper):
             )
 
 
+def test_dump_complex_document_json(document2_json_dumper):
+    shape1 = Circle(Vector2D(5.0, 6.0), 12.0)
+    shape2 = Rectangle(Vector2D(-2.0, -5.0), 3.0, 7.0)
+    data = Document2(Vector2D(3.0, 4.0), [shape1, shape2])
+    text = yaml.dump(data, Dumper=document2_json_dumper, indent=2)
+    print(text)
+    assert text == (
+            '{\n'
+            '  "cursor_at": {\n'
+            '    "x": 3.0,\n'
+            '    "y": 4.0\n'
+            '  },\n'
+            '  "shapes": [\n'
+            '    {\n'
+            '      "center": {\n'
+            '        "x": 5.0,\n'
+            '        "y": 6.0\n'
+            '      },\n'
+            '      "radius": 12.0\n'
+            '    },\n'
+            '    {\n'
+            '      "center": {\n'
+            '        "x": -2.0,\n'
+            '        "y": -5.0\n'
+            '      },\n'
+            '      "width": 3.0,\n'
+            '      "height": 7.0\n'
+            '    }\n'
+            '  ],\n'
+            '  "color": "red",\n'
+            '  "extra_shape": null\n'
+            '}\n'
+            )
+
+
 def test_broken_custom_attributes(universal_dumper):
     data = Universal(3, [4])
     with pytest.raises(RuntimeError):
         yaml.dump(data, Dumper=universal_dumper)
+
+
+def test_broken_custom_attributes_json(universal_json_dumper):
+    data = Universal(3, [4])
+    with pytest.raises(RuntimeError):
+        yaml.dump(data, Dumper=universal_json_dumper)
 
 
 def test_yatiml_attributes(private_attributes_dumper):
@@ -266,10 +337,22 @@ def test_yatiml_attributes(private_attributes_dumper):
     assert text == 'a: 10\nb: 42.0\n'
 
 
+def test_yatiml_attributes_json(private_attributes_json_dumper):
+    data = PrivateAttributes(10, 42.0)
+    text = yaml.dump(data, Dumper=private_attributes_json_dumper)
+    assert text == '{"a":10,"b":42.0}'
+
+
 def test_private_attributes(broken_private_attributes_dumper):
     data = BrokenPrivateAttributes(10, 42.0)
     with pytest.raises(AttributeError):
         yaml.dump(data, Dumper=broken_private_attributes_dumper)
+
+
+def test_private_attributes_json(broken_private_attributes_json_dumper):
+    data = BrokenPrivateAttributes(10, 42.0)
+    with pytest.raises(AttributeError):
+        yaml.dump(data, Dumper=broken_private_attributes_json_dumper)
 
 
 def test_complex_private_attributes(complex_private_attributes_dumper):
@@ -300,6 +383,11 @@ def test_dump_enum(enum_dumper):
     assert text == 'green\n...\n'
 
 
+def test_dump_enum_json(enum_json_dumper):
+    text = yaml.dump(Color.green, Dumper=enum_json_dumper)
+    assert text == '"green"'
+
+
 def test_dump_enum2(enum_dumper):
     # check that we don't generate cross-references for enum values
     # regression test
@@ -317,6 +405,11 @@ def test_enum_savorize(enum_loader2):
 def test_enum_sweeten(enum_dumper2):
     text = yaml.dump(Color2.YELLOW, Dumper=enum_dumper2)
     assert text == 'yellow\n...\n'
+
+
+def test_enum_sweeten_json(enum_json_dumper2):
+    text = yaml.dump(Color2.YELLOW, Dumper=enum_json_dumper2)
+    assert text == '"yellow"'
 
 
 def test_enum_list(enum_list_loader):
@@ -357,6 +450,12 @@ def test_dump_user_string(user_string_dumper):
     assert text == 'abc\n...\n'
 
 
+def test_dump_user_string_json(user_string_json_dumper):
+    data = ConstrainedString('abc')
+    text = yaml.dump(data, Dumper=user_string_json_dumper)
+    assert text == '"abc"'
+
+
 def test_parsed_class(parsed_class_loader):
     text = '1098 XG'
     data = yaml.load(text, Loader=parsed_class_loader)
@@ -369,3 +468,9 @@ def test_dump_parsed_class(parsed_class_dumper):
     data = Postcode(1098, 'XG')
     text = yaml.dump(data, Dumper=parsed_class_dumper)
     assert text == '1098 XG\n...\n'
+
+
+def test_dump_parsed_class_json(parsed_class_json_dumper):
+    data = Postcode(1098, 'XG')
+    text = yaml.dump(data, Dumper=parsed_class_json_dumper)
+    assert text == '"1098 XG"'
