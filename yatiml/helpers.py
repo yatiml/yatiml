@@ -148,7 +148,7 @@ class Node:
             key_node.value == attribute for key_node, _ in self.yaml_node.value
         ])
 
-    def has_attribute_type(self, attribute: str, typ: Type) -> bool:
+    def has_attribute_type(self, attribute: str, typ: Optional[Type]) -> bool:
         """Whether the given attribute exists and has a compatible type.
 
         Returns true iff the attribute exists and is an instance of \
