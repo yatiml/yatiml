@@ -416,6 +416,9 @@ if you're making something new, it's often convenient to use the values for
 something else. The names are usually what you want to write though, so they're
 probably easier for the users to write in the YAML file too.
 
+Note that you can also season your enumeration classes. See
+:ref:`seasoning_enumerations` in the Recipes section for some examples.
+
 User-Defined Strings
 --------------------
 

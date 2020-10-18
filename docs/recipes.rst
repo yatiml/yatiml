@@ -78,6 +78,8 @@ somehow in order to be able to dump correctly, and then it's better to specify
 it on loading as well for symmetry.)
 
 
+.. _seasoning_enumerations:
+
 Seasoning enumerations
 ----------------------
 
