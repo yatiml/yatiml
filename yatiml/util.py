@@ -47,8 +47,8 @@ def is_generic_sequence(type_: Type) -> bool:
         return (isinstance(type_, typing._GenericAlias) and     # type: ignore
                 (
                     type_.__origin__ is list or
-                    type_.__origin__ is collections.abc.Sequence or
-                    type_.__origin__ is collections.abc.MutableSequence))
+                    type_.__origin__ is collections.Sequence or
+                    type_.__origin__ is collections.MutableSequence))
     else:
         # 3.6 and earlier
         # GenericMeta cannot be imported from typing, because it doesn't
@@ -80,8 +80,8 @@ def is_generic_mapping(type_: Type) -> bool:
         return (isinstance(type_, typing._GenericAlias) and     # type: ignore
                 (
                     type_.__origin__ is dict or
-                    type_.__origin__ is collections.abc.Mapping or
-                    type_.__origin__ is collections.abc.MutableMapping))
+                    type_.__origin__ is collections.Mapping or
+                    type_.__origin__ is collections.MutableMapping))
     else:
         # 3.6 and earlier
         return (isinstance(type_, typing.GenericMeta) and
