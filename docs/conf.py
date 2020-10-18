@@ -48,7 +48,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'YAtiML'
-copyright = u'2018, Netherlands eScience Center, University of Amsterdam, and VU University Amsterdam'
+copyright = u'2018-2020, Netherlands eScience Center, University of Amsterdam, and VU University Amsterdam'
 author = u'Lourens Veen'
 
 # The version info for the project you're documenting, acts as replacement for
