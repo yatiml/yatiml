@@ -1,5 +1,6 @@
 import os
 from typing import (  # noqa: F401
+    Any,
     List,
     Optional,
     Set,
@@ -12,6 +13,7 @@ from ruamel import yaml
 from ruamel.yaml.error import StreamMark
 
 from yatiml.exceptions import RecognitionError, SeasoningError
+from yatiml.introspection import defaulted_attributes
 from yatiml.irecognizer import IRecognizer
 from yatiml.util import ScalarType, scalar_type_to_tag
 
@@ -282,6 +284,59 @@ class Node:
         attr_index = self.__attr_index(attribute)
         if attr_index is not None:
             self.yaml_node.value.pop(attr_index)
+
+    def remove_attributes_with_default_values(self, cls: Type) -> None:
+        """Remove attributes with default values.
+
+        If an attribute has a default value, and the current value when
+        saving the attribute matches that, then it could be removed.
+        This function can be used in _yatiml_sweeten() to do that. For
+        `cls`, pass the `cls` first argument of _yatiml_sweeten().
+
+        Note that this currently only works for the built-in types
+        bool, float, int, str and for None values, not for classes or
+        enums.
+
+        Use only if is_mapping() returns True.
+
+        Args:
+            cls: The class we're sweetening.
+        """
+        def matches(value_node: yaml.Node, default: Any) -> bool:
+            if value_node.tag == 'tag:yaml.org,2002:null':
+                return default is None
+
+            if value_node.tag == 'tag:yaml.org,2002:int':
+                return int(value_node.value) == default
+
+            if value_node.tag == 'tag:yaml.org,2002:float':
+                return float(value_node.value) == default
+
+            if value_node.tag == 'tag:yaml.org,2002:bool':
+                if default is False:
+                    return (
+                            value_node.value.lower() == 'n' or
+                            value_node.value.lower() == 'no' or
+                            value_node.value.lower() == 'false' or
+                            value_node.value.lower() == 'off')
+                elif default is True:
+                    return (
+                            value_node.value.lower() == 'y' or
+                            value_node.value.lower() == 'yes' or
+                            value_node.value.lower() == 'true' or
+                            value_node.value.lower() == 'on')
+                return False
+
+            return value_node.value == default
+
+        defaults = defaulted_attributes(cls)
+
+        self.yaml_node.value = [
+                (name_node, value_node)
+                for name_node, value_node in self.yaml_node.value
+                if (
+                    name_node.value not in defaults or
+                    not matches(value_node, defaults[name_node.value]))]
 
     def rename_attribute(self, attribute: str, new_name: str) -> None:
         """Renames an attribute.

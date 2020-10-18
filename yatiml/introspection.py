@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Generator, Tuple
+from typing import Any, Dict, Generator, Tuple
 from typing_extensions import Type
 
 
@@ -27,3 +27,24 @@ def class_subobjects(
             continue
         attr_type = argspec.annotations.get(attr_name, Any)
         yield attr_name, attr_type, i < first_optional
+
+
+def defaulted_attributes(class_: Type) -> Dict[str, Any]:
+    """Returns attributes with defaulted values.
+
+    Args:
+        class_: The class to inspect.
+
+    Returns:
+        A dictionary containing attribute names and their default
+        values.
+    """
+    argspec = inspect.getfullargspec(class_.__init__)
+    defaults = argspec.defaults if argspec.defaults else []
+    num_optional = len(defaults)
+    first_optional = len(argspec.args) - num_optional
+
+    result = dict()     # type: Dict[str, Any]
+    for i, default in enumerate(defaults):
+        result[argspec.args[first_optional + i]] = default
+    return result

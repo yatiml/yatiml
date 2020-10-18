@@ -12,9 +12,9 @@ import yatiml
 from .conftest import (BrokenPrivateAttributes, Circle, Color, Color2,
                        ComplexPrivateAttributes, ConstrainedString,
                        DashedAttribute, DictAttribute, Document1, Document2,
-                       Extensible, Postcode, PrivateAttributes, Rectangle,
-                       Shape, SubA, SubA2, Super, UnionAttribute, Universal,
-                       Vector2D)
+                       Document3, Extensible, Postcode, PrivateAttributes,
+                       Rectangle, Shape, SubA, SubA2, Super, UnionAttribute,
+                       Universal, Vector2D)
 
 
 def test_load_class(document1_loader):
@@ -190,6 +190,34 @@ def test_load_dashed_attribute(dashed_attribute_loader):
     assert data.dashed_attribute == 23
 
 
+def test_remove_defaulted_attribute(document3_dumper):
+    data = Document3(Vector2D(1.2, 3.4))
+    data.another_number = 13
+    text = yaml.dump(data, Dumper=document3_dumper)
+    assert text == 'cursor_at:\n  x: 1.2\n  y: 3.4\nanother_number: 13\n'
+
+    data.color = 'blue'
+    data.age = 8
+    data.has_siblings = True
+    data.score = 5.5
+    data.extra_shape = Circle(Vector2D(1.0, 2.0), 3.0)
+    data.another_number = 42
+    text = yaml.dump(data, Dumper=document3_dumper)
+    assert text == (
+            'cursor_at:\n'
+            '  x: 1.2\n'
+            '  y: 3.4\n'
+            'color: blue\n'
+            'age: 8\n'
+            'has_siblings: true\n'
+            'score: 5.5\n'
+            'extra_shape:\n'
+            '  center:\n'
+            '    x: 1.0\n'
+            '    y: 2.0\n'
+            '  radius: 3.0\n')
+
+
 def test_dump_dashed_attribute(dashed_attribute_dumper):
     data = DashedAttribute(34)
     text = yaml.dump(data, Dumper=dashed_attribute_dumper)
@@ -289,7 +317,6 @@ def test_dump_complex_document_json(document2_json_dumper):
     shape2 = Rectangle(Vector2D(-2.0, -5.0), 3.0, 7.0)
     data = Document2(Vector2D(3.0, 4.0), [shape1, shape2])
     text = yaml.dump(data, Dumper=document2_json_dumper, indent=2)
-    print(text)
     assert text == (
             '{\n'
             '  "cursor_at": {\n'

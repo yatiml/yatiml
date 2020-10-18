@@ -226,11 +226,32 @@ class Document2:
                  color: Color2 = Color2.RED,
                  extra_shape: Optional[Shape] = None
                  ) -> None:
-        # Yes, having [] as a default value is a bad idea, but ok here
         self.cursor_at = cursor_at
         self.shapes = shapes if shapes is not None else list()
         self.color = color
         self.extra_shape = extra_shape
+
+
+class Document3:
+    def __init__(self, cursor_at: Vector2D,
+                 color: str = 'red',
+                 age: int = 7,
+                 has_siblings: bool = False,
+                 score: float = 7.5,
+                 extra_shape: Optional[Shape] = None,
+                 another_number: int = 42
+                 ) -> None:
+        self.cursor_at = cursor_at
+        self.color = color
+        self.age = age
+        self.has_siblings = has_siblings
+        self.score = score
+        self.extra_shape = extra_shape
+        self.another_number = another_number
+
+    @classmethod
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        node.remove_attributes_with_default_values(cls)
 
 
 class Super:
@@ -477,6 +498,16 @@ def document2_json_dumper(document2_dumper):
         output_format = 'json'
 
     return Document2JsonDumper
+
+
+@pytest.fixture
+def document3_dumper():
+    class Document3Dumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(
+            Document3Dumper,
+            [Color2, Document3, Shape, Rectangle, Circle, Vector2D])
+    return Document3Dumper
 
 
 @pytest.fixture
