@@ -10,11 +10,11 @@ document structure (a tree of nested dicts and lists), and manipulate that in
 your code.
 
 While this works fine for simple file formats, it does not scale very well to
-more complex file formats such as the Common Workflow Language (CWL) or the
-Multiscale Computing Language (yMCL). Manual error-checking is lots of work and
-error-prone, defaults are not set automatically (which is especially tricky if
-you have multiple nested optional objects), and the file format often ends up
-somewhat underspecified.
+more complex file formats like Docker Compose-files, the Common Workflow
+Language (CWL) or the Multiscale Computing Language (yMCL). Manual
+error-checking is lots of work and error-prone, defaults are not set
+automatically (which is especially tricky if you have multiple nested optional
+objects), and the file format often ends up somewhat underspecified.
 
 Furthermore, a small collection of nested dicts and lists may work fine, but for
 more complex file formats, this becomes unwieldy and a set of objects is a
@@ -22,7 +22,7 @@ better choice. Although it is not often used this way, YAML is actually a fully
 fledged object-to-text serialisation protocol. The Python yaml and ruamel.yaml
 libraries will actually construct objects for you, but the class names need to
 be put in the YAML file for that to work, which makes those files harder to
-read and write for humans.
+read and write for humans, and may be a security issue.
 
 YAtiML is a helper library that helps address these issues. With YAtiML, you
 have easy-to-read YAML for the user, and easy-to-use objects for the programmer,
@@ -216,6 +216,12 @@ passing the values from the YAML document to the constructor.
 In this example, the attributes themselves do not have a type annotation. You
 are free to add some, but YAtiML will not use them. For YAtiML, the types of the
 attributes are determined by the annotations on the ``__init__`` method only.
+
+Sometimes, you want to add further constraints on the attributes of the class.
+For example, maybe our contestants' ``age`` may be at most ``12``. The standard
+thing to do in this situation is to add a check to ``__init__``, and raise a
+``ValueError`` if it fails. If that happens during loading, then YAtiML will
+output the associated message and point out where in the input the problem is.
 
 There is another new line in the script:
 
