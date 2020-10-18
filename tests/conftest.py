@@ -2,7 +2,9 @@ import enum
 import math
 from collections import OrderedDict, UserString
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import (
+        Any, Dict, List, Mapping, MutableMapping, MutableSequence, Optional,
+        Sequence, Tuple, Union)
 from typing_extensions import Type
 
 from ruamel import yaml
@@ -53,6 +55,22 @@ def int_list_loader():
 
 
 @pytest.fixture
+def int_sequence_loader():
+    class IntSequenceLoader(yatiml.Loader):
+        pass
+    yatiml.set_document_type(IntSequenceLoader, Sequence[int])
+    return IntSequenceLoader
+
+
+@pytest.fixture
+def int_mutable_sequence_loader():
+    class IntMutableSequenceLoader(yatiml.Loader):
+        pass
+    yatiml.set_document_type(IntMutableSequenceLoader, MutableSequence[int])
+    return IntMutableSequenceLoader
+
+
+@pytest.fixture
 def string_dict_loader():
     class StringDictLoader(yatiml.Loader):
         pass
@@ -66,6 +84,23 @@ def int_key_dict_loader():
         pass
     yatiml.set_document_type(IntKeyDictLoader, Dict[int, str])
     return IntKeyDictLoader
+
+
+@pytest.fixture
+def string_mapping_loader():
+    class StringMappingLoader(yatiml.Loader):
+        pass
+    yatiml.set_document_type(StringMappingLoader, Mapping[str, str])
+    return StringMappingLoader
+
+
+@pytest.fixture
+def string_mutable_mapping_loader():
+    class StringMutableMappingLoader(yatiml.Loader):
+        pass
+    yatiml.set_document_type(
+            StringMutableMappingLoader, MutableMapping[str, str])
+    return StringMutableMappingLoader
 
 
 @pytest.fixture

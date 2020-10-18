@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """Tests for the yatiml module."""
-from collections import MutableMapping
+import collections
 from datetime import datetime
 from typing import Dict
 
@@ -81,6 +81,7 @@ def test_load_datetime(datetime_loader):
 def test_load_list(string_list_loader):
     text = '- test1\n- test2\n'
     data = yaml.load(text, Loader=string_list_loader)
+    assert isinstance(data, list)
     assert data == ['test1', 'test2']
 
 
@@ -102,10 +103,23 @@ def test_load_list_mismatch(int_list_loader):
         yaml.load(text, Loader=int_list_loader)
 
 
+def test_load_sequence(int_sequence_loader):
+    text = '- 1\n- 2'
+    data = yaml.load(text, Loader=int_sequence_loader)
+    assert isinstance(data, collections.abc.Sequence)
+    assert data == [1, 2]
+
+
+def test_load_mutable_sequence(int_mutable_sequence_loader):
+    text = '[3, 4]'
+    data = yaml.load(text, Loader=int_mutable_sequence_loader)
+    assert data == [3, 4]
+
+
 def test_load_dict(string_dict_loader):
     text = 'key1: test1\nkey2: test2\n'
     data = yaml.load(text, Loader=string_dict_loader)
-    assert isinstance(data, MutableMapping)
+    assert isinstance(data, dict)
     assert data == {'key1': 'test1', 'key2': 'test2'}
 
 
@@ -125,6 +139,20 @@ def test_load_dict_item_type_mismatch(string_dict_loader):
     text = 'key1: test1\nkey2: 2\n'
     with pytest.raises(yatiml.RecognitionError):
         yaml.load(text, Loader=string_dict_loader)
+
+
+def test_load_mapping(string_mapping_loader):
+    text = 'key1: test1\nkey2: test2\n'
+    data = yaml.load(text, Loader=string_mapping_loader)
+    assert isinstance(data, collections.abc.MutableMapping)
+    assert data == {'key1': 'test1', 'key2': 'test2'}
+
+
+def test_load_mutable_mapping(string_mutable_mapping_loader):
+    text = 'key1: test1\nkey2: test2\n'
+    data = yaml.load(text, Loader=string_mutable_mapping_loader)
+    assert isinstance(data, collections.abc.MutableMapping)
+    assert data == {'key1': 'test1', 'key2': 'test2'}
 
 
 def test_load_nested_dict(nested_dict_loader):

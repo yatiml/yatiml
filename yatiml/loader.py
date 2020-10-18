@@ -13,8 +13,9 @@ from yatiml.exceptions import RecognitionError
 from yatiml.helpers import Node
 from yatiml.introspection import class_subobjects
 from yatiml.recognizer import Recognizer
-from yatiml.util import (generic_type_args, is_generic_list, is_generic_dict,
-                         scalar_type_to_tag, type_to_desc)
+from yatiml.util import (
+        generic_type_args, is_generic_sequence, is_generic_mapping,
+        scalar_type_to_tag, type_to_desc)
 
 logger = logging.getLogger(__name__)
 
@@ -69,10 +70,10 @@ class Loader(yaml.RoundTripLoader):
         if type_ in scalar_type_to_tag:
             return scalar_type_to_tag[type_]
 
-        if is_generic_list(type_):
+        if is_generic_sequence(type_):
             return 'tag:yaml.org,2002:seq'
 
-        if is_generic_dict(type_):
+        if is_generic_mapping(type_):
             return 'tag:yaml.org,2002:map'
 
         if type_ in self._registered_classes.values():
@@ -143,7 +144,7 @@ class Loader(yaml.RoundTripLoader):
 
         # process subnodes
         logger.debug('Recursing into subnodes')
-        if is_generic_list(recognized_type):
+        if is_generic_sequence(recognized_type):
             if node.tag != 'tag:yaml.org,2002:seq':
                 raise RecognitionError('{}{}Expected a {} here'.format(
                     node.start_mark, os.linesep,
@@ -153,7 +154,7 @@ class Loader(yaml.RoundTripLoader):
                         item, generic_type_args(recognized_type)[0])
                     for item in node.value]
 
-        elif is_generic_dict(recognized_type):
+        elif is_generic_mapping(recognized_type):
             if node.tag != 'tag:yaml.org,2002:map':
                 raise RecognitionError('{}{}Expected a {} here'.format(
                     node.start_mark, os.linesep,

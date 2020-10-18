@@ -1,6 +1,9 @@
+import collections
 from datetime import datetime
 import typing
-from typing import Any, cast, Dict, List, Union
+from typing import (
+        Any, cast, Dict, Mapping, MutableMapping, MutableSequence, List,
+        Sequence, Union)
 from typing_extensions import Type
 
 
@@ -22,18 +25,19 @@ scalar_type_to_tag = {
 ScalarType = Union[str, int, float, bool, None]
 
 
-def is_generic_list(type_: Type) -> bool:
-    """Determines whether a type is a List[...].
+def is_generic_sequence(type_: Type) -> bool:
+    """Determines whether a type is a sequence tag.
 
     How to do this varies for different Python versions, due to the
     typing library not having a stable API. This functions smooths
-    over the differences.
+    over the differences, returning True if the type is a List[],
+    Sequence[] or MutableSequence[].
 
     Args:
         type_: The type to check.
 
     Returns:
-        True iff it's a List[...something...].
+        True iff it's a generic sequence.
     """
     if hasattr(typing, '_GenericAlias'):
         # 3.7
@@ -41,37 +45,50 @@ def is_generic_list(type_: Type) -> bool:
         # exist in all versions, and it will fail the type check in those
         # versions as well, so we ignore it.
         return (isinstance(type_, typing._GenericAlias) and     # type: ignore
-                type_.__origin__ is list)
+                (
+                    type_.__origin__ is list or
+                    type_.__origin__ is collections.abc.Sequence or
+                    type_.__origin__ is collections.abc.MutableSequence))
     else:
         # 3.6 and earlier
         # GenericMeta cannot be imported from typing, because it doesn't
         # exist in all versions, and it will fail the type check in those
         # versions as well, so we ignore it.
         return (isinstance(type_, typing.GenericMeta) and
-                cast(Any, type_).__origin__ is List)
+                (
+                    cast(Any, type_).__origin__ is List or
+                    cast(Any, type_).__origin__ is Sequence or
+                    cast(Any, type_).__origin__ is MutableSequence))
 
 
-def is_generic_dict(type_: Type) -> bool:
-    """Determines whether a type is a Dict[...].
+def is_generic_mapping(type_: Type) -> bool:
+    """Determines whether a type is a mapping tag.
 
     How to do this varies for different Python versions, due to the
     typing library not having a stable API. This functions smoothes
-    over the differences.
+    over the differences, returning True if the type is a Dict[],
+    Mapping[] or MutableMapping[].
 
     Args:
         type_: The type to check.
 
     Returns:
-        True iff it's a Dict[...something...].
+        True iff it's a generic mapping.
     """
     if hasattr(typing, '_GenericAlias'):
         # 3.7
         return (isinstance(type_, typing._GenericAlias) and     # type: ignore
-                type_.__origin__ is dict)
+                (
+                    type_.__origin__ is dict or
+                    type_.__origin__ is collections.abc.Mapping or
+                    type_.__origin__ is collections.abc.MutableMapping))
     else:
         # 3.6 and earlier
         return (isinstance(type_, typing.GenericMeta) and
-                cast(Any, type_).__origin__ is Dict)
+                (
+                    cast(Any, type_).__origin__ is Dict or
+                    cast(Any, type_).__origin__ is Mapping or
+                    cast(Any, type_).__origin__ is MutableMapping))
 
 
 def is_generic_union(type_: Type) -> bool:
@@ -156,10 +173,10 @@ def type_to_desc(type_: Type) -> str:
         return 'union of {}'.format([type_to_desc(t)
                                      for t in generic_type_args(type_)])
 
-    if is_generic_list(type_):
+    if is_generic_sequence(type_):
         return 'list of ({})'.format(type_to_desc(generic_type_args(type_)[0]))
 
-    if is_generic_dict(type_):
+    if is_generic_mapping(type_):
         return 'dict of string to ({})'.format(
                 type_to_desc(generic_type_args(type_)[1]))
 

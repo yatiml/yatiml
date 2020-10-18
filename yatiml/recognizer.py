@@ -13,9 +13,9 @@ from yatiml.exceptions import RecognitionError
 from yatiml.helpers import Node, UnknownNode
 from yatiml.introspection import class_subobjects
 from yatiml.irecognizer import IRecognizer, RecResult
-from yatiml.util import (generic_type_args, is_generic_dict, is_generic_list,
-                         is_generic_union, scalar_type_to_tag, type_to_desc,
-                         bool_union_fix)
+from yatiml.util import (
+        generic_type_args, is_generic_mapping, is_generic_sequence,
+        is_generic_union, scalar_type_to_tag, type_to_desc, bool_union_fix)
 
 logger = logging.getLogger(__name__)
 
@@ -316,10 +316,10 @@ class Recognizer(IRecognizer):
         elif is_generic_union(expected_type):
             recognized_types, message = self.__recognize_union(
                 node, expected_type)
-        elif is_generic_list(expected_type):
+        elif is_generic_sequence(expected_type):
             recognized_types, message = self.__recognize_list(
                 node, expected_type)
-        elif is_generic_dict(expected_type):
+        elif is_generic_mapping(expected_type):
             recognized_types, message = self.__recognize_dict(
                 node, expected_type)
         elif expected_type in self.__registered_classes.values():
