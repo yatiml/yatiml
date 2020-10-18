@@ -12,9 +12,9 @@ import yatiml
 from .conftest import (BrokenPrivateAttributes, Circle, Color, Color2,
                        ComplexPrivateAttributes, ConstrainedString,
                        DashedAttribute, DictAttribute, Document1, Document2,
-                       Document3, Extensible, Postcode, PrivateAttributes,
-                       Rectangle, Shape, SubA, SubA2, Super, UnionAttribute,
-                       Universal, Vector2D)
+                       Document3, Document4, Extensible, Postcode,
+                       PrivateAttributes, Rectangle, Shape, SubA, SubA2, Super,
+                       UnionAttribute, Universal, Vector2D)
 
 
 def test_load_class(document1_loader):
@@ -216,6 +216,12 @@ def test_remove_defaulted_attribute(document3_dumper):
             '    x: 1.0\n'
             '    y: 2.0\n'
             '  radius: 3.0\n')
+
+
+def test_yatiml_defaults(document4_dumper):
+    data = Document4()
+    text = yaml.dump(data, Dumper=document4_dumper)
+    assert text == '{}\n'
 
 
 def test_dump_dashed_attribute(dashed_attribute_dumper):

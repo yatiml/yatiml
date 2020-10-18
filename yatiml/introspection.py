@@ -44,7 +44,17 @@ def defaulted_attributes(class_: Type) -> Dict[str, Any]:
     num_optional = len(defaults)
     first_optional = len(argspec.args) - num_optional
 
+    if hasattr(class_, '_yatiml_defaults'):
+        user_defaults = class_._yatiml_defaults     # type: Dict[str, Any]
+    else:
+        user_defaults = {}
+
+    print('c: {}, ud: {}'.format(class_, user_defaults))
+
     result = dict()     # type: Dict[str, Any]
     for i, default in enumerate(defaults):
-        result[argspec.args[first_optional + i]] = default
+        arg_name = argspec.args[first_optional + i]
+        if arg_name in user_defaults:
+            default = user_defaults[arg_name]
+        result[arg_name] = default
     return result

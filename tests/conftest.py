@@ -254,6 +254,17 @@ class Document3:
         node.remove_attributes_with_default_values(cls)
 
 
+class Document4:
+    def __init__(self, shapes: List[Shape] = None) -> None:
+        self.shapes = shapes if shapes is not None else list()
+
+    _yatiml_defaults = {'shapes': []}   # type: Dict[str, Any]
+
+    @classmethod
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        node.remove_attributes_with_default_values(cls)
+
+
 class Super:
     def __init__(self, subclass: str) -> None:
         pass
@@ -508,6 +519,16 @@ def document3_dumper():
             Document3Dumper,
             [Color2, Document3, Shape, Rectangle, Circle, Vector2D])
     return Document3Dumper
+
+
+@pytest.fixture
+def document4_dumper():
+    class Document4Dumper(yatiml.Dumper):
+        pass
+    yatiml.add_to_dumper(
+            Document4Dumper,
+            [Document4, Shape, Rectangle, Circle, Vector2D])
+    return Document4Dumper
 
 
 @pytest.fixture

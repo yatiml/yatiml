@@ -297,9 +297,40 @@ class Node:
         This function can be used in _yatiml_sweeten() to do that. For
         `cls`, pass the `cls` first argument of _yatiml_sweeten().
 
-        Note that this currently only works for the built-in types
-        bool, float, int, str and for None values, not for classes or
-        enums.
+        If the default for the parameter is not the same as the default
+        of the attribute, for example in this common situation:
+
+        .. code-block:: python
+
+            def __init__(
+                    self, my_list: Optional[List[int]] = None) -> None:
+                if my_list is None:
+                    my_list = list()
+                self.my_list = my_list
+
+
+        then this function will not remove the attribute if it is an
+        empty list, because it compares with `None` in the type
+        annotation. To fix that, you can define `_yatiml_defaults` like
+        this:
+
+        .. code-block:: python
+
+            def __init__(
+                    self, my_list: Optional[List[int]] = None) -> None:
+                if my_list is None:
+                    my_list = list()
+                self.my_list = my_list
+
+            _yatiml_defaults = {'my_list', []}  # type: Dict[str, Any]
+
+            @classmethod _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+                node.remove_attributes_with_default_values(cls)
+
+
+        Note that this function currently only works for the built-in
+        types bool, float, int, str and for None values, not for
+        classes or enums.
 
         Use only if is_mapping() returns True.
 
