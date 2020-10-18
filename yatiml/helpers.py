@@ -288,8 +288,12 @@ class Node:
     def remove_attributes_with_default_values(self, cls: Type) -> None:
         """Remove attributes with default values.
 
-        If an attribute has a default value, and the current value when
-        saving the attribute matches that, then it could be removed.
+        If you have a class with many optional attributes, then saving
+        it to YAML may yield a very large dictionary with many values
+        set to e.g. None. If there's no risk of creating an ambiguity,
+        then you may want to remove any attributes whose value matches
+        the default.
+
         This function can be used in _yatiml_sweeten() to do that. For
         `cls`, pass the `cls` first argument of _yatiml_sweeten().
 
