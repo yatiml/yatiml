@@ -1,8 +1,9 @@
+from collections import UserString
 import enum
 import json
 import logging
-from collections import UserString
-from typing import Any, List, Optional
+from pathlib import Path
+from typing import Any, AnyStr, Callable, IO, List, Optional, Union
 from typing_extensions import Type
 
 from ruamel import yaml
@@ -171,3 +172,253 @@ def add_to_dumper(dumper: Type, classes: List[Type]) -> None:
             dumper.add_representer(class_, UserStringRepresenter(class_))
         else:
             dumper.add_representer(class_, Representer(class_))
+
+
+def dumps_function(*args: Type) -> Callable[[Any], str]:
+    """Create a dumps function for the given types.
+
+    This function returns a callable object which takes an object
+    and returns a string containing the YAML serialisation of that
+    object. The type of the object, and any other custom types
+    needed, must have been passed to dumps_function().
+
+    Note that only custom classes need to be passed, the built-in
+    types are, well, built in.
+
+    Examples:
+
+        .. code-block:: python
+
+          dumps = yatiml.dumps_function()
+          yaml_text = dumps({'x': 1})
+          assert yaml_text == 'x: 1\\n'
+
+        .. code-block:: python
+
+          dumps_config = yatiml.dumps_function(Config, Setting)
+          yaml_text = dumps_config(my_config)
+
+        Here, Config is the top-level class, and Setting is
+        another class that is used by Config somewhere. Note that any
+        object can be passed to the resulting dumps function, as long
+        as it is of a built-in type or its type and any types needed
+        to represent it have been passed to dumps_function().
+
+    Args:
+        *args: Any custom types needed.
+
+    Returns:
+        A function that takes an object and produces a YAML string
+        representing it.
+    """
+    class UserDumper(Dumper):
+        pass
+
+    add_to_dumper(UserDumper, list(args))
+
+    def dumps_function(obj: Any) -> Any:
+        return yaml.dump(obj, Dumper=UserDumper)
+
+    return dumps_function
+
+
+def dump_function(
+        *args: Type) -> Callable[[Any, Union[str, Path, IO[AnyStr]]], None]:
+    """Create a dump function for the given types.
+
+    This function returns a callable object which takes an object
+    and a stream, Path or file name, and writes the YAML serialisation
+    of that object to the target. The type of the object, and any other
+    custom types needed, must have been passed to dump_function().
+
+    Note that only custom classes need to be passed, the built-in
+    types are, well, built in.
+
+    Examples:
+
+        .. code-block:: python
+
+          dump = yatiml.dump_function()
+          with open('test.yaml', 'w') as f:
+              dump({'x': 1}, f)
+          # will write 'x: 1\\n' to test.yaml
+
+        .. code-block:: python
+
+          my_config = Config(...)
+          dump_config = yatiml.dump_function(Config, Setting)
+          dump_config(my_config, 'config.yaml')
+
+        Here, Config is the top-level class, and Setting is
+        another class that is used by Config somewhere. Note that any
+        object can be passed to the resulting dump function, as long
+        as it is of a built-in type or its type and any types needed
+        to represent it have been passed to dump_function().
+
+    Args:
+        *args: Any custom types needed.
+
+    Returns:
+        A function that takes an object and a stream, file name or Path,
+        and writes a YAML string representing the object to the file.
+    """
+    class UserDumper(Dumper):
+        pass
+
+    add_to_dumper(UserDumper, list(args))
+
+    def dump_function(obj: Any, sink: Union[str, Path, IO[AnyStr]]) -> None:
+        if isinstance(sink, str):
+            sink = Path(sink)
+
+        if isinstance(sink, Path):
+            with sink.open('w') as f:
+                yaml.dump(obj, f, Dumper=UserDumper)
+        else:
+            yaml.dump(obj, sink, Dumper=UserDumper)
+
+    return dump_function
+
+
+def dumps_json_function(*args: Type) -> Callable[[Any], str]:
+    """Create a dumps function for the given types that writes JSON.
+
+    This function returns a callable object which takes an object
+    and returns a string containing the JSON serialisation of that
+    object. The type of the object, and any other custom types
+    needed, must have been passed to dumps_json_function().
+
+    By default, the produced JSON is in ASCII and in a compact format
+    without newlines or spaces. To make it more readable, you can
+    pass an `indent` keyword argument to the returned function, which
+    causes the output to be formatted with the given indent.
+
+    To output unicode characters as-is, pass `ensure_ascii=False` to
+    the returned dumps function.
+
+    Note that only custom classes need to be passed, the built-in
+    types are, well, built in.
+
+    Examples:
+
+        .. code-block:: python
+
+          dumps_json = yatiml.dumps_json_function()
+          json_text = dumps_json({'x': 1})
+          assert json_text == '{"x": 1}'
+
+          json_text = dumps_json({'x': 1}, indent=2)
+          assert json_text == (
+              '{\\n'
+              '  "x": 1\\n'
+              '}\\n')
+
+
+        .. code-block:: python
+
+          dumps_config_to_json = yatiml.dumps_json_function(Config, Setting)
+          json_text = dumps_config_to_json(my_config)
+
+        Here, Config is the top-level class, and Setting is
+        another class that is used by Config somewhere. Note that any
+        object can be passed to the resulting dumps function, as long
+        as it is of a built-in type or its type and any types needed
+        to represent it have been passed to dumps_json_function().
+
+    Args:
+        *args: Any custom types needed.
+
+    Returns:
+        A function that takes an object and produces a YAML string
+        representing it.
+    """
+    class UserDumper(Dumper):
+        output_format = 'json'
+
+    add_to_dumper(UserDumper, list(args))
+
+    def dumps_json_function(
+            obj: Any, *,
+            indent: Optional[int] = None, ensure_ascii: bool = True
+            ) -> Any:
+        return yaml.dump(
+                obj, Dumper=UserDumper,
+                indent=indent, allow_unicode=not ensure_ascii)
+
+    return dumps_json_function
+
+
+def dump_json_function(
+        *args: Type) -> Callable[[Any, Union[str, Path, IO[AnyStr]]], None]:
+    """Create a dump function for the given types that writes JSON.
+
+    This function returns a callable object which takes an object
+    and a stream, Path or file name, and writes the JSON serialisation
+    of that object to the target. The type of the object, and any other
+    custom types needed, must have been passed to dump_json_function().
+
+    By default, the produced JSON is in ASCII and in a compact format
+    without newlines or spaces. To make it more readable, you can
+    pass an `indent` keyword argument to the returned function, which
+    causes the output to be formatted with the given indent.
+
+    To output unicode characters as-is, pass `ensure_ascii=False` to
+    the returned dumps function.
+
+    Note that only custom classes need to be passed, the built-in
+    types are, well, built in.
+
+    Examples:
+
+        .. code-block:: python
+
+          dump_json = yatiml.dump_json_function()
+          with open('test.json', 'w') as f:
+              dump_json({'x': 1}, f)
+          # will write '{"x": 1}' to test.json
+
+          dump_json({'x': 1}, 'test.json')
+          # will write the same, but nicely formatted
+
+        .. code-block:: python
+
+          my_config = Config(...)
+          dump_config_as_json = yatiml.dump_function(Config, Setting)
+          dump_config_as_json(my_config, 'config.json', indent=2)
+
+        Here, Config is the top-level class, and Setting is
+        another class that is used by Config somewhere. Note that any
+        object can be passed to the resulting dump function, as long
+        as it is of a built-in type or its type and any types needed
+        to represent it have been passed to dump_json_function().
+
+    Args:
+        *args: Any custom types needed.
+
+    Returns:
+        A function that takes an object and a stream, file name or Path,
+        and writes a JSON string representing the object to the file.
+    """
+    class UserDumper(Dumper):
+        output_format = 'json'
+
+    add_to_dumper(UserDumper, list(args))
+
+    def dump_json_function(
+            obj: Any, sink: Union[str, Path, IO[AnyStr]],
+            *, indent: Optional[int] = None, ensure_ascii: bool = True
+            ) -> None:
+        if isinstance(sink, str):
+            sink = Path(sink)
+
+        if isinstance(sink, Path):
+            with sink.open('w') as f:
+                yaml.dump(
+                        obj, f, Dumper=UserDumper,
+                        indent=indent, allow_unicode=not ensure_ascii)
+        else:
+            yaml.dump(
+                    obj, sink, Dumper=UserDumper,
+                    indent=indent, allow_unicode=not ensure_ascii)
+
+    return dump_json_function

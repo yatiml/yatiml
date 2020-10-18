@@ -13,8 +13,11 @@ __author__ = 'Lourens Veen'
 __email__ = 'l.veen@esciencecenter.nl'
 
 from yatiml.exceptions import RecognitionError, SeasoningError
-from yatiml.loader import Loader, add_to_loader, set_document_type
-from yatiml.dumper import Dumper, add_to_dumper
+from yatiml.loader import (
+        Loader, add_to_loader, set_document_type, load_function)
+from yatiml.dumper import (
+        Dumper, add_to_dumper, dump_json_function, dumps_json_function,
+        dump_function, dumps_function)
 from yatiml.helpers import Node, UnknownNode
 from yatiml.util import bool_union_fix
 
@@ -37,6 +40,6 @@ or for even more::
 
 __all__ = [
     'logger', 'RecognitionError', 'SeasoningError', 'Node', 'UnknownNode',
-    'Loader', 'add_to_loader', 'set_document_type', 'Dumper', 'add_to_dumper',
-    'bool_union_fix'
-]
+    'Loader', 'add_to_loader', 'set_document_type', 'load_function', 'Dumper',
+    'add_to_dumper', 'dump_json_function', 'dumps_json_function',
+    'dump_function', 'dumps_function', 'bool_union_fix']

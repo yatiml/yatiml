@@ -57,17 +57,6 @@ time.
 
 .. code-block:: python
 
-  from ruamel import yaml
-
-
-YAtiML is built upon ruamel.yaml, a fork of PyYAML. We chose ruamel.yaml because
-it is more actively maintained, and has some support for comments and formatting
-of YAML files, which is important for making the files easier to work with
-directly by users. When you install YAtiML, ruamel.yaml is automatically
-installed as well.
-
-.. code-block:: python
-
   from typing import Dict
 
 
@@ -86,45 +75,24 @@ Here is where we import the YAtiML library itself.
 
 .. code-block:: python
 
-  class MyLoader(yatiml.Loader):
-      pass
+  load = yatiml.load_function(Dict[str, str])
 
-
-This is where we first start using YAtiML. To read YAML files, ruamel.yaml uses
-a Loader. It has several built-in loaders, but since we want to do some special
-things during the loading process, we specify our own loader class. Since the
-special things are all done for you by YAtiML, the class itself can be empty,
-but it must inherit from ``yatiml.Loader`` for YAtiML to be able to do its work.
-
-.. code-block:: python
-
-  yatiml.set_document_type(MyLoader, Dict[str, str])
-
-
-The one remaining thing to do before we can load some YAML data is to tell our
-Loader which kind of object it should create from the YAML file. Here, we tell
-it to create a dictionary, with strings as keys and also strings as values. The
-``Dict`` type (rather than a plain ``dict``, which won't let us specify the key
-and value types) and square brackets are standard Python notation for type
-annotations. Note that YAtiML does not accept anything other than ``str`` for
-the key type of a ``Dict``.
-
-Creating a class first and then calling a separate function to modify it is a
-bit odd. It would be nicer if we could just construct a Loader object and pass
-the document type to its constructor. However, due to the design of ruamel.yaml
-(which it inherited from PyYAML), implementing this turned out to cause a lot of
-trouble, so we decided to do it the PyYAML way.
-
+This is where we first start using YAtiML. To load a YAML file, we need a
+function that can do so. This call makes a function (!) called ``load`` which
+can load and check YAML files containing a dictionary with strings as keys and
+also strings as values. The ``Dict`` type (rather than a plain ``dict``, which
+won't let us specify the key and value types) and square brackets are standard
+Python notation for type annotations. Note that YAtiML does not accept anything
+other than ``str`` for the key type of a ``Dict``.
 
 .. code-block:: python
 
-  doc = yaml.load(yaml_text, Loader=MyLoader)
+  doc = load(yaml_text)
 
 
-Here, we load the YAML document. Note that we're using the standard ``load()``
-function from ruamel.yaml, as you normally would. The only difference is that
-the new MyLoader class is passed to the function, causing it to work differently
-than it normally would have.
+Here, we load the YAML document using our newly created function. Other than a
+string, you can also open a stream object (an opened file) or a ``pathlib.Path``
+object pointing to a file.
 
 .. code-block:: none
 
@@ -135,14 +103,14 @@ One immediately visible difference is in the result: it is not a plain Python
 ``dict``, but an ``OrderedDict``. This is a standard Python type from the
 ``collections`` module that works just like a normal ``dict``, but remembers the
 order of the entries.  Saving a ``dict`` to a YAML file using plain PyYAML will
-put the attributes in a random order, which is usually difficult to read. With
-ruamel.yaml, YAtiML can control the order, and it makes use of that feature
-here.
+put the attributes in a random order, which is usually difficult to read.
+YAtiML keeps the order of the attributes, so you can make your YAML file more
+readable.
 
 Type errors
 -----------
 
-So far, we have define the type of our document, and read a matching YAML file.
+So far, we have defined the type of our document, and read a matching YAML file.
 But what if we are given a YAML file that does not match? Let's modify our input
 a bit, writing the age as a number:
 
@@ -210,8 +178,8 @@ The type annotations on the ``__init__`` method are used by YAtiML to check that
 the YAML document it is reading is in the correct form. For a custom class like
 this, it will expect to see a mapping (dict) with keys ``name`` and ``age``,
 with a string value for ``name``, and either an int or a string for ``age``. If
-it finds this, it will instruct ruamel.yaml to create a ``Submission`` object,
-passing the values from the YAML document to the constructor.
+it finds this, it will create a ``Submission`` object, passing the values from
+the YAML document to the constructor.
 
 In this example, the attributes themselves do not have a type annotation. You
 are free to add some, but YAtiML will not use them. For YAtiML, the types of the
@@ -223,19 +191,16 @@ thing to do in this situation is to add a check to ``__init__``, and raise a
 ``ValueError`` if it fails. If that happens during loading, then YAtiML will
 output the associated message and point out where in the input the problem is.
 
-There is another new line in the script:
+Note that the loader is now passed our custom class, rather than a ``Dict``:
 
 .. code-block:: python
 
-  yatiml.add_to_loader(MyLoader, Submission)
+  load = yatiml.load_function(Submission)
 
-This registers the new custom class with ``MyLoader``, which will allow it to
-construct ``Submission`` objects. Note that you still have to set the document
-type as well. For more complex file formats, you will likely have a custom class
-that describes the document, which has attributes that themselves are of a
-custom class type. In this case, all these custom class types need to be added
-to the loader, but only the one that describes the whole document is set as the
-document type.
+For more complex file formats, you will likely have a custom class that
+describes the document, which has attributes that themselves are of a custom
+class type. In this case, all these custom class types need to be added to the
+arguments, with the one that describes the whole document first.
 
 This new example outputs the following:
 
@@ -320,16 +285,15 @@ Note that the attributes are in the order of the parameters of the ``__init__``
 method. YAtiML always outputs attributes in this order, even if the object was
 read in with YAtiML from a YAML file and originally had a different order. While
 it would be nice to do full round-trip formatting of the input YAML, support for
-this in ruamel.yaml is still developing, so for now this is what YAtiML does.
+this in the ruamel.yaml library used by YAtiML is still developing, so for now
+this is what YAtiML does.
 
-As an example of the advantage of using YAtiML, try using the default ``Dumper``
-instead of the custom YAtiML one:
+:meth:`yatiml.dumps_function` creates a function that converts objects to a
+string. If you want to write the output to a file directly, you can use
+:meth:`yatiml.dump_function` instead to create a function that can do that.
 
-.. code-block:: python
-
-  yaml_text = yaml.dump(doc)
-
-This will give
+As an example of the advantage of using YAtiML, saving a Submission document
+with PyYAML or ruamel.yaml gives this:
 
 .. code-block:: none
 
@@ -342,26 +306,13 @@ with the exclamation marks remains.)
 Saving to JSON
 --------------
 
-YAML is a superset of JSON, so ruamel.yaml and YAtiML can read JSON files.
-Wouldn't it be nice if you could save to JSON as well? ruamel.yaml does not
-support this, but with YAtiML, you can do it:
+YAML is a superset of JSON, so YAtiML can read JSON files. If you want to save
+JSON as well, then you can use :meth:`yatiml.dumps_json_function` instead:
 
 .. code-block:: python
 
   # Create dumper
-  class MyDumper(yatiml.Dumper):
-      output_format = 'json'
-
-
-If you already have a class ``MyYamlDumper`` which dumps YAML, and you also want a
-dumper with the same classes but which outputs JSON, then you can inherit from
-it:
-
-.. code-block:: python
-
-  # Create JSON dumper from YAML dumper
-  class MyJsonDumper(MyYamlDumper):
-      output_format = 'json'
+  dumps = yatiml.dumps_json_function(Submission)
 
 
 Class hierarchies
@@ -382,9 +333,9 @@ a somewhat crude representation consisting of circles and squares.
 Here, we have defined a class ``Shape``, and have added a list of Shapes as an
 attribute to ``Submission``. Each shape has a location, its center, which is a
 list of coordinates. Classes ``Circle`` and ``Square`` inherit from
-``Shape``, and have some additional attributes. All the classe are added to the
-Loader, and that's important, because only classes added to the Loader will be
-considered by YAtiML.
+``Shape``, and have some additional attributes. All the classe are passed when
+creating the load function, and that's important, because only those classes
+will be considered by YAtiML.
 
 YAtiML will automatically recognize which subclass matches the object actually
 specified in the list from the attributes that it has. If more than one subclass
@@ -420,10 +371,10 @@ Note that the labels that YAtiML looks for are the names of the enum members,
 not their values. In many existing standards, enums map to numerical values, or
 if you're making something new, it's often convenient to use the values for
 something else. The names are usually what you want to write though, so they're
-probably easier for the users to write in the YAML file too.
-
-Note that you can also season your enumeration classes. See
-:ref:`seasoning_enumerations` in the Recipes section for some examples.
+probably easier for the users to write in the YAML file too. If you want
+something else though, you can season your enumerations. See below for a general
+explanation of seasoning, or look at :ref:`seasoning_enumerations` in the
+Recipes section for some examples.
 
 User-Defined Strings
 --------------------
@@ -512,12 +463,12 @@ classmethod:
   :language: python
 
 The ``_yatiml_sweeten()`` method has the same signature as
-``_yatiml_savorize()`` but is called by a Dumper, not by a Loader. It gives you
-access to the YAML node that has been produced from a Submission object before
-it is written out to the YAML output. Here, we use the same functions as before
-to convert some of the int values back to strings. Since we converted all the
-strings to ints on loading above, we can assume that the value is indeed an
-int, and we do not have to check.
+``_yatiml_savorize()`` but is called when dumping rather than when loading. It
+gives you access to the YAML node that has been produced from a Submission
+object before it is written out to the YAML output. Here, we use the same
+functions as before to convert some of the int values back to strings. Since we
+converted all the strings to ints on loading above, we can assume that the value
+is indeed an int, and we do not have to check.
 
 Indeed, if we run this example, we get:
 
@@ -622,11 +573,11 @@ wouldn't be an obvious way of saving such extra attributes again.
 
 So, instead, extra attributes are sent to a ``_yatiml_extra`` parameter of type
 ``OrderedDict`` on ``__init__``, if there is one. You put this value into a
-``_yatiml_extra`` public attribute, whose contents YAtiML will then dump
-appended to the normal attributes. If you want to be able to add extra
-attributes when constructing an object using keyword arguments, then you can
-add a ``**kwargs`` parameter as well, and put any key-value pairs in it into
-``self._yatiml_extra`` in your favourite order yourself.
+``_yatiml_extra`` attribute, whose contents YAtiML will then dump appended to
+the normal attributes. If you want to be able to add extra attributes when
+constructing an object using keyword arguments, then you can add a ``**kwargs``
+parameter as well, and put any key-value pairs in it into ``self._yatiml_extra``
+in your favourite order yourself.
 
 Here is an example:
 

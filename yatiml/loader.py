@@ -2,7 +2,8 @@ import enum
 import logging
 import os
 from collections import UserString
-from typing import Any, Dict, List              # noqa
+from pathlib import Path
+from typing import Any, AnyStr, Callable, Dict, IO, List, Union    # noqa
 from typing_extensions import ClassVar, Type    # noqa
 
 import ruamel.yaml as yaml
@@ -226,3 +227,56 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
         if loader_cls._registered_classes is None:
             loader_cls._registered_classes = dict()
         loader_cls._registered_classes[tag] = class_
+
+
+def load_function(
+        *args: Type) -> Callable[[Union[str, Path, IO[AnyStr]]], Any]:
+    """Create a load function for the given type.
+
+    This function returns a callable object which takes an input
+    (`str`, `pathlib.Path`, or an open stream) and returns an object
+    of the type given as the first argument (a string is expected to
+    contain YAML, not a file name). Any other custom types
+    needed must be passed as the remaining arguments.
+
+    Examples:
+
+        .. code-block:: python
+
+          load_int_dict = yatiml.load_function(Dict[str, int])
+          my_dict = load_int_dict('x: 1')
+
+        .. code-block:: python
+
+          load_config = yatiml.load_function(Config, Setting)
+          my_config = load_config(Path('config.yaml'))
+
+          # or
+
+          with open('config.yaml', 'r') as f:
+              my_config = load_config(f)
+
+        Here, Config is the top-level class, and Setting is
+        another class that is used by Config somewhere.
+
+    Args:
+        *args: The top-level type, followed by any other types needed.
+
+    Returns:
+        A function that can load YAML input from a string, Path or
+        stream and convert it to an object of the first type given.
+    """
+    class UserLoader(Loader):
+        pass
+
+    add_to_loader(UserLoader, list(args))
+    set_document_type(UserLoader, args[0])
+
+    def load_function(source: Union[str, Path, IO[AnyStr]]) -> Any:
+        if isinstance(source, Path):
+            with source.open('r') as f:
+                return yaml.load(f, Loader=UserLoader)
+        else:
+            return yaml.load(source, Loader=UserLoader)
+
+    return load_function
