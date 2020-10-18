@@ -1,3 +1,8 @@
+import enum
+
+import yatiml
+
+
 class Color(enum.Enum):
     """Demonstrates lowercased Enum names in YAML."""
     RED = 0

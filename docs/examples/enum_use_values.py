@@ -1,4 +1,8 @@
 # Example from https://github.com/GooglingTheCancerGenome/sv-gen
+import enum
+
+import yatiml
+
 
 class Genotype(enum.Enum):
     HOMO_NOSV = 'hmz'
