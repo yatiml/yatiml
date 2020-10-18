@@ -468,8 +468,8 @@ class Node:
                     not unique.
 
         Raises:
-            SeasoningError: If the keys are not unique and strict is \
-                    True.
+            yatiml.SeasoningError: If the keys are not unique and \
+                    strict is True.
         """
         if not self.has_attribute(attribute):
             return
@@ -748,8 +748,8 @@ class UnknownNode:
                     object of this type.
 
         Raises:
-            RecognitionError: If the attribute does not exist, or does \
-                    not have the required value.
+            yatiml.RecognitionError: If the attribute does not exist, \
+                    or does not have the required value.
         """
         found = False
         for key_node, value_node in self.yaml_node.value:
