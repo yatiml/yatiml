@@ -169,8 +169,28 @@ complete type check. That makes it easier to write them.
 Error messages
 --------------
 
-Here will hopefully be a list of all error messages that YAtiML generates, and
-what may be causing them. Meanwhile, if you run into an error message you can't
-figure out, please make an issue, because the solution should be here and it
-isn't. Contributions are of course even more welcome! See the
+This section contains some error messages that you may encounter when using
+YAtiML, and potential solutions to try if you do. If you run into an error that
+you cannot figure out, please make an issue describing the error message and
+what you are doing (a short example really helps!). Contributions directly to
+the documentation are of course also welcome! See the
 :ref:`development` section for information on how to contribute.
+
+
+_yatiml_recognize missing required argument
+'''''''''''''''''''''''''''''''''''''''''''
+
+If you get
+
+.. code-block::
+
+  TypeError: _yatiml_recognize() missing 1 required positional argument: 'node'
+
+or
+
+.. code-block::
+
+  TypeError: yatiml_savorize() missing 1 required positional argument: 'node'
+
+then you have probably forgotten to add the ``@classmethod`` decorator to your
+``_yatiml_recognize()`` or ``_yatiml_savorize()`` function.
