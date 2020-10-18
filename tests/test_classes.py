@@ -24,6 +24,12 @@ def test_load_class(document1_loader):
     assert data.attr1 == 'test_value'
 
 
+def test_init_raises(raises_loader):
+    text = 'x: 20'
+    with pytest.raises(yatiml.RecognitionError):
+        yaml.load(text, Loader=raises_loader)
+
+
 def test_recognize_subclass(shape_loader):
     text = ('center:\n'
             '  x: 10.0\n'

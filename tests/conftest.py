@@ -429,6 +429,12 @@ class DashedAttribute:
         node.unders_to_dashes_in_keys()
 
 
+class Raises:
+    def __init__(self, x: int) -> None:
+        if x >= 10:
+            raise RuntimeError('x must be less than 10')
+
+
 @pytest.fixture
 def document1_loader():
     class Document1Loader(yatiml.Loader):
@@ -808,6 +814,15 @@ def dashed_attribute_json_dumper(dashed_attribute_dumper):
     class DashedAttributeJsonDumper(dashed_attribute_dumper):
         output_format = 'json'
     return DashedAttributeJsonDumper
+
+
+@pytest.fixture
+def raises_loader():
+    class RaisesLoader(yatiml.Loader):
+        pass
+    yatiml.add_to_loader(RaisesLoader, Raises)
+    yatiml.set_document_type(RaisesLoader, Raises)
+    return RaisesLoader
 
 
 @pytest.fixture

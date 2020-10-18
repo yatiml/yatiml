@@ -101,11 +101,10 @@ class Constructor:
             else:
                 new_obj.__init__(**mapping)
 
-        except TypeError:  # pragma: no cover
+        except Exception as e:
             raise RecognitionError(
-                ('{}{}Could not construct object of class {}'
-                 ' from {}. This is a bug in YAtiML, please report.'.format(
-                     node.start_mark, os.linesep, self.class_.__name__, node)))
+                    ('{}{}Could not construct object of class {}: {}'.format(
+                     node.start_mark, os.linesep, self.class_.__name__, e)))
         logger.debug('Done constructing {}'.format(self.class_.__name__))
 
     def __to_plain_containers(self,
