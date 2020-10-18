@@ -114,9 +114,10 @@ Update version
 
 Next, the version should be updated. There is a version tag in ``setup.py`` and
 two for the documentation in ``docs/conf.py`` (search for ``version`` and
-``release``). On the development branch, these should be set to ``0.0.0.dev0``.
-On the release branch, they should be set to ``x.y.z`` (or rather, the actual
-number of this release of course).
+``release``). There is also an ``__version__`` in ``__init__.py``. On the
+development branch, these should be set to ``x.y.z.dev0``, where ``x.y.z`` is
+the expected next version. On the release branch, they should be set to
+``x.y.z`` (with here the actual number of this release of course).
 
 Check documentation
 ...................
