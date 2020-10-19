@@ -16,7 +16,7 @@ from yatiml.introspection import class_subobjects
 from yatiml.recognizer import Recognizer
 from yatiml.util import (
         generic_type_args, is_generic_sequence, is_generic_mapping,
-        scalar_type_to_tag, type_to_desc)
+        is_generic_union, scalar_type_to_tag, type_to_desc)
 
 logger = logging.getLogger(__name__)
 
@@ -269,7 +269,14 @@ def load_function(
     class UserLoader(Loader):
         pass
 
-    add_to_loader(UserLoader, list(args))
+    user_classes = list(args)
+    if user_classes:
+        if (
+                is_generic_mapping(user_classes[0]) or
+                is_generic_sequence(user_classes[0]) or
+                is_generic_union(user_classes[0])):
+            del user_classes[0]
+    add_to_loader(UserLoader, user_classes)
     set_document_type(UserLoader, args[0])
 
     def load_function(source: Union[str, Path, IO[AnyStr]]) -> Any:
