@@ -18,8 +18,8 @@ def test_load_from_string():
         load_float_list('x: 1')
 
 
-def test_load_from_path(tmp_path):
-    tmp_file = tmp_path / 'test_load_from_path.yaml'   # is a pathlib.Path
+def test_load_from_path(tmpdir_path):
+    tmp_file = tmpdir_path / 'test_load_from_path.yaml'   # is a pathlib.Path
     with tmp_file.open('w') as f:
         f.write('y: z')
 
@@ -28,8 +28,8 @@ def test_load_from_path(tmp_path):
     assert data['y'] == 'z'
 
 
-def test_load_from_stream(tmp_path):
-    tmp_file = tmp_path / 'test_load_from_stream.yaml'  # is a pathlib.Path
+def test_load_from_stream(tmpdir_path):
+    tmp_file = tmpdir_path / 'test_load_from_stream.yaml'  # is a pathlib.Path
     with tmp_file.open('w') as f:
         f.write('testing')
 
@@ -49,8 +49,8 @@ def test_dump_to_string():
     assert yaml_text == 'x: 1\n'
 
 
-def test_dump_to_stream(tmp_path):
-    tmp_file = tmp_path / 'test.yaml'
+def test_dump_to_stream(tmpdir_path):
+    tmp_file = tmpdir_path / 'test.yaml'
     dump = yatiml.dump_function()
     with tmp_file.open('w') as f:
         dump({'a': 1.5}, f)
@@ -59,8 +59,8 @@ def test_dump_to_stream(tmp_path):
         assert f.read() == 'a: 1.5\n'
 
 
-def test_dump_to_filename(tmp_path):
-    tmp_file = tmp_path / 'test.yaml'
+def test_dump_to_filename(tmpdir_path):
+    tmp_file = tmpdir_path / 'test.yaml'
     dump = yatiml.dump_function()
     dump({'a': 1.5}, str(tmp_file))
 
@@ -68,8 +68,8 @@ def test_dump_to_filename(tmp_path):
         assert f.read() == 'a: 1.5\n'
 
 
-def test_dump_to_path(tmp_path):
-    tmp_file = tmp_path / 'test.yaml'
+def test_dump_to_path(tmpdir_path):
+    tmp_file = tmpdir_path / 'test.yaml'
     dump = yatiml.dump_function()
     dump({'a': 1.5}, tmp_file)
 
@@ -95,8 +95,8 @@ def test_dump_json_to_string():
     assert json_text == '"\u0410\u043d\u043d\u0430"'
 
 
-def test_dump_json_to_stream(tmp_path):
-    tmp_file = tmp_path / 'test.json'
+def test_dump_json_to_stream(tmpdir_path):
+    tmp_file = tmpdir_path / 'test.json'
     dump = yatiml.dump_json_function()
     with tmp_file.open('w') as f:
         dump({'a': 1.5}, f)
@@ -105,8 +105,8 @@ def test_dump_json_to_stream(tmp_path):
         assert f.read() == '{"a":1.5}'
 
 
-def test_dump_json_to_filename(tmp_path):
-    tmp_file = tmp_path / 'test.yaml'
+def test_dump_json_to_filename(tmpdir_path):
+    tmp_file = tmpdir_path / 'test.yaml'
     dump = yatiml.dump_json_function()
     dump({'a': 1.5}, str(tmp_file))
 
@@ -129,8 +129,8 @@ def test_dump_json_to_filename(tmp_path):
         assert f.read() == '"\u0410\u043d\u043d\u0430"'
 
 
-def test_dump_json_to_path(tmp_path):
-    tmp_file = tmp_path / 'test.yaml'
+def test_dump_json_to_path(tmpdir_path):
+    tmp_file = tmpdir_path / 'test.yaml'
     dump = yatiml.dump_json_function()
     dump({'a': 1.5}, tmp_file)
 

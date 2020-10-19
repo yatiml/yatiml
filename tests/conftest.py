@@ -2,6 +2,7 @@ import enum
 import math
 from collections import OrderedDict, UserString
 from datetime import datetime
+from pathlib import Path
 from typing import (
         Any, Dict, List, Mapping, MutableMapping, MutableSequence, Optional,
         Sequence, Tuple, Union)
@@ -12,6 +13,14 @@ from ruamel import yaml
 import pytest  # type: ignore
 import yatiml
 from yatiml.recognizer import Recognizer
+
+
+@pytest.fixture
+def tmpdir_path(tmp_path):
+    # Older versions of PyTest on older versions of Python give us a
+    # pathlib2.Path, which YAtiML does not support. This smooths over
+    # the difference and makes sure our tests work everywhere.
+    return Path(str(tmp_path))
 
 
 @pytest.fixture
