@@ -283,3 +283,15 @@ def test_require_attribute_value(unknown_node: yatiml.UnknownNode) -> None:
         unknown_node.require_attribute_value('attr1', 'test')
     with pytest.raises(yatiml.RecognitionError):
         unknown_node.require_attribute_value('non_existent_attribute', 'test')
+
+
+def test_require_attribute_value_not(unknown_node: yatiml.UnknownNode) -> None:
+    unknown_node.require_attribute_value_not('attr1', '42')
+    unknown_node.require_attribute_value_not('null_attr', 42)
+    unknown_node.require_attribute_value_not('list1', None)
+    with pytest.raises(yatiml.RecognitionError):
+        unknown_node.require_attribute_value_not('attr1', 42)
+    with pytest.raises(yatiml.RecognitionError):
+        unknown_node.require_attribute_value_not('null_attr', None)
+    with pytest.raises(yatiml.RecognitionError):
+        unknown_node.require_attribute_value_not('non_existent_attribute', 1)

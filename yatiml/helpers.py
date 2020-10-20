@@ -775,3 +775,40 @@ class UnknownNode:
             raise RecognitionError(
                 ('{}{}Required attribute {} not found').format(
                     self.yaml_node.start_mark, os.linesep, attribute))
+
+    def require_attribute_value_not(
+            self, attribute: str,
+            value: Union[int, str, float, bool, None]) -> None:
+        """Require an attribute on the node to not have a given value.
+
+        This requires the attribute to exist, and to not have the given
+        value.
+
+        Args:
+            attribute: The name of the attribute / mapping key.
+            value: The value the attribute must not have to recognize an
+                    object of this type.
+
+        Raises:
+            yatiml.RecognitionError: If the attribute does not exist,
+                    or has the required value.
+        """
+        found = False
+        for key_node, value_node in self.yaml_node.value:
+            if (key_node.tag == 'tag:yaml.org,2002:str'
+                    and key_node.value == attribute):
+                found = True
+                node = Node(value_node)
+                if not node.is_scalar(type(value)):
+                    return
+                if node.get_value() == value:
+                    raise RecognitionError(
+                        ('{}{}Incorrect attribute value'
+                         ' {} where {} was not allowed').format(
+                             self.yaml_node.start_mark, os.linesep,
+                             value_node.value, value))
+
+        if not found:
+            raise RecognitionError(
+                ('{}{}Required attribute {} not found').format(
+                    self.yaml_node.start_mark, os.linesep, attribute))
