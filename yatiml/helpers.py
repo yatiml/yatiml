@@ -49,7 +49,7 @@ class Node:
         """Convert to a human-readable string."""
         return 'Node({})'.format(self.yaml_node)
 
-    def is_scalar(self, typ: Type = _Any) -> bool:
+    def is_scalar(self, typ: Union[Type, None] = _Any) -> bool:
         """Returns True iff this represents a scalar node.
 
         If a type is given, checks that the ScalarNode represents this \
@@ -705,7 +705,8 @@ class UnknownNode:
             raise RecognitionError(('{}{}A sequence is required here').format(
                 self.yaml_node.start_mark, os.linesep))
 
-    def require_attribute(self, attribute: str, typ: Type = _Any) -> None:
+    def require_attribute(
+            self, attribute: str, typ: Union[None, Type] = _Any) -> None:
         """Require an attribute on the node to exist.
 
         This implies that the node must be a mapping.

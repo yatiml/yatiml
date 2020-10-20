@@ -1,254 +1,225 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """Tests for the yatiml module."""
 import collections
 from datetime import datetime
-from typing import Dict
-
-import ruamel.yaml as yaml
+from typing import (
+        Dict, List, Mapping, MutableMapping, MutableSequence, Optional,
+        Sequence, Union)
 
 import pytest
 import yatiml
 
 
-def test_load_str(string_loader):
-    text = 'test'
-    data = yaml.load(text, Loader=string_loader)
+def test_load_str() -> None:
+    load = yatiml.load_function(str)
+    data = load('test')
     assert isinstance(data, str)
     assert data == 'test'
 
 
-def test_load_multiple_docs(string_loader):
-    text = (
-        '---\n'
-        'test1\n'
-        '...\n'
-        '---\n'
-        'test2\n'
-        '...\n')
-    data = yaml.load_all(text, Loader=string_loader)
-    assert list(data) == ['test1', 'test2']
-
-
-def test_load_str_type_error(string_loader):
-    text = '1'
+def test_load_str_type_error() -> None:
+    load = yatiml.load_function(str)
     with pytest.raises(yatiml.RecognitionError):
-        yaml.load(text, Loader=string_loader)
+        load('1')
 
 
-def test_load_int():
-    class IntLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(IntLoader, int)
-
-    text = '42'
-    data = yaml.load(text, Loader=IntLoader)
+def test_load_int() -> None:
+    load = yatiml.load_function(int)
+    data = load('42')
     assert isinstance(data, int)
     assert data == 42
 
 
-def test_load_float():
-    class FloatLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(FloatLoader, float)
-
-    text = '3.1415'
-    data = yaml.load(text, Loader=FloatLoader)
+def test_load_float() -> None:
+    load = yatiml.load_function(float)
+    data = load('3.1415')
     assert isinstance(data, float)
     assert data == 3.1415
 
 
-def test_load_bool():
-    class BoolLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(BoolLoader, bool)
-
-    text = 'True'
-    data = yaml.load(text, Loader=BoolLoader)
+def test_load_bool() -> None:
+    load = yatiml.load_function(bool)
+    data = load('True')
     assert isinstance(data, bool)
     assert data is True
 
 
-def test_load_datetime(datetime_loader):
-    text = '2018-10-27T06:05:23Z'
-    data = yaml.load(text, Loader=datetime_loader)
+def test_load_datetime() -> None:
+    load = yatiml.load_function(datetime)
+    data = load('2018-10-27T06:05:23Z')
     assert isinstance(data, datetime)
     assert data.year == 2018
     assert data.second == 23
 
 
-def test_load_list(string_list_loader):
-    text = '- test1\n- test2\n'
-    data = yaml.load(text, Loader=string_list_loader)
+def test_load_list() -> None:
+    load = yatiml.load_function(List[str])
+    data = load('- test1\n- test2\n')
     assert isinstance(data, list)
     assert data == ['test1', 'test2']
 
 
-def test_load_list_item_type_mismatch(string_list_loader):
-    text = '[test1, 2]'
+def test_load_list_item_type_mismatch() -> None:
+    load = yatiml.load_function(List[str])
     with pytest.raises(yatiml.RecognitionError):
-        yaml.load(text, Loader=string_list_loader)
+        load('[test1, 2]')
 
 
-def test_load_nested_list(int_list_list_loader):
-    text = '- [1, 2]\n- [3, 4]\n'
-    data = yaml.load(text, Loader=int_list_list_loader)
+def test_load_nested_list() -> None:
+    load = yatiml.load_function(List[List[int]])
+    data = load('- [1, 2]\n- [3, 4]\n')
     assert data == [[1, 2], [3, 4]]
 
 
-def test_load_list_mismatch(int_list_loader):
-    text = '12\n'
+def test_load_list_mismatch() -> None:
+    load = yatiml.load_function(List[int])
     with pytest.raises(yatiml.RecognitionError):
-        yaml.load(text, Loader=int_list_loader)
+        load('12\n')
 
 
-def test_load_sequence(int_sequence_loader):
-    text = '- 1\n- 2'
-    data = yaml.load(text, Loader=int_sequence_loader)
+def test_load_sequence() -> None:
+    load = yatiml.load_function(Sequence[int])
+    data = load('- 1\n- 2')
     assert isinstance(data, collections.abc.Sequence)
     assert data == [1, 2]
 
 
-def test_load_mutable_sequence(int_mutable_sequence_loader):
-    text = '[3, 4]'
-    data = yaml.load(text, Loader=int_mutable_sequence_loader)
+def test_load_mutable_sequence() -> None:
+    load = yatiml.load_function(MutableSequence[int])
+    data = load('[3, 4]')
     assert data == [3, 4]
 
 
-def test_load_dict(string_dict_loader):
-    text = 'key1: test1\nkey2: test2\n'
-    data = yaml.load(text, Loader=string_dict_loader)
+def test_load_dict() -> None:
+    load = yatiml.load_function(Dict[str, str])
+    data = load('key1: test1\nkey2: test2\n')
     assert isinstance(data, dict)
     assert data == {'key1': 'test1', 'key2': 'test2'}
 
 
-def test_load_dict_invalid_key():
-    class IntKeyDictLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(IntKeyDictLoader, Dict[int, str])
-
-    text = ('1: one\n'
-            '2: two\n'
-            '3: three\n')
+def test_load_dict_invalid_key() -> None:
+    load = yatiml.load_function(Dict[int, str])
     with pytest.raises(RuntimeError):
-        yaml.load(text, Loader=IntKeyDictLoader)
+        load(
+                '1: one\n'
+                '2: two\n'
+                '3: three\n')
 
 
-def test_load_dict_item_type_mismatch(string_dict_loader):
-    text = 'key1: test1\nkey2: 2\n'
+def test_load_dict_item_type_mismatch() -> None:
+    load = yatiml.load_function(Dict[str, str])
     with pytest.raises(yatiml.RecognitionError):
-        yaml.load(text, Loader=string_dict_loader)
+        load('key1: test1\nkey2: 2\n')
 
 
-def test_load_mapping(string_mapping_loader):
-    text = 'key1: test1\nkey2: test2\n'
-    data = yaml.load(text, Loader=string_mapping_loader)
+def test_load_mapping() -> None:
+    load = yatiml.load_function(Mapping[str, str])
+    data = load('key1: test1\nkey2: test2\n')
     assert isinstance(data, collections.abc.MutableMapping)
     assert data == {'key1': 'test1', 'key2': 'test2'}
 
 
-def test_load_mutable_mapping(string_mutable_mapping_loader):
-    text = 'key1: test1\nkey2: test2\n'
-    data = yaml.load(text, Loader=string_mutable_mapping_loader)
+def test_load_mutable_mapping() -> None:
+    load = yatiml.load_function(MutableMapping[str, str])
+    data = load('key1: test1\nkey2: test2\n')
     assert isinstance(data, collections.abc.MutableMapping)
     assert data == {'key1': 'test1', 'key2': 'test2'}
 
 
-def test_load_nested_dict(nested_dict_loader):
-    text = 'key1: { key2: True, key3: False }\nkey4: {}'
-    data = yaml.load(text, Loader=nested_dict_loader)
+def test_load_nested_dict() -> None:
+    load = yatiml.load_function(Dict[str, Dict[str, bool]])
+    data = load('key1: { key2: True, key3: False }\nkey4: {}')
     assert data == {'key1': {'key2': True, 'key3': False}, 'key4': {}}
 
 
-def test_load_mixed_dict_list(mixed_dict_list_loader):
-    text = '[{key1: 10},{key2: 11, key3: 13}]'
-    data = yaml.load(text, Loader=mixed_dict_list_loader)
+def test_load_mixed_dict_list() -> None:
+    load = yatiml.load_function(List[Dict[str, int]])
+    data = load('[{key1: 10},{key2: 11, key3: 13}]')
     assert data == [{'key1': 10}, {'key2': 11, 'key3': 13}]
 
-    text = '[{key1: string}]'
     with pytest.raises(yatiml.RecognitionError):
-        yaml.load(text, Loader=mixed_dict_list_loader)
+        load('[{key1: string}]')
 
 
-def test_load_dict_error(string_dict_loader):
-    text = '10'
+def test_load_dict_error() -> None:
+    load = yatiml.load_function(Dict[str, str])
     with pytest.raises(yatiml.RecognitionError):
-        yaml.load(text, Loader=string_dict_loader)
+        load('10')
 
 
-def test_load_union(union_loader):
-    text = '10'
-    data = yaml.load(text, Loader=union_loader)
+def test_load_union() -> None:
+    load = yatiml.load_function(Union[str, int])
+    data = load('10')
     assert isinstance(data, int)
     assert data == 10
-    text = 'test'
-    data = yaml.load(text, Loader=union_loader)
+    data = load('test')
     assert isinstance(data, str)
     assert data == 'test'
 
 
-def test_union_mismatch(union_loader):
-    text = '2.71'
+def test_union_mismatch() -> None:
+    load = yatiml.load_function(Union[str, int])
     with pytest.raises(yatiml.RecognitionError):
-        yaml.load(text, Loader=union_loader)
+        load('2.71')
 
 
-def test_optional(optional_loader):
-    text = 'test'
-    data = yaml.load(text, Loader=optional_loader)
+def test_optional() -> None:
+    load = yatiml.load_function(Optional[str])
+    data = load('test')
     assert data == 'test'
 
-    text = '!!null'
-    data = yaml.load(text, Loader=optional_loader)
+    data = load('!!null')
     assert data is None
 
 
-def test_empty_document(optional_loader):
-    text = ''
-    data = yaml.load(text, Loader=optional_loader)
+def test_empty_document() -> None:
+    load = yatiml.load_function(Optional[str])
+    data = load('')
     assert data is None
 
 
-def test_dump_str(plain_dumper):
-    data = 'test'
-    text = yaml.dump(data, Dumper=plain_dumper)
+def test_dump_str() -> None:
+    dumps = yatiml.dumps_function()
+    text = dumps('test')
     assert text == 'test\n...\n'
 
 
-def test_dump_str_json(plain_json_dumper):
-    data = 'test'
-    text = yaml.dump(data, Dumper=plain_json_dumper)
+def test_dump_str_json() -> None:
+    dumps = yatiml.dumps_json_function()
+    text = dumps('test')
     assert text == '"test"'
 
 
-def test_dump_datetime(plain_dumper):
-    data = datetime(2018, 10, 27)
-    text = yaml.dump(data, Dumper=plain_dumper)
-    assert text == '2018-10-27 00:00:00\n...\n'
+def test_dump_datetime() -> None:
+    dumps = yatiml.dumps_json_function()
+    text = dumps(datetime(2018, 10, 27))
+    assert text == '"2018-10-27 00:00:00"'
 
 
-def test_dump_datetime_json(plain_json_dumper):
-    data = datetime(2020, 10, 16)
-    text = yaml.dump(data, Dumper=plain_json_dumper)
+def test_dump_datetime_json() -> None:
+    dumps = yatiml.dumps_json_function()
+    text = dumps(datetime(2020, 10, 16))
     assert text == '"2020-10-16 00:00:00"'
 
 
-def test_dump_int_json(plain_json_dumper):
-    text = yaml.dump(data=42, Dumper=plain_json_dumper)
+def test_dump_int_json() -> None:
+    dumps = yatiml.dumps_json_function()
+    text = dumps(42)
     assert text == '42'
 
 
-def test_dump_float_json(plain_json_dumper):
-    text = yaml.dump(data=13.5, Dumper=plain_json_dumper)
+def test_dump_float_json() -> None:
+    dumps = yatiml.dumps_json_function()
+    text = dumps(13.5)
     assert text == '13.5'
 
 
-def test_dump_bool_json(plain_json_dumper):
-    text = yaml.dump(data=True, Dumper=plain_json_dumper)
+def test_dump_bool_json() -> None:
+    dumps = yatiml.dumps_json_function()
+    text = dumps(True)
     assert text == 'true'
 
 
-def test_dump_null_json(plain_json_dumper):
-    text = yaml.dump(data=None, Dumper=plain_json_dumper)
+def test_dump_null_json() -> None:
+    dumps = yatiml.dumps_json_function()
+    text = dumps(None)
     assert text == 'null'

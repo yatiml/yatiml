@@ -231,7 +231,7 @@ def dump_function(
     of that object to the target. The type of the object, and any other
     custom types needed, must have been passed to dump_function().
 
-    Note that only custom classes need to be passed, the built-in
+    Note that only custom classes should be passed, the built-in
     types are, well, built in.
 
     Examples:
@@ -280,7 +280,7 @@ def dump_function(
     return dump_function
 
 
-def dumps_json_function(*args: Type) -> Callable[[Any], str]:
+def dumps_json_function(*args: Type) -> Callable[..., str]:
     """Create a dumps function for the given types that writes JSON.
 
     This function returns a callable object which takes an object
@@ -349,7 +349,7 @@ def dumps_json_function(*args: Type) -> Callable[[Any], str]:
 
 
 def dump_json_function(
-        *args: Type) -> Callable[[Any, Union[str, Path, IO[AnyStr]]], None]:
+        *args: Type) -> Callable[..., None]:
     """Create a dump function for the given types that writes JSON.
 
     This function returns a callable object which takes an object

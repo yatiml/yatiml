@@ -3,7 +3,8 @@ import logging
 import os
 from collections import UserString
 from pathlib import Path
-from typing import Any, AnyStr, Callable, Dict, IO, List, Union    # noqa
+from typing import (
+        Any, AnyStr, Callable, Dict, IO, List, Union, TypeVar)  # noqa
 from typing_extensions import ClassVar, Type    # noqa
 
 import ruamel.yaml as yaml
@@ -229,15 +230,19 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
         loader_cls._registered_classes[tag] = class_
 
 
+T = TypeVar('T')
+
+
 def load_function(
-        *args: Type) -> Callable[[Union[str, Path, IO[AnyStr]]], Any]:
+        result: Any, *args: Type
+        ) -> Callable[[Union[str, Path, IO[AnyStr]]], Any]:
     """Create a load function for the given type.
 
     This function returns a callable object which takes an input
-    (`str`, `pathlib.Path`, or an open stream) and returns an object
-    of the type given as the first argument (a string is expected to
-    contain YAML, not a file name). Any other custom types
-    needed must be passed as the remaining arguments.
+    (`str` with YAML input, `pathlib.Path`, or an open stream) and
+    tries to load an object of the type given as the first argument.
+    Any user-defined classes needed by the result must be passed as
+    the remaining arguments.
 
     Examples:
 
@@ -260,7 +265,8 @@ def load_function(
         another class that is used by Config somewhere.
 
     Args:
-        *args: The top-level type, followed by any other types needed.
+        result: The top level type, return type of the function.
+        *args: Any other (custom) types needed.
 
     Returns:
         A function that can load YAML input from a string, Path or
@@ -270,15 +276,20 @@ def load_function(
         pass
 
     user_classes = list(args)
-    if user_classes:
-        if (
-                is_generic_mapping(user_classes[0]) or
-                is_generic_sequence(user_classes[0]) or
-                is_generic_union(user_classes[0])):
-            del user_classes[0]
-    add_to_loader(UserLoader, user_classes)
-    set_document_type(UserLoader, args[0])
+    if not (
+            is_generic_mapping(result) or
+            is_generic_sequence(result) or
+            is_generic_union(result)):
+        if result not in user_classes:
+            user_classes.append(result)
 
+    add_to_loader(UserLoader, user_classes)
+    set_document_type(UserLoader, result)
+
+    # It would be better if result was of type Type[T] above, and we
+    # returned T here. Unfortunately, List[x, y] and co do not match
+    # Type[T]. PEP 585 may help, but until we can drop support for
+    # Python 3.8 and below, this seems to be the best we can do.
     def load_function(source: Union[str, Path, IO[AnyStr]]) -> Any:
         if isinstance(source, Path):
             with source.open('r') as f:

@@ -4,32 +4,32 @@ import pytest
 import yatiml
 
 
-def test_is_scalar(class_node):
+def test_is_scalar(class_node: yatiml.Node) -> None:
     assert class_node.get_attribute('attr1').is_scalar()
     assert class_node.get_attribute('attr1').is_scalar(int)
     assert class_node.get_attribute('null_attr').is_scalar(None)
     assert not class_node.is_scalar()
     with pytest.raises(ValueError):
-        class_node.get_attribute('attr1').is_scalar(yaml)
+        class_node.get_attribute('attr1').is_scalar(dict)
 
 
-def test_is_mapping(class_node):
+def test_is_mapping(class_node: yatiml.Node) -> None:
     assert class_node.is_mapping()
     assert not class_node.get_attribute('attr1').is_mapping()
     assert not class_node.get_attribute('list1').is_mapping()
 
 
-def test_is_sequence(class_node):
+def test_is_sequence(class_node: yatiml.Node) -> None:
     assert not class_node.is_sequence()
     assert class_node.get_attribute('list1').is_sequence()
     assert not class_node.get_attribute('attr1').is_sequence()
 
 
-def test_get_value(class_node):
+def test_get_value(class_node: yatiml.Node) -> None:
     assert class_node.get_attribute('attr1').get_value() == 42
 
 
-def test_set_value(class_node):
+def test_set_value(class_node: yatiml.Node) -> None:
     assert class_node.is_mapping()
     class_node.set_value(42)
     assert class_node.is_scalar(int)
@@ -39,7 +39,7 @@ def test_set_value(class_node):
     assert class_node.yaml_node.value == 'true'
 
 
-def test_make_mapping(scalar_node):
+def test_make_mapping(scalar_node: yatiml.Node) -> None:
     assert scalar_node.is_scalar(int)
     scalar_node.make_mapping()
     assert isinstance(scalar_node.yaml_node, yaml.MappingNode)
@@ -47,27 +47,27 @@ def test_make_mapping(scalar_node):
     assert scalar_node.yaml_node.value == []
 
 
-def test_has_attribute(class_node):
+def test_has_attribute(class_node: yatiml.Node) -> None:
     assert class_node.has_attribute('attr1')
     assert class_node.has_attribute('list1')
     assert not class_node.has_attribute('non_existent_attribute')
 
 
-def test_has_attribute_type(class_node):
+def test_has_attribute_type(class_node: yatiml.Node) -> None:
     assert class_node.has_attribute_type('attr1', int)
     assert not class_node.has_attribute_type('attr1', float)
     assert class_node.has_attribute_type('list1', list)
     with pytest.raises(ValueError):
-        class_node.has_attribute_type('attr1', yaml)
+        class_node.has_attribute_type('attr1', yaml.Node)
 
 
-def test_get_attribute(class_node):
+def test_get_attribute(class_node: yatiml.Node) -> None:
     assert class_node.get_attribute('attr1').yaml_node.value == '42'
     with pytest.raises(yatiml.SeasoningError):
         class_node.get_attribute('non_existent_attribute')
 
 
-def test_set_attribute(class_node):
+def test_set_attribute(class_node: yatiml.Node) -> None:
     assert class_node.get_attribute('attr1').get_value() == 42
 
     class_node.set_attribute('attr1', 43)
@@ -117,10 +117,10 @@ def test_set_attribute(class_node):
     assert class_node.get_attribute('attr3').yaml_node == node
 
     with pytest.raises(TypeError):
-        class_node.set_attribute('attr4', class_node)
+        class_node.set_attribute('attr4', class_node)   # type: ignore
 
 
-def test_remove_attribute(class_node):
+def test_remove_attribute(class_node: yatiml.Node) -> None:
     assert class_node.has_attribute('attr1')
     class_node.remove_attribute('attr1')
     assert not class_node.has_attribute('attr1')
@@ -135,7 +135,7 @@ def test_remove_attribute(class_node):
     assert not class_node.has_attribute('attr2')
 
 
-def test_rename_attribute(class_node):
+def test_rename_attribute(class_node: yatiml.Node) -> None:
     assert class_node.has_attribute('attr1')
     assert not class_node.has_attribute('attr2')
     attr1_value = class_node.get_attribute('attr1').get_value()
@@ -148,7 +148,9 @@ def test_rename_attribute(class_node):
     class_node.rename_attribute('non_existent_attribute', 'attr3')
 
 
-def test_seq_attribute_to_map(class_node, class_node_dup_key):
+def test_seq_attribute_to_map(
+        class_node: yatiml.Node, class_node_dup_key: yatiml.Node
+        ) -> None:
     assert class_node.has_attribute('list1')
     assert class_node.get_attribute('list1').is_sequence()
 
@@ -174,10 +176,11 @@ def test_seq_attribute_to_map(class_node, class_node_dup_key):
 
     # check that it raises with strict=True and duplicate keys
     with pytest.raises(yatiml.SeasoningError):
-        class_node_dup_key.seq_attribute_to_map('dup_list', 'item_id', True)
+        class_node_dup_key.seq_attribute_to_map(
+                'dup_list', 'item_id', strict=True)
 
 
-def test_map_attribute_to_seq(class_node):
+def test_map_attribute_to_seq(class_node: yatiml.Node) -> None:
     assert class_node.has_attribute_type('dict1', dict)
 
     class_node.map_attribute_to_seq('dict1', 'item_id', 'price')
@@ -209,7 +212,7 @@ def test_map_attribute_to_seq(class_node):
             (first_item_id == 'item2' and second_item_id == 'item1'))
 
 
-def test_unders_to_dashes_in_keys(class_node):
+def test_unders_to_dashes_in_keys(class_node: yatiml.Node) -> None:
     assert class_node.has_attribute('undered_attr')
     assert class_node.has_attribute('attr1')
     class_node.unders_to_dashes_in_keys()
@@ -217,7 +220,7 @@ def test_unders_to_dashes_in_keys(class_node):
     assert class_node.has_attribute('attr1')
 
 
-def test_dashes_to_unders_in_keys(class_node):
+def test_dashes_to_unders_in_keys(class_node: yatiml.Node) -> None:
     assert class_node.has_attribute('dashed-attr')
     assert class_node.has_attribute('list1')
     class_node.dashes_to_unders_in_keys()
@@ -225,29 +228,38 @@ def test_dashes_to_unders_in_keys(class_node):
     assert class_node.has_attribute('list1')
 
 
-def test_unknown_node_str(unknown_node):
+def test_unknown_node_str(unknown_node: yatiml.Node) -> None:
     assert str(unknown_node).startswith('UnknownNode')
 
 
-def test_require_scalar(unknown_node, unknown_scalar_node):
+def test_require_scalar(
+        unknown_node: yatiml.UnknownNode,
+        unknown_scalar_node: yatiml.UnknownNode
+        ) -> None:
     unknown_scalar_node.require_scalar()
     with pytest.raises(yatiml.RecognitionError):
         unknown_node.require_scalar()
 
 
-def test_require_mapping(unknown_node, unknown_scalar_node):
+def test_require_mapping(
+        unknown_node: yatiml.UnknownNode,
+        unknown_scalar_node: yatiml.UnknownNode
+        ) -> None:
     unknown_node.require_mapping()
     with pytest.raises(yatiml.RecognitionError):
         unknown_scalar_node.require_mapping()
 
 
-def test_require_sequence(unknown_node, unknown_sequence_node):
+def test_require_sequence(
+        unknown_node: yatiml.UnknownNode,
+        unknown_sequence_node: yatiml.UnknownNode
+        ) -> None:
     unknown_sequence_node.require_sequence()
     with pytest.raises(yatiml.RecognitionError):
         unknown_node.require_sequence()
 
 
-def test_require_attribute(unknown_node):
+def test_require_attribute(unknown_node: yatiml.UnknownNode) -> None:
     unknown_node.require_attribute('attr1')
     with pytest.raises(yatiml.RecognitionError):
         unknown_node.require_attribute('non_existent_attribute')
@@ -263,7 +275,7 @@ def test_require_attribute(unknown_node):
         unknown_node.require_attribute('null_attr', int)
 
 
-def test_require_attribute_value(unknown_node):
+def test_require_attribute_value(unknown_node: yatiml.UnknownNode) -> None:
     unknown_node.require_attribute_value('attr1', 42)
     with pytest.raises(yatiml.RecognitionError):
         unknown_node.require_attribute_value('attr1', 43)
