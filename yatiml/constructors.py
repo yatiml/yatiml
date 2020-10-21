@@ -157,7 +157,7 @@ class Constructor:
             A map with attributes reorganised as described above.
         """
         attr_names = list(mapping.keys())
-        main_attrs = mapping.copy()
+        main_attrs = mapping.copy()     # type: CommentedMap
         extra_attrs = OrderedDict(mapping.items())
         for name in attr_names:
             if name not in known_attrs or name == '_yatiml_extra':

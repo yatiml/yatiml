@@ -4,7 +4,7 @@ import os
 from collections import UserString
 from pathlib import Path
 from typing import (
-        Any, AnyStr, Callable, Dict, IO, List, Union, TypeVar)  # noqa
+        Any, AnyStr, Callable, cast, Dict, IO, List, TypeVar, Union)  # noqa
 from typing_extensions import ClassVar, Type    # noqa
 
 import ruamel.yaml as yaml
@@ -40,7 +40,7 @@ class Loader(yaml.RoundTripLoader):
         Returns:
             A processed node representing the document.
         """
-        node = super().get_single_node()
+        node = cast(yaml.Node, super().get_single_node())
         if node is not None:
             node = self.__process_node(node, type(self).document_type)
         return node
@@ -55,7 +55,7 @@ class Loader(yaml.RoundTripLoader):
         Returns:
             A processed node representing the document.
         """
-        node = super().get_node()
+        node = cast(yaml.Node, super().get_node())
         if node is not None:
             node = self.__process_node(node, type(self).document_type)
         return node

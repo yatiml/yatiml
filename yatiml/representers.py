@@ -1,6 +1,6 @@
 import inspect
 import logging
-from typing import Any
+from typing import Any, cast
 from typing_extensions import TYPE_CHECKING, Type
 
 from ruamel import yaml
@@ -30,7 +30,7 @@ class Representer:
         """
         self.class_ = class_
 
-    def __call__(self, dumper: 'Dumper', data: Any) -> yaml.MappingNode:
+    def __call__(self, dumper: 'Dumper', data: Any) -> yaml.Node:
         """Represents the class as a MappingNode.
 
         Args:
@@ -69,12 +69,13 @@ class Representer:
 
         # convert to a yaml.MappingNode
         represented = dumper.represent_mapping('tag:yaml.org,2002:map',
-                                               attributes)
+                                               attributes)  # type: yaml.Node
 
         # sweeten
         cnode = Node(represented)
         self.__sweeten(dumper, self.class_, cnode)
-        represented = cnode.yaml_node
+        # __sweeten() checks this, so can cast safely
+        represented = cast(yaml.Node, cnode.yaml_node)
 
         logger.debug('End representing {}'.format(data))
         return represented
@@ -98,6 +99,12 @@ class Representer:
                 self.__sweeten(dumper, base_class, node)
         if hasattr(class_, '_yatiml_sweeten'):
             class_._yatiml_sweeten(node)
+            if not isinstance(node.yaml_node, yaml.Node):
+                raise RuntimeError(
+                        ('After sweetening an object of class {},'
+                         ' node.yaml_node is not a yaml.Node. Please'
+                         ' check your _yatiml_sweeten() function.'
+                         ).format(class_.__name__))
 
 
 class EnumRepresenter:
@@ -164,27 +171,33 @@ class UserStringRepresenter:
         """
         self.class_ = class_
 
-    def __call__(self, dumper: 'Dumper', data: Any) -> yaml.MappingNode:
-        """Represents the class as a ScalarNode.
+    def __call__(self, dumper: 'Dumper', data: Any) -> yaml.Node:
+        """Represents the class as a Node.
 
         Args:
             dumper: The dumper to use.
             data: The user-defined object to dump.
 
         Returns:
-            A yaml.ScalarNode representing the object.
+            A yaml.Node representing the object.
         """
         # make a ScalarNode of type str with name of value
         logger.info('Representing {} of class {}'.format(
             data, self.class_.__name__))
 
         # convert to a yaml.ScalarNode
-        represented = dumper.represent_str(str(data))
+        represented = dumper.represent_str(str(data))   # type: yaml.Node
 
         # sweeten
         snode = Node(represented)
         if hasattr(self.class_, '_yatiml_sweeten'):
             self.class_._yatiml_sweeten(snode)
+            if not isinstance(snode.yaml_node, yaml.Node):
+                raise RuntimeError(
+                        ('After sweetening an object of class {},'
+                         ' node.yaml_node is not a yaml.Node. Please'
+                         ' check your _yatiml_sweeten() function.'
+                         ).format(self.class_.__name__))
             represented = snode.yaml_node
 
         logger.debug('End representing {}'.format(data))

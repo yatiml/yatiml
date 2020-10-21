@@ -61,7 +61,7 @@ class Node:
             if typ != _Any and typ in scalar_type_to_tag:
                 if typ is None:
                     typ = type(None)
-                return self.yaml_node.tag == scalar_type_to_tag[typ]
+                return cast(str, self.yaml_node.tag) == scalar_type_to_tag[typ]
 
             if typ is _Any:
                 return True
@@ -83,7 +83,7 @@ class Node:
         Use is_scalar(type) to check which type the node has.
         """
         if self.yaml_node.tag == 'tag:yaml.org,2002:str':
-            return self.yaml_node.value
+            return str(self.yaml_node.value)
         if self.yaml_node.tag == 'tag:yaml.org,2002:int':
             return int(self.yaml_node.value)
         if self.yaml_node.tag == 'tag:yaml.org,2002:float':
@@ -189,7 +189,7 @@ class Node:
 
         if typ in scalar_type_to_tag:
             tag = scalar_type_to_tag[typ]
-            return attr_node.tag == tag
+            return cast(str, attr_node.tag) == tag
         elif typ == list:
             return isinstance(attr_node, yaml.SequenceNode)
         elif typ == dict:
@@ -342,27 +342,27 @@ class Node:
                 return default is None
 
             if value_node.tag == 'tag:yaml.org,2002:int':
-                return int(value_node.value) == default
+                return int(value_node.value) == int(default)
 
             if value_node.tag == 'tag:yaml.org,2002:float':
-                return float(value_node.value) == default
+                return float(value_node.value) == float(default)
 
             if value_node.tag == 'tag:yaml.org,2002:bool':
                 if default is False:
                     return (
-                            value_node.value.lower() == 'n' or
-                            value_node.value.lower() == 'no' or
-                            value_node.value.lower() == 'false' or
-                            value_node.value.lower() == 'off')
+                            str(value_node.value).lower() == 'n' or
+                            str(value_node.value).lower() == 'no' or
+                            str(value_node.value).lower() == 'false' or
+                            str(value_node.value).lower() == 'off')
                 elif default is True:
                     return (
-                            value_node.value.lower() == 'y' or
-                            value_node.value.lower() == 'yes' or
-                            value_node.value.lower() == 'true' or
-                            value_node.value.lower() == 'on')
+                            str(value_node.value).lower() == 'y' or
+                            str(value_node.value).lower() == 'yes' or
+                            str(value_node.value).lower() == 'true' or
+                            str(value_node.value).lower() == 'on')
                 return False
 
-            return value_node.value == default
+            return bool(value_node.value == default)
 
         defaults = defaulted_attributes(cls)
 

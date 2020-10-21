@@ -20,7 +20,7 @@ scalar_type_to_tag = {
     None: 'tag:yaml.org,2002:null',
     type(None): 'tag:yaml.org,2002:null',
     datetime: 'tag:yaml.org,2002:timestamp'
-}
+    }
 
 ScalarType = Union[str, int, float, bool, None]
 
