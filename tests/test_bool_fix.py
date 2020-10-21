@@ -51,28 +51,30 @@ def test_load_bool_union_bool() -> None:
     # On Python 3.7 and up, Union[bool, int] does not collapse to int.
     # So there, this is supposed to work without the work-around.
     if sys.version_info.major > 3 or sys.version_info.minor >= 7:
-        load = yatiml.load_function(Union[int, bool])
+        load = yatiml.load_function(Union[int, bool])   # type: ignore
         data = load('true')
         assert isinstance(data, bool)
         assert data is True
 
 
 def test_load_bool_union_int() -> None:
-    load = yatiml.load_function(Union[int, bool])
+    load = yatiml.load_function(Union[int, bool])   # type: ignore
     data = load('42')
     assert isinstance(data, int)
     assert data == 42
 
 
 def test_load_bool_fix_union_bool() -> None:
-    load = yatiml.load_function(Union[int, yatiml.bool_union_fix, bool])
+    load = yatiml.load_function(    # type: ignore
+            Union[int, yatiml.bool_union_fix, bool])    # type: ignore
     data = load('true')
     assert isinstance(data, bool)
     assert data is True
 
 
 def test_load_bool_fix_union_int() -> None:
-    load = yatiml.load_function(Union[int, yatiml.bool_union_fix, bool])
+    load = yatiml.load_function(    # type: ignore
+            Union[int, yatiml.bool_union_fix, bool])    # type: ignore
     data = load('42')
     assert isinstance(data, int)
     assert data == 42

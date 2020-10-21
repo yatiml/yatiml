@@ -77,14 +77,14 @@ def test_load_list_mismatch() -> None:
 
 
 def test_load_sequence() -> None:
-    load = yatiml.load_function(Sequence[int])
+    load = yatiml.load_function(Sequence[int])  # type: ignore
     data = load('- 1\n- 2')
     assert isinstance(data, collections.abc.Sequence)
     assert data == [1, 2]
 
 
 def test_load_mutable_sequence() -> None:
-    load = yatiml.load_function(MutableSequence[int])
+    load = yatiml.load_function(MutableSequence[int])   # type: ignore
     data = load('[3, 4]')
     assert data == [3, 4]
 
@@ -112,14 +112,14 @@ def test_load_dict_item_type_mismatch() -> None:
 
 
 def test_load_mapping() -> None:
-    load = yatiml.load_function(Mapping[str, str])
+    load = yatiml.load_function(Mapping[str, str])  # type: ignore
     data = load('key1: test1\nkey2: test2\n')
     assert isinstance(data, collections.abc.MutableMapping)
     assert data == {'key1': 'test1', 'key2': 'test2'}
 
 
 def test_load_mutable_mapping() -> None:
-    load = yatiml.load_function(MutableMapping[str, str])
+    load = yatiml.load_function(MutableMapping[str, str])   # type: ignore
     data = load('key1: test1\nkey2: test2\n')
     assert isinstance(data, collections.abc.MutableMapping)
     assert data == {'key1': 'test1', 'key2': 'test2'}
@@ -147,7 +147,7 @@ def test_load_dict_error() -> None:
 
 
 def test_load_union() -> None:
-    load = yatiml.load_function(Union[str, int])
+    load = yatiml.load_function(Union[str, int])    # type: ignore
     data = load('10')
     assert isinstance(data, int)
     assert data == 10
@@ -157,13 +157,13 @@ def test_load_union() -> None:
 
 
 def test_union_mismatch() -> None:
-    load = yatiml.load_function(Union[str, int])
+    load = yatiml.load_function(Union[str, int])    # type: ignore
     with pytest.raises(yatiml.RecognitionError):
         load('2.71')
 
 
 def test_optional() -> None:
-    load = yatiml.load_function(Optional[str])
+    load = yatiml.load_function(Optional[str])      # type: ignore
     data = load('test')
     assert data == 'test'
 
@@ -172,7 +172,7 @@ def test_optional() -> None:
 
 
 def test_empty_document() -> None:
-    load = yatiml.load_function(Optional[str])
+    load = yatiml.load_function(Optional[str])      # type: ignore
     data = load('')
     assert data is None
 

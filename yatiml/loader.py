@@ -234,8 +234,8 @@ T = TypeVar('T')
 
 
 def load_function(
-        result: Any, *args: Type
-        ) -> Callable[[Union[str, Path, IO[AnyStr]]], Any]:
+        result: Type[T], *args: Type
+        ) -> Callable[[Union[str, Path, IO[AnyStr]]], T]:
     """Create a load function for the given type.
 
     This function returns a callable object which takes an input
@@ -243,6 +243,22 @@ def load_function(
     tries to load an object of the type given as the first argument.
     Any user-defined classes needed by the result must be passed as
     the remaining arguments.
+
+    Note that mypy will give an error if you try to pass some of the
+    special type-like objects from ``typing``. ``typing.Dict`` and
+    ``typing.List`` seem to be okay, but ``typing.Union``,
+    ``typing.Optional``, and abstract containers
+    ``typing.Sequence``, ``typing.Mapping``,
+    ``typing.MutableSequence`` and ``typing.MutableMapping`` will
+    give an error. They are supported however, and work fine,
+    there is just no way presently to explain to mypy that they
+    are okay.
+
+    So, if you want to tell YAtiML that your YAML file may contain
+    either a string or an int, you can use ``Union[str, int]`` for the
+    first argument, but you'll have to add a ``# type: ignore`` or two
+    to tell mypy to ignore the issue. The resulting Callable will have
+    return type ``Any`` in this case.
 
     Examples:
 
@@ -263,6 +279,10 @@ def load_function(
 
         Here, Config is the top-level class, and Setting is
         another class that is used by Config somewhere.
+
+        # Needs an ignore, on each line if split over two lines
+        load_int_or_str = yatiml.load_function(     # type: ignore
+                Union[int, str])                    # type: ignore
 
     Args:
         result: The top level type, return type of the function.

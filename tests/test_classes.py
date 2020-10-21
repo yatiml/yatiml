@@ -24,6 +24,15 @@ def test_load_class() -> None:
     assert data.attr1 == 'test_value'
 
 
+def test_load_class_return_type() -> None:
+    def test_fn(text: str) -> Document1:
+        load = yatiml.load_function(Document1)
+        return load(text)
+
+    assert isinstance(test_fn('attr1: test_value'), Document1)
+    assert test_fn('attr1: test_value').attr1 == 'test_value'
+
+
 def test_init_raises() -> None:
     load = yatiml.load_function(Raises)
     with pytest.raises(yatiml.RecognitionError):
