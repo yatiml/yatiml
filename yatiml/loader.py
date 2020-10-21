@@ -306,15 +306,33 @@ def load_function(
     add_to_loader(UserLoader, user_classes)
     set_document_type(UserLoader, result)
 
-    # It would be better if result was of type Type[T] above, and we
-    # returned T here. Unfortunately, List[x, y] and co do not match
-    # Type[T]. PEP 585 may help, but until we can drop support for
-    # Python 3.8 and below, this seems to be the best we can do.
-    def load_function(source: Union[str, Path, IO[AnyStr]]) -> Any:
-        if isinstance(source, Path):
-            with source.open('r') as f:
-                return yaml.load(f, Loader=UserLoader)
-        else:
-            return yaml.load(source, Loader=UserLoader)
+    class LoadFunction:
+        """Validates YAML input and constructs objects."""
+        def __init__(self, loader: Type[Loader]) -> None:
+            """Create a LoadFunction."""
+            self.loader = loader
 
-    return load_function
+        def __call__(self, source: Union[str, Path, IO[AnyStr]]) -> T:
+            """Load a YAML document from a source.
+
+            The source can be a string containing YAML, a pathlib.Path
+            containing a path to a file to load, or a stream (e.g. an
+            open file handle returned by open()).
+
+            Args:
+                source: The source to load from.
+
+            Returns:
+                An object loaded from the file.
+
+            Raises:
+                yatiml.RecognitionError: If the input is invalid.
+            """
+
+            if isinstance(source, Path):
+                with source.open('r') as f:
+                    return cast(T, yaml.load(f, Loader=self.loader))
+            else:
+                return cast(T, yaml.load(source, Loader=self.loader))
+
+    return LoadFunction(UserLoader)

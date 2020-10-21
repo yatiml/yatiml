@@ -3,7 +3,7 @@ import enum
 import json
 import logging
 from pathlib import Path
-from typing import Any, AnyStr, Callable, IO, List, Optional, Union
+from typing import Any, AnyStr, Callable, IO, List, Optional, Union, cast
 from typing_extensions import Type
 
 from ruamel import yaml
@@ -216,10 +216,24 @@ def dumps_function(*args: Type) -> Callable[[Any], str]:
 
     add_to_dumper(UserDumper, list(args))
 
-    def dumps_function(obj: Any) -> Any:
-        return yaml.dump(obj, Dumper=UserDumper)
+    class DumpsFunction:
+        """Dumps objects to a YAML string."""
+        def __init__(self, dumper: Type[Dumper]) -> None:
+            """Create a dumps function."""
+            self.dumper = dumper
 
-    return dumps_function
+        def __call__(self, obj: Any) -> str:
+            """Dump the object to a YAML string.
+
+            Args:
+                obj: An object to dump.
+
+            Returns:
+                A string containing its YAML representation.
+            """
+            return cast(str, yaml.dump(obj, Dumper=self.dumper))
+
+    return DumpsFunction(UserDumper)
 
 
 def dump_function(
@@ -267,17 +281,34 @@ def dump_function(
 
     add_to_dumper(UserDumper, list(args))
 
-    def dump_function(obj: Any, sink: Union[str, Path, IO[AnyStr]]) -> None:
-        if isinstance(sink, str):
-            sink = Path(sink)
+    class DumpFunction:
+        """Dumps objects to a stream."""
+        def __init__(self, dumper: Type[Dumper]) -> None:
+            """Create a dumps function."""
+            self.dumper = dumper
 
-        if isinstance(sink, Path):
-            with sink.open('w') as f:
-                yaml.dump(obj, f, Dumper=UserDumper)
-        else:
-            yaml.dump(obj, sink, Dumper=UserDumper)
+        def __call__(
+                self, obj: Any, sink: Union[str, Path, IO[AnyStr]]) -> None:
+            """Dump the object to a file or stream.
 
-    return dump_function
+            The sink argument may be a string containing a path, a
+            pathlib.Path object containing a path, or a stream to write
+            to directly (e.g. an open file).
+
+            Args:
+                obj: An object to dump.
+                sink: A place to save it to.
+            """
+            if isinstance(sink, str):
+                sink = Path(sink)
+
+            if isinstance(sink, Path):
+                with sink.open('w') as f:
+                    yaml.dump(obj, f, Dumper=UserDumper)
+            else:
+                yaml.dump(obj, sink, Dumper=UserDumper)
+
+    return DumpFunction(UserDumper)
 
 
 def dumps_json_function(*args: Type) -> Callable[..., str]:
@@ -337,15 +368,29 @@ def dumps_json_function(*args: Type) -> Callable[..., str]:
 
     add_to_dumper(UserDumper, list(args))
 
-    def dumps_json_function(
-            obj: Any, *,
-            indent: Optional[int] = None, ensure_ascii: bool = True
-            ) -> Any:
-        return yaml.dump(
-                obj, Dumper=UserDumper,
-                indent=indent, allow_unicode=not ensure_ascii)
+    class DumpsJsonFunction:
+        """Dumps objects to a JSON string."""
+        def __init__(self, dumper: Type[Dumper]) -> None:
+            """Create a dumps function."""
+            self.dumper = dumper
 
-    return dumps_json_function
+        def __call__(
+                self, obj: Any, *,
+                indent: Optional[int] = None, ensure_ascii: bool = True
+                ) -> str:
+            """Dump the object to a JSON string.
+
+            Args:
+                obj: An object to dump.
+
+            Returns:
+                A string containing its JSON representation.
+            """
+            return cast(str, yaml.dump(
+                obj, Dumper=self.dumper,
+                indent=indent, allow_unicode=not ensure_ascii))
+
+    return DumpsJsonFunction(UserDumper)
 
 
 def dump_json_function(
@@ -404,21 +449,37 @@ def dump_json_function(
 
     add_to_dumper(UserDumper, list(args))
 
-    def dump_json_function(
-            obj: Any, sink: Union[str, Path, IO[AnyStr]],
-            *, indent: Optional[int] = None, ensure_ascii: bool = True
-            ) -> None:
-        if isinstance(sink, str):
-            sink = Path(sink)
+    class DumpJsonFunction:
+        """Dumps objects to a stream."""
+        def __init__(self, dumper: Type[Dumper]) -> None:
+            """Create a dump function."""
+            self.dumper = dumper
 
-        if isinstance(sink, Path):
-            with sink.open('w') as f:
+        def __call__(
+                self, obj: Any, sink: Union[str, Path, IO[AnyStr]],
+                indent: Optional[int] = None, ensure_ascii: bool = True
+                ) -> None:
+            """Dump the object to a file or stream as JSON.
+
+            The sink argument may be a string containing a path, a
+            pathlib.Path object containing a path, or a stream to write
+            to directly (e.g. an open file).
+
+            Args:
+                obj: An object to dump.
+                sink: A place to save it to.
+            """
+            if isinstance(sink, str):
+                sink = Path(sink)
+
+            if isinstance(sink, Path):
+                with sink.open('w') as f:
+                    yaml.dump(
+                            obj, f, Dumper=UserDumper,
+                            indent=indent, allow_unicode=not ensure_ascii)
+            else:
                 yaml.dump(
-                        obj, f, Dumper=UserDumper,
+                        obj, sink, Dumper=UserDumper,
                         indent=indent, allow_unicode=not ensure_ascii)
-        else:
-            yaml.dump(
-                    obj, sink, Dumper=UserDumper,
-                    indent=indent, allow_unicode=not ensure_ascii)
 
-    return dump_json_function
+    return DumpJsonFunction(UserDumper)
