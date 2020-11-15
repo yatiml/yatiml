@@ -8,7 +8,7 @@ with open('README.rst') as readme_file:
 
 setup(
     name='yatiml',
-    version='0.5.2.dev',
+    version='0.6.1.dev',
     description="A library for making YAML-based file formats",
     long_description=readme + '\n\n',
     author="Lourens Veen",
