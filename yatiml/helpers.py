@@ -324,7 +324,8 @@ class Node:
 
             _yatiml_defaults = {'my_list', []}  # type: Dict[str, Any]
 
-            @classmethod _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+            @classmethod
+            def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
                 node.remove_attributes_with_default_values(cls)
 
 
