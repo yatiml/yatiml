@@ -10,8 +10,9 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from yatiml.exceptions import RecognitionError
 from yatiml.introspection import class_subobjects
-from yatiml.util import (bool_union_fix, generic_type_args, is_generic_list,
-                         is_generic_dict, is_generic_union)
+from yatiml.util import (
+        bool_union_fix, generic_type_args, is_generic_sequence,
+        is_generic_mapping, is_generic_union)
 
 if TYPE_CHECKING:
     from yatiml.loader import Loader  # noqa: F401
@@ -44,7 +45,7 @@ class Constructor:
         Since Python does not do type checks, we do a type check \
         manually, to ensure that the class's constructor gets the types \
         it expects. This avoids confusing errors, but moreover is a \
-        security features that ensures that regardless of the content \
+        security feature that ensures that regardless of the content \
         of the YAML file, we produce the objects that the programmer \
         defined and expects.
 
@@ -100,11 +101,10 @@ class Constructor:
             else:
                 new_obj.__init__(**mapping)
 
-        except TypeError:  # pragma: no cover
+        except Exception as e:
             raise RecognitionError(
-                ('{}{}Could not construct object of class {}'
-                 ' from {}. This is a bug in YAtiML, please report.'.format(
-                     node.start_mark, os.linesep, self.class_.__name__, node)))
+                    ('{}{}Could not construct object of class {}: {}'.format(
+                     node.start_mark, os.linesep, self.class_.__name__, e)))
         logger.debug('Done constructing {}'.format(self.class_.__name__))
 
     def __to_plain_containers(self,
@@ -157,7 +157,7 @@ class Constructor:
             A map with attributes reorganised as described above.
         """
         attr_names = list(mapping.keys())
-        main_attrs = mapping.copy()
+        main_attrs = mapping.copy()     # type: CommentedMap
         extra_attrs = OrderedDict(mapping.items())
         for name in attr_names:
             if name not in known_attrs or name == '_yatiml_extra':
@@ -185,14 +185,14 @@ class Constructor:
                 if self.__type_matches(obj, t):
                     return True
             return False
-        elif is_generic_list(type_):
+        elif is_generic_sequence(type_):
             if not isinstance(obj, list):
                 return False
             for item in obj:
                 if not self.__type_matches(item, generic_type_args(type_)[0]):
                     return False
             return True
-        elif is_generic_dict(type_):
+        elif is_generic_mapping(type_):
             if not isinstance(obj, OrderedDict):
                 return False
             for key, value in obj.items():

@@ -76,3 +76,26 @@ stage, not in the type checking stage, so you do need the seasoning functions.
 YAML side should have dashes or underscores. So you need to specify this
 somehow in order to be able to dump correctly, and then it's better to specify
 it on loading as well for symmetry.)
+
+
+.. _seasoning_enumerations:
+
+Seasoning enumerations
+----------------------
+
+By default, YAtiML will use an enum member's name to write to the YAML file, and
+that's what it will recognise on loading as well. Sometimes, that's not what you
+want however. Maybe you want to use the values, or you want to have the names on
+the Python side in uppercase (because PEP-8 says so) while you want to use
+a lower-case version in the YAML file. In that case, you can apply YAtiML's
+seasoning mechanisms like this:
+
+.. literalinclude:: examples/enum_use_values.py
+  :caption: ``docs/examples/enum_use_values.py``
+  :language: python
+
+or like this:
+
+.. literalinclude:: examples/enum_lowercase.py
+  :caption: ``docs/examples/enum_lowercase.py``
+  :language: python

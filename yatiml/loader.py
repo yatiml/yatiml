@@ -2,7 +2,9 @@ import enum
 import logging
 import os
 from collections import UserString
-from typing import Any, Dict, List              # noqa
+from pathlib import Path
+from typing import (
+        Any, AnyStr, Callable, cast, Dict, IO, List, TypeVar, Union)  # noqa
 from typing_extensions import ClassVar, Type    # noqa
 
 import ruamel.yaml as yaml
@@ -13,8 +15,9 @@ from yatiml.exceptions import RecognitionError
 from yatiml.helpers import Node
 from yatiml.introspection import class_subobjects
 from yatiml.recognizer import Recognizer
-from yatiml.util import (generic_type_args, is_generic_list, is_generic_dict,
-                         scalar_type_to_tag, type_to_desc)
+from yatiml.util import (
+        generic_type_args, is_generic_sequence, is_generic_mapping,
+        is_generic_union, scalar_type_to_tag, type_to_desc)
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +40,7 @@ class Loader(yaml.RoundTripLoader):
         Returns:
             A processed node representing the document.
         """
-        node = super().get_single_node()
+        node = cast(yaml.Node, super().get_single_node())
         if node is not None:
             node = self.__process_node(node, type(self).document_type)
         return node
@@ -52,7 +55,7 @@ class Loader(yaml.RoundTripLoader):
         Returns:
             A processed node representing the document.
         """
-        node = super().get_node()
+        node = cast(yaml.Node, super().get_node())
         if node is not None:
             node = self.__process_node(node, type(self).document_type)
         return node
@@ -69,10 +72,10 @@ class Loader(yaml.RoundTripLoader):
         if type_ in scalar_type_to_tag:
             return scalar_type_to_tag[type_]
 
-        if is_generic_list(type_):
+        if is_generic_sequence(type_):
             return 'tag:yaml.org,2002:seq'
 
-        if is_generic_dict(type_):
+        if is_generic_mapping(type_):
             return 'tag:yaml.org,2002:map'
 
         if type_ in self._registered_classes.values():
@@ -143,7 +146,7 @@ class Loader(yaml.RoundTripLoader):
 
         # process subnodes
         logger.debug('Recursing into subnodes')
-        if is_generic_list(recognized_type):
+        if is_generic_sequence(recognized_type):
             if node.tag != 'tag:yaml.org,2002:seq':
                 raise RecognitionError('{}{}Expected a {} here'.format(
                     node.start_mark, os.linesep,
@@ -153,7 +156,7 @@ class Loader(yaml.RoundTripLoader):
                         item, generic_type_args(recognized_type)[0])
                     for item in node.value]
 
-        elif is_generic_dict(recognized_type):
+        elif is_generic_mapping(recognized_type):
             if node.tag != 'tag:yaml.org,2002:map':
                 raise RecognitionError('{}{}Expected a {} here'.format(
                     node.start_mark, os.linesep,
@@ -225,3 +228,111 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
         if loader_cls._registered_classes is None:
             loader_cls._registered_classes = dict()
         loader_cls._registered_classes[tag] = class_
+
+
+T = TypeVar('T')
+
+
+def load_function(
+        result: Type[T], *args: Type
+        ) -> Callable[[Union[str, Path, IO[AnyStr]]], T]:
+    """Create a load function for the given type.
+
+    This function returns a callable object which takes an input
+    (`str` with YAML input, `pathlib.Path`, or an open stream) and
+    tries to load an object of the type given as the first argument.
+    Any user-defined classes needed by the result must be passed as
+    the remaining arguments.
+
+    Note that mypy will give an error if you try to pass some of the
+    special type-like objects from ``typing``. ``typing.Dict`` and
+    ``typing.List`` seem to be okay, but ``typing.Union``,
+    ``typing.Optional``, and abstract containers
+    ``typing.Sequence``, ``typing.Mapping``,
+    ``typing.MutableSequence`` and ``typing.MutableMapping`` will
+    give an error. They are supported however, and work fine,
+    there is just no way presently to explain to mypy that they
+    are okay.
+
+    So, if you want to tell YAtiML that your YAML file may contain
+    either a string or an int, you can use ``Union[str, int]`` for the
+    first argument, but you'll have to add a ``# type: ignore`` or two
+    to tell mypy to ignore the issue. The resulting Callable will have
+    return type ``Any`` in this case.
+
+    Examples:
+
+        .. code-block:: python
+
+          load_int_dict = yatiml.load_function(Dict[str, int])
+          my_dict = load_int_dict('x: 1')
+
+        .. code-block:: python
+
+          load_config = yatiml.load_function(Config, Setting)
+          my_config = load_config(Path('config.yaml'))
+
+          # or
+
+          with open('config.yaml', 'r') as f:
+              my_config = load_config(f)
+
+        Here, Config is the top-level class, and Setting is
+        another class that is used by Config somewhere.
+
+        # Needs an ignore, on each line if split over two lines
+        load_int_or_str = yatiml.load_function(     # type: ignore
+                Union[int, str])                    # type: ignore
+
+    Args:
+        result: The top level type, return type of the function.
+        *args: Any other (custom) types needed.
+
+    Returns:
+        A function that can load YAML input from a string, Path or
+        stream and convert it to an object of the first type given.
+    """
+    class UserLoader(Loader):
+        pass
+
+    user_classes = list(args)
+    if not (
+            is_generic_mapping(result) or
+            is_generic_sequence(result) or
+            is_generic_union(result)):
+        if result not in user_classes:
+            user_classes.append(result)
+
+    add_to_loader(UserLoader, user_classes)
+    set_document_type(UserLoader, result)
+
+    class LoadFunction:
+        """Validates YAML input and constructs objects."""
+        def __init__(self, loader: Type[Loader]) -> None:
+            """Create a LoadFunction."""
+            self.loader = loader
+
+        def __call__(self, source: Union[str, Path, IO[AnyStr]]) -> T:
+            """Load a YAML document from a source.
+
+            The source can be a string containing YAML, a pathlib.Path
+            containing a path to a file to load, or a stream (e.g. an
+            open file handle returned by open()).
+
+            Args:
+                source: The source to load from.
+
+            Returns:
+                An object loaded from the file.
+
+            Raises:
+                yatiml.RecognitionError: If the input is invalid.
+            """
+
+            if isinstance(source, Path):
+                with source.open('r') as f:
+                    return cast(T, yaml.load(f, Loader=self.loader))
+            else:
+                return cast(T, yaml.load(source, Loader=self.loader))
+
+    return LoadFunction(UserLoader)

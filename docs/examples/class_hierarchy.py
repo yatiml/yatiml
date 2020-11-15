@@ -1,4 +1,3 @@
-from ruamel import yaml
 from typing import List, Union
 import yatiml
 
@@ -35,11 +34,7 @@ class Submission(Shape):
 
 
 # Create loader
-class MyLoader(yatiml.Loader):
-    pass
-
-yatiml.add_to_loader(MyLoader, [Shape, Circle, Square, Submission])
-yatiml.set_document_type(MyLoader, Submission)
+load = yatiml.load_function(Submission, Shape, Circle, Square)
 
 # Load YAML
 yaml_text = ('name: Janice\n'
@@ -50,7 +45,7 @@ yaml_text = ('name: Janice\n'
              '  - center: [5.0, 5.0]\n'
              '    width: 1.0\n'
              '    height: 1.0\n')
-doc = yaml.load(yaml_text, Loader=MyLoader)
+doc = load(yaml_text)
 
 print(doc.name)
 print(doc.age)

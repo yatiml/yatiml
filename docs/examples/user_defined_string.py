@@ -1,5 +1,4 @@
 from collections import UserString
-from ruamel import yaml
 from typing import Any, Union
 import yatiml
 
@@ -22,17 +21,13 @@ class Submission:
 
 
 # Create loader
-class MyLoader(yatiml.Loader):
-    pass
-
-yatiml.add_to_loader(MyLoader, [TitleCaseString, Submission])
-yatiml.set_document_type(MyLoader, Submission)
+load_submission = yatiml.load_function(Submission, TitleCaseString)
 
 # Load YAML
 yaml_text = ('name: Janice\n'
              'age: 6\n'
              'town: Piedmont')
-doc = yaml.load(yaml_text, Loader=MyLoader)
+doc = load_submission(yaml_text)
 
 print(type(doc))
 print(doc.name)

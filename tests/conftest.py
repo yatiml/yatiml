@@ -1,7 +1,7 @@
 import enum
 import math
 from collections import OrderedDict, UserString
-from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Type
 
@@ -13,98 +13,11 @@ from yatiml.recognizer import Recognizer
 
 
 @pytest.fixture
-def string_loader():
-    class StringLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(StringLoader, str)
-    return StringLoader
-
-
-@pytest.fixture
-def datetime_loader():
-    class DatetimeLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(DatetimeLoader, datetime)
-    return DatetimeLoader
-
-
-@pytest.fixture
-def string_list_loader():
-    class StringListLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(StringListLoader, List[str])
-    return StringListLoader
-
-
-@pytest.fixture
-def int_list_list_loader():
-    class IntListListLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(IntListListLoader, List[List[int]])
-    return IntListListLoader
-
-
-@pytest.fixture
-def int_list_loader():
-    class IntListLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(IntListLoader, List[int])
-    return IntListLoader
-
-
-@pytest.fixture
-def string_dict_loader():
-    class StringDictLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(StringDictLoader, Dict[str, str])
-    return StringDictLoader
-
-
-@pytest.fixture
-def int_key_dict_loader():
-    class IntKeyDictLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(IntKeyDictLoader, Dict[int, str])
-    return IntKeyDictLoader
-
-
-@pytest.fixture
-def nested_dict_loader():
-    class NestedDictLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(NestedDictLoader, Dict[str, Dict[str, bool]])
-    return NestedDictLoader
-
-
-@pytest.fixture
-def mixed_dict_list_loader():
-    class MixedDictListLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(MixedDictListLoader, List[Dict[str, int]])
-    return MixedDictListLoader
-
-
-@pytest.fixture
-def union_loader():
-    class UnionLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(UnionLoader, Union[str, int])
-    return UnionLoader
-
-
-@pytest.fixture
-def optional_loader():
-    class OptionalLoader(yatiml.Loader):
-        pass
-    yatiml.set_document_type(OptionalLoader, Optional[str])
-    return OptionalLoader
-
-
-@pytest.fixture
-def plain_dumper():
-    class PlainDumper(yatiml.Dumper):
-        pass
-    return PlainDumper
+def tmpdir_path(tmp_path: Any) -> Path:
+    # Older versions of PyTest on older versions of Python give us a
+    # pathlib2.Path, which YAtiML does not support. This smooths over
+    # the difference and makes sure our tests work everywhere.
+    return Path(str(tmp_path))
 
 
 class Document1:
@@ -183,11 +96,43 @@ class Document2:
                  color: Color2 = Color2.RED,
                  extra_shape: Optional[Shape] = None
                  ) -> None:
-        # Yes, having [] as a default value is a bad idea, but ok here
         self.cursor_at = cursor_at
         self.shapes = shapes if shapes is not None else list()
         self.color = color
         self.extra_shape = extra_shape
+
+
+class Document3:
+    def __init__(self, cursor_at: Vector2D,
+                 color: str = 'red',
+                 age: int = 7,
+                 has_siblings: bool = False,
+                 score: float = 7.5,
+                 extra_shape: Optional[Shape] = None,
+                 another_number: int = 42
+                 ) -> None:
+        self.cursor_at = cursor_at
+        self.color = color
+        self.age = age
+        self.has_siblings = has_siblings
+        self.score = score
+        self.extra_shape = extra_shape
+        self.another_number = another_number
+
+    @classmethod
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        node.remove_attributes_with_default_values(cls)
+
+
+class Document4:
+    def __init__(self, shapes: List[Shape] = None) -> None:
+        self.shapes = shapes if shapes is not None else list()
+
+    _yatiml_defaults = {'shapes': []}   # type: Dict[str, Any]
+
+    @classmethod
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        node.remove_attributes_with_default_values(cls)
 
 
 class Super:
@@ -354,284 +299,14 @@ class DashedAttribute:
         node.unders_to_dashes_in_keys()
 
 
-@pytest.fixture
-def document1_loader():
-    class Document1Loader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(Document1Loader, Document1)
-    yatiml.set_document_type(Document1Loader, Document1)
-    return Document1Loader
+class Raises:
+    def __init__(self, x: int) -> None:
+        if x >= 10:
+            raise RuntimeError('x must be less than 10')
 
 
 @pytest.fixture
-def document1_dumper():
-    class Document1Dumper(yatiml.Dumper):
-        pass
-    yatiml.add_to_dumper(Document1Dumper, Document1)
-    return Document1Dumper
-
-
-@pytest.fixture
-def vector_loader():
-    class VectorLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(VectorLoader, Vector2D)
-    yatiml.set_document_type(VectorLoader, Vector2D)
-    return VectorLoader
-
-
-@pytest.fixture
-def shape_loader():
-    class ShapeLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(
-            ShapeLoader, [Shape, Rectangle, Circle, Ellipse, Vector2D])
-    yatiml.set_document_type(ShapeLoader, Shape)
-    return ShapeLoader
-
-
-@pytest.fixture
-def missing_circle_loader():
-    class MissingCircleLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(
-            MissingCircleLoader, [Shape, Rectangle, Ellipse, Vector2D])
-    yatiml.set_document_type(MissingCircleLoader, Shape)
-    return MissingCircleLoader
-
-
-@pytest.fixture
-def document2_loader():
-    class Document2Loader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(
-            Document2Loader,
-            [Color2, Document2, Shape, Rectangle, Circle, Vector2D])
-    yatiml.set_document_type(Document2Loader, Document2)
-    return Document2Loader
-
-
-@pytest.fixture
-def document2_dumper():
-    class Document2Dumper(yatiml.Dumper):
-        pass
-    yatiml.add_to_dumper(
-            Document2Dumper,
-            [Color2, Document2, Shape, Rectangle, Circle, Vector2D])
-    return Document2Dumper
-
-
-@pytest.fixture
-def enum_loader():
-    class EnumLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(EnumLoader, Color)
-    yatiml.set_document_type(EnumLoader, Color)
-    return EnumLoader
-
-
-@pytest.fixture
-def enum_dumper():
-    class EnumDumper(yatiml.Dumper):
-        pass
-    yatiml.add_to_dumper(EnumDumper, Color)
-    return EnumDumper
-
-
-@pytest.fixture
-def enum_loader2():
-    class EnumLoader2(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(EnumLoader2, Color2)
-    yatiml.set_document_type(EnumLoader2, Color2)
-    return EnumLoader2
-
-
-@pytest.fixture
-def enum_dumper2():
-    class EnumDumper2(yatiml.Dumper):
-        pass
-    yatiml.add_to_dumper(EnumDumper2, Color2)
-    return EnumDumper2
-
-
-@pytest.fixture
-def enum_list_loader():
-    class EnumListLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(EnumListLoader, Color2)
-    yatiml.set_document_type(EnumListLoader, List[Color2])
-    return EnumListLoader
-
-
-@pytest.fixture
-def enum_dict_loader():
-    class EnumDictLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(EnumDictLoader, Color2)
-    yatiml.set_document_type(EnumDictLoader, Dict[str, Color2])
-    return EnumDictLoader
-
-
-@pytest.fixture
-def user_string_loader():
-    class UserStringLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(UserStringLoader, ConstrainedString)
-    yatiml.set_document_type(UserStringLoader, ConstrainedString)
-    return UserStringLoader
-
-
-@pytest.fixture
-def user_string_dumper():
-    class UserStringDumper(yatiml.Dumper):
-        pass
-    yatiml.add_to_dumper(UserStringDumper, ConstrainedString)
-    return UserStringDumper
-
-
-@pytest.fixture
-def super_loader():
-    class SuperLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(SuperLoader, [Super, SubA, SubB])
-    yatiml.set_document_type(SuperLoader, Super)
-    return SuperLoader
-
-
-@pytest.fixture
-def super2_loader():
-    class Super2Loader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(Super2Loader, [Super2, SubA2, SubB2])
-    yatiml.set_document_type(Super2Loader, Super2)
-    return Super2Loader
-
-
-@pytest.fixture
-def super2_dumper():
-    class Super2Dumper(yatiml.Dumper):
-        pass
-    yatiml.add_to_dumper(Super2Dumper, [Super2, SubA2, SubB2])
-    return Super2Dumper
-
-
-@pytest.fixture
-def universal_loader():
-    class UniversalLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(UniversalLoader, Universal)
-    yatiml.set_document_type(UniversalLoader, Universal)
-    return UniversalLoader
-
-
-@pytest.fixture
-def universal_dumper():
-    class UniversalDumper(yatiml.Dumper):
-        pass
-    yatiml.add_to_dumper(UniversalDumper, Universal)
-    return UniversalDumper
-
-
-@pytest.fixture
-def extensible_loader():
-    class ExtensibleLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(ExtensibleLoader, Extensible)
-    yatiml.set_document_type(ExtensibleLoader, Extensible)
-    return ExtensibleLoader
-
-
-@pytest.fixture
-def extensible_dumper():
-    class ExtensibleDumper(yatiml.Dumper):
-        pass
-    yatiml.add_to_dumper(ExtensibleDumper, Extensible)
-    return ExtensibleDumper
-
-
-@pytest.fixture
-def private_attributes_dumper():
-    class PrivateAttributesDumper(yatiml.Dumper):
-        pass
-    yatiml.add_to_dumper(PrivateAttributesDumper, PrivateAttributes)
-    return PrivateAttributesDumper
-
-
-@pytest.fixture
-def broken_private_attributes_dumper():
-    class BrokenPrivateAttributesDumper(yatiml.Dumper):
-        pass
-    yatiml.add_to_dumper(
-            BrokenPrivateAttributesDumper,
-            BrokenPrivateAttributes)
-    return BrokenPrivateAttributesDumper
-
-
-@pytest.fixture
-def complex_private_attributes_dumper():
-    class ComplexPrivateAttributesDumper(yatiml.Dumper):
-        pass
-    yatiml.add_to_dumper(ComplexPrivateAttributesDumper, Vector2D)
-    yatiml.add_to_dumper(
-            ComplexPrivateAttributesDumper, ComplexPrivateAttributes)
-    return ComplexPrivateAttributesDumper
-
-
-@pytest.fixture
-def union_attribute_loader():
-    class UnionAttributeLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(UnionAttributeLoader, UnionAttribute)
-    yatiml.set_document_type(UnionAttributeLoader, UnionAttribute)
-    return UnionAttributeLoader
-
-
-@pytest.fixture
-def dict_attribute_loader():
-    class DictAttributeLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(DictAttributeLoader, DictAttribute)
-    yatiml.set_document_type(DictAttributeLoader, DictAttribute)
-    return DictAttributeLoader
-
-
-@pytest.fixture
-def parsed_class_loader():
-    class ParsedClassLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(ParsedClassLoader, Postcode)
-    yatiml.set_document_type(ParsedClassLoader, Postcode)
-    return ParsedClassLoader
-
-
-@pytest.fixture
-def parsed_class_dumper():
-    class ParsedClassDumper(yatiml.Dumper):
-        pass
-    yatiml.add_to_dumper(ParsedClassDumper, Postcode)
-    return ParsedClassDumper
-
-
-@pytest.fixture
-def dashed_attribute_loader():
-    class DashedAttributeLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(DashedAttributeLoader, DashedAttribute)
-    yatiml.set_document_type(DashedAttributeLoader, DashedAttribute)
-    return DashedAttributeLoader
-
-
-@pytest.fixture
-def dashed_attribute_dumper():
-    class DashedAttributeDumper(yatiml.Dumper):
-        pass
-    yatiml.add_to_dumper(DashedAttributeDumper, DashedAttribute)
-    return DashedAttributeDumper
-
-
-@pytest.fixture
-def yaml_seq_node():
+def yaml_seq_node() -> yaml.Node:
     # A yaml.SequenceNode representing a sequence of mappings
     tag1 = 'tag:yaml.org,2002:map'
     item1_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item_id')
@@ -663,7 +338,7 @@ def yaml_seq_node():
 
 
 @pytest.fixture
-def yaml_map_node():
+def yaml_map_node() -> yaml.Node:
     # A yaml.MappingNode representing a mapping of mappings
     tag1 = 'tag:yaml.org,2002:map'
     item1_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'price')
@@ -692,7 +367,7 @@ def yaml_map_node():
 
 
 @pytest.fixture
-def yaml_node(yaml_seq_node, yaml_map_node):
+def yaml_node(yaml_seq_node: yaml.Node, yaml_map_node: yaml.Node) -> yaml.Node:
     tag = 'tag:yaml.org,2002:map'
 
     attr1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'attr1')
@@ -722,35 +397,35 @@ def yaml_node(yaml_seq_node, yaml_map_node):
 
 
 @pytest.fixture
-def class_node(yaml_node):
+def class_node(yaml_node: yaml.Node) -> yatiml.Node:
     return yatiml.Node(yaml_node)
 
 
 @pytest.fixture
-def scalar_node():
+def scalar_node() -> yatiml.Node:
     ynode = yaml.ScalarNode('tag:yaml.org,2002:int', '42')
     return yatiml.Node(ynode)
 
 
 @pytest.fixture
-def unknown_node(yaml_node):
+def unknown_node(yaml_node: yaml.Node) -> yatiml.UnknownNode:
     return yatiml.UnknownNode(Recognizer({}), yaml_node)
 
 
 @pytest.fixture
-def unknown_scalar_node():
+def unknown_scalar_node() -> yatiml.UnknownNode:
     ynode = yaml.ScalarNode('tag:yaml.org,2002:int', '23')
     return yatiml.UnknownNode(Recognizer({}), ynode)
 
 
 @pytest.fixture
-def unknown_sequence_node():
+def unknown_sequence_node() -> yatiml.UnknownNode:
     ynode = yaml.SequenceNode('tag:yaml.org,2002:seq', [])
     return yatiml.UnknownNode(Recognizer({}), ynode)
 
 
 @pytest.fixture
-def class_node_dup_key():
+def class_node_dup_key() -> yatiml.Node:
     # A Node wrapping a yaml.SequenceNode representing a sequence of
     # mappings with a duplicate key.
     tag1 = 'tag:yaml.org,2002:map'

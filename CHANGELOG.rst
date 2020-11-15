@@ -5,6 +5,26 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.6.0
+*****
+
+New functionality
+-----------------
+
+* New make_loader and make_dumper functions improve ease-of-use
+* JSON support
+* Support for Mapping and Sequence types
+* UnknownNode.require_attribute_value_not() function
+* Node.remove_attributes_with_default_values() function
+* Recipe for seasoning Enums
+
+Fixes
+-----
+
+* Various documentation improvements
+* Better error message if constructor raises
+
+
 0.5.1
 *****
 

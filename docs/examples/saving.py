@@ -1,4 +1,3 @@
-from ruamel import yaml
 from typing import Optional, Union
 import yatiml
 
@@ -17,14 +16,10 @@ class Submission:
 
 
 # Create dumper
-class MyDumper(yatiml.Dumper):
-    pass
-
-yatiml.add_to_dumper(MyDumper, Submission)
-
+dumps = yatiml.dumps_function(Submission)
 
 # Dump YAML
 doc = Submission('Youssou', 7, 'pencils')
-yaml_text = yaml.dump(doc, Dumper=MyDumper)
+yaml_text = dumps(doc)
 
 print(yaml_text)

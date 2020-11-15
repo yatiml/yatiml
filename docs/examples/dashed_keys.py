@@ -1,4 +1,3 @@
-from ruamel import yaml
 from typing import Union
 import yatiml
 
@@ -19,24 +18,15 @@ class Dashed:
 
 
 # Create loader
-class MyLoader(yatiml.Loader):
-    pass
-
-yatiml.add_to_loader(MyLoader, Dashed)
-yatiml.set_document_type(MyLoader, Dashed)
-
+load = yatiml.load_function(Dashed)
 
 # Create dumper
-class MyDumper(yatiml.Dumper):
-    pass
-
-yatiml.add_to_dumper(MyDumper, Dashed)
-
+dumps = yatiml.dumps_function(Dashed)
 
 # Load YAML
 yaml_text = ('an-attribute: 42\n'
              'another-attribute: with-dashes\n')
-doc = yaml.load(yaml_text, Loader=MyLoader)
+doc = load(yaml_text)
 
 print(type(doc))
 print(doc.an_attribute)
@@ -45,5 +35,5 @@ print(doc.another_attribute)
 
 # Dump YAML
 
-dumped_text = yaml.dump(doc, Dumper=MyDumper)
+dumped_text = dumps(doc)
 print(dumped_text)

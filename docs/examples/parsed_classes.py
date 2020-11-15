@@ -43,29 +43,17 @@ class Identifier:
         node.set_value('{}.{}'.format(namespace_str, name))
 
 
-class MyLoader(yatiml.Loader):
-    pass
-
-
-yatiml.add_to_loader(MyLoader, Identifier)
-yatiml.set_document_type(MyLoader, Identifier)
-
-
-class MyDumper(yatiml.Dumper):
-    pass
-
-
-yatiml.add_to_dumper(MyDumper, Identifier)
-
+load = yatiml.load_function(Identifier)
+dumps = yatiml.dumps_function(Identifier)
 
 yaml_text = ('yatiml.logger.setLevel\n')
-doc = yaml.load(yaml_text, Loader=MyLoader)
+doc = load(yaml_text)
 
 print(type(doc))
 print(doc.namespaces)
 print(doc.name)
 
 doc = Identifier(['yatiml'], 'add_to_loader')
-yaml_text = yaml.dump(doc, Dumper=MyDumper)
+yaml_text = dumps(doc)
 
 print(yaml_text)

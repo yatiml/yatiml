@@ -1,5 +1,6 @@
 import os
 from typing import (  # noqa: F401
+    Any,
     List,
     Optional,
     Set,
@@ -12,6 +13,7 @@ from ruamel import yaml
 from ruamel.yaml.error import StreamMark
 
 from yatiml.exceptions import RecognitionError, SeasoningError
+from yatiml.introspection import defaulted_attributes
 from yatiml.irecognizer import IRecognizer
 from yatiml.util import ScalarType, scalar_type_to_tag
 
@@ -47,7 +49,7 @@ class Node:
         """Convert to a human-readable string."""
         return 'Node({})'.format(self.yaml_node)
 
-    def is_scalar(self, typ: Type = _Any) -> bool:
+    def is_scalar(self, typ: Union[Type, None] = _Any) -> bool:
         """Returns True iff this represents a scalar node.
 
         If a type is given, checks that the ScalarNode represents this \
@@ -59,7 +61,7 @@ class Node:
             if typ != _Any and typ in scalar_type_to_tag:
                 if typ is None:
                     typ = type(None)
-                return self.yaml_node.tag == scalar_type_to_tag[typ]
+                return cast(str, self.yaml_node.tag) == scalar_type_to_tag[typ]
 
             if typ is _Any:
                 return True
@@ -81,7 +83,7 @@ class Node:
         Use is_scalar(type) to check which type the node has.
         """
         if self.yaml_node.tag == 'tag:yaml.org,2002:str':
-            return self.yaml_node.value
+            return str(self.yaml_node.value)
         if self.yaml_node.tag == 'tag:yaml.org,2002:int':
             return int(self.yaml_node.value)
         if self.yaml_node.tag == 'tag:yaml.org,2002:float':
@@ -148,7 +150,7 @@ class Node:
             key_node.value == attribute for key_node, _ in self.yaml_node.value
         ])
 
-    def has_attribute_type(self, attribute: str, typ: Type) -> bool:
+    def has_attribute_type(self, attribute: str, typ: Optional[Type]) -> bool:
         """Whether the given attribute exists and has a compatible type.
 
         Returns true iff the attribute exists and is an instance of \
@@ -187,7 +189,7 @@ class Node:
 
         if typ in scalar_type_to_tag:
             tag = scalar_type_to_tag[typ]
-            return attr_node.tag == tag
+            return cast(str, attr_node.tag) == tag
         elif typ == list:
             return isinstance(attr_node, yaml.SequenceNode)
         elif typ == dict:
@@ -282,6 +284,95 @@ class Node:
         attr_index = self.__attr_index(attribute)
         if attr_index is not None:
             self.yaml_node.value.pop(attr_index)
+
+    def remove_attributes_with_default_values(self, cls: Type) -> None:
+        """Remove attributes with default values.
+
+        If you have a class with many optional attributes, then saving
+        it to YAML may yield a very large dictionary with many values
+        set to e.g. None. If there's no risk of creating an ambiguity,
+        then you may want to remove any attributes whose value matches
+        the default.
+
+        This function can be used in _yatiml_sweeten() to do that. For
+        `cls`, pass the `cls` first argument of _yatiml_sweeten().
+
+        If the default for the parameter is not the same as the default
+        of the attribute, for example in this common situation:
+
+        .. code-block:: python
+
+            def __init__(
+                    self, my_list: Optional[List[int]] = None) -> None:
+                if my_list is None:
+                    my_list = list()
+                self.my_list = my_list
+
+
+        then this function will not remove the attribute if it is an
+        empty list, because it compares with `None` in the type
+        annotation. To fix that, you can define `_yatiml_defaults` like
+        this:
+
+        .. code-block:: python
+
+            def __init__(
+                    self, my_list: Optional[List[int]] = None) -> None:
+                if my_list is None:
+                    my_list = list()
+                self.my_list = my_list
+
+            _yatiml_defaults = {'my_list', []}  # type: Dict[str, Any]
+
+            @classmethod
+            def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+                node.remove_attributes_with_default_values(cls)
+
+
+        Note that this function currently only works for the built-in
+        types bool, float, int, str and for None values, not for
+        classes or enums.
+
+        Use only if is_mapping() returns True.
+
+        Args:
+            cls: The class we're sweetening.
+        """
+        def matches(value_node: yaml.Node, default: Any) -> bool:
+            if value_node.tag == 'tag:yaml.org,2002:null':
+                return default is None
+
+            if value_node.tag == 'tag:yaml.org,2002:int':
+                return int(value_node.value) == int(default)
+
+            if value_node.tag == 'tag:yaml.org,2002:float':
+                return float(value_node.value) == float(default)
+
+            if value_node.tag == 'tag:yaml.org,2002:bool':
+                if default is False:
+                    return (
+                            str(value_node.value).lower() == 'n' or
+                            str(value_node.value).lower() == 'no' or
+                            str(value_node.value).lower() == 'false' or
+                            str(value_node.value).lower() == 'off')
+                elif default is True:
+                    return (
+                            str(value_node.value).lower() == 'y' or
+                            str(value_node.value).lower() == 'yes' or
+                            str(value_node.value).lower() == 'true' or
+                            str(value_node.value).lower() == 'on')
+                return False
+
+            return bool(value_node.value == default)
+
+        defaults = defaulted_attributes(cls)
+
+        self.yaml_node.value = [
+                (name_node, value_node)
+                for name_node, value_node in self.yaml_node.value
+                if (
+                    name_node.value not in defaults or
+                    not matches(value_node, defaults[name_node.value]))]
 
     def rename_attribute(self, attribute: str, new_name: str) -> None:
         """Renames an attribute.
@@ -378,8 +469,8 @@ class Node:
                     not unique.
 
         Raises:
-            SeasoningError: If the keys are not unique and strict is \
-                    True.
+            yatiml.SeasoningError: If the keys are not unique and \
+                    strict is True.
         """
         if not self.has_attribute(attribute):
             return
@@ -615,7 +706,8 @@ class UnknownNode:
             raise RecognitionError(('{}{}A sequence is required here').format(
                 self.yaml_node.start_mark, os.linesep))
 
-    def require_attribute(self, attribute: str, typ: Type = _Any) -> None:
+    def require_attribute(
+            self, attribute: str, typ: Union[None, Type] = _Any) -> None:
         """Require an attribute on the node to exist.
 
         This implies that the node must be a mapping.
@@ -658,8 +750,8 @@ class UnknownNode:
                     object of this type.
 
         Raises:
-            RecognitionError: If the attribute does not exist, or does \
-                    not have the required value.
+            yatiml.RecognitionError: If the attribute does not exist, \
+                    or does not have the required value.
         """
         found = False
         for key_node, value_node in self.yaml_node.value:
@@ -677,6 +769,43 @@ class UnknownNode:
                     raise RecognitionError(
                         ('{}{}Incorrect attribute value'
                          ' {} where {} was required').format(
+                             self.yaml_node.start_mark, os.linesep,
+                             value_node.value, value))
+
+        if not found:
+            raise RecognitionError(
+                ('{}{}Required attribute {} not found').format(
+                    self.yaml_node.start_mark, os.linesep, attribute))
+
+    def require_attribute_value_not(
+            self, attribute: str,
+            value: Union[int, str, float, bool, None]) -> None:
+        """Require an attribute on the node to not have a given value.
+
+        This requires the attribute to exist, and to not have the given
+        value.
+
+        Args:
+            attribute: The name of the attribute / mapping key.
+            value: The value the attribute must not have to recognize an
+                    object of this type.
+
+        Raises:
+            yatiml.RecognitionError: If the attribute does not exist,
+                    or has the required value.
+        """
+        found = False
+        for key_node, value_node in self.yaml_node.value:
+            if (key_node.tag == 'tag:yaml.org,2002:str'
+                    and key_node.value == attribute):
+                found = True
+                node = Node(value_node)
+                if not node.is_scalar(type(value)):
+                    return
+                if node.get_value() == value:
+                    raise RecognitionError(
+                        ('{}{}Incorrect attribute value'
+                         ' {} where {} was not allowed').format(
                              self.yaml_node.start_mark, os.linesep,
                              value_node.value, value))
 
