@@ -102,10 +102,10 @@ Running this modified version gives an exception traceback ending with:
 
 .. code-block:: none
 
-  yatiml.exceptions.RecognitionError:   in "<unicode string>", line 1, column 1:
-      name: Janice
-      ^ (line: 1)
-  Type mismatch, expected a dict of string to (string)
+  yatiml.exceptions.RecognitionError: Failed to recognize a string
+    in "<unicode string>", line 2, column 6:
+      age: 6
+           ^ (line: 2)
 
 
 What has happened here is that YAML has recognised ``6`` as an ``int``. Since it
