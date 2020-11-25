@@ -149,7 +149,7 @@ This is the usual Git poem:
 
 .. code-block:: bash
 
-  git add setup.py docs/conf.py
+  git add setup.py docs/conf.py yatiml/__init__.py
   git commit -m 'Set release version to x.y.z'
   git push --set-upstream origin release-x.y.z
 
@@ -232,6 +232,7 @@ To continue developing, merge the release branch back into develop
 
   git checkout develop
   git merge --no-commit release-x.y.z
+  git push
 
 Make sure that the badges are set to develop, and that the version number is
 set to the next expected version x.y.{z+1}.dev (it's fine if x.{y+1}.0 is what
