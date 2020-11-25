@@ -1,6 +1,7 @@
 import enum
 import logging
 import os
+import pathlib
 from collections import UserString
 from datetime import datetime
 from textwrap import indent
@@ -47,6 +48,28 @@ class Recognizer(IRecognizer):
         if (isinstance(node, yaml.ScalarNode)
                 and node.tag == scalar_type_to_tag[expected_type]):
             return [expected_type], ''
+        message = 'Failed to recognize a {}\n{}\n'.format(
+            type_to_desc(expected_type), node.start_mark)
+        return [], message
+
+    def __recognize_additional(
+            self, node: yaml.Node, expected_type: Type) -> RecResult:
+        """Recognize a node that we expect to be an additional type.
+
+        Args:
+            node: The node to recognize.
+            expected_type: The type it is expected to be.
+
+        Returns:
+            A list of recognized types and an error message
+        """
+        logger.debug('Recognizing as an additional type')
+
+        if expected_type == pathlib.Path:
+            if (isinstance(node, yaml.ScalarNode)
+                    and node.tag == 'tag:yaml.org,2002:str'):
+                return [expected_type], ''
+
         message = 'Failed to recognize a {}\n{}\n'.format(
             type_to_desc(expected_type), node.start_mark)
         return [], message
@@ -307,24 +330,26 @@ class Recognizer(IRecognizer):
         """
         logger.debug('Recognizing {} as a {}'.format(node, expected_type))
         recognized_types = None
-        if expected_type in [
+        if expected_type in (
                 str, int, float, bool, bool_union_fix, datetime, None,
-                type(None)
-        ]:
+                type(None)):
             recognized_types, message = self.__recognize_scalar(
-                node, expected_type)
+                    node, expected_type)
+        elif expected_type in (pathlib.Path,):
+            recognized_types, message = self.__recognize_additional(
+                    node, expected_type)
         elif is_generic_union(expected_type):
             recognized_types, message = self.__recognize_union(
-                node, expected_type)
+                     node, expected_type)
         elif is_generic_sequence(expected_type):
             recognized_types, message = self.__recognize_list(
-                node, expected_type)
+                    node, expected_type)
         elif is_generic_mapping(expected_type):
             recognized_types, message = self.__recognize_dict(
-                node, expected_type)
+                    node, expected_type)
         elif expected_type in self.__registered_classes.values():
             recognized_types, message = self.__recognize_user_classes(
-                node, expected_type)
+                    node, expected_type)
 
         if recognized_types is None:
             raise RecognitionError(

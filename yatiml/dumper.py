@@ -2,7 +2,7 @@ from collections import UserString
 import enum
 import json
 import logging
-from pathlib import Path
+from pathlib import Path, PosixPath, WindowsPath
 from typing import Any, AnyStr, Callable, IO, List, Optional, Union, cast
 from typing_extensions import Type
 
@@ -12,7 +12,7 @@ from ruamel.yaml.events import (
         ScalarEvent, SequenceEndEvent, SequenceStartEvent)
 
 from yatiml.representers import (EnumRepresenter, Representer,
-                                 UserStringRepresenter)
+                                 PathRepresenter, UserStringRepresenter)
 
 logger = logging.getLogger(__name__)
 
@@ -214,6 +214,9 @@ def dumps_function(*args: Type) -> Callable[[Any], str]:
     class UserDumper(Dumper):
         pass
 
+    UserDumper.add_representer(PosixPath, PathRepresenter())
+    UserDumper.add_representer(WindowsPath, PathRepresenter())
+
     add_to_dumper(UserDumper, list(args))
 
     class DumpsFunction:
@@ -278,6 +281,9 @@ def dump_function(
     """
     class UserDumper(Dumper):
         pass
+
+    UserDumper.add_representer(PosixPath, PathRepresenter())
+    UserDumper.add_representer(WindowsPath, PathRepresenter())
 
     add_to_dumper(UserDumper, list(args))
 
@@ -366,6 +372,9 @@ def dumps_json_function(*args: Type) -> Callable[..., str]:
     class UserDumper(Dumper):
         output_format = 'json'
 
+    UserDumper.add_representer(PosixPath, PathRepresenter())
+    UserDumper.add_representer(WindowsPath, PathRepresenter())
+
     add_to_dumper(UserDumper, list(args))
 
     class DumpsJsonFunction:
@@ -446,6 +455,9 @@ def dump_json_function(
     """
     class UserDumper(Dumper):
         output_format = 'json'
+
+    UserDumper.add_representer(PosixPath, PathRepresenter())
+    UserDumper.add_representer(WindowsPath, PathRepresenter())
 
     add_to_dumper(UserDumper, list(args))
 

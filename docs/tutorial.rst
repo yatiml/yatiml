@@ -66,6 +66,11 @@ definitions from the standard ``typing`` module. If you use type annotations in
 your Python code, then you will already be familiar with them. If not, you will
 find plenty of examples in this tutorial.
 
+For reference, YAtiML supports these built-in and standard types: ``str``,
+``int``, ``float``, ``bool``, ``typing.Dict``, ``typing.List``,
+``typing.Mapping``, ``typing.Sequence``, ``typing.Union``,
+``datetime.datetime`` and ``pathlib.Path``.
+
 .. code-block:: python
 
   import yatiml

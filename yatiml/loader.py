@@ -10,7 +10,7 @@ from typing_extensions import ClassVar, Type    # noqa
 import ruamel.yaml as yaml
 
 from yatiml.constructors import (Constructor, EnumConstructor,
-                                 UserStringConstructor)
+                                 PathConstructor, UserStringConstructor)
 from yatiml.exceptions import RecognitionError
 from yatiml.helpers import Node
 from yatiml.introspection import class_subobjects
@@ -295,12 +295,21 @@ def load_function(
     class UserLoader(Loader):
         pass
 
+    # add loaders for additional types
+    if UserLoader._registered_classes is None:
+        UserLoader._registered_classes = dict()
+    UserLoader.add_constructor('!Path', PathConstructor())
+    UserLoader._registered_classes['!Path'] = Path
+
+    additional_types = (Path,)
+
+    # add loaders for user types
     user_classes = list(args)
     if not (
             is_generic_mapping(result) or
             is_generic_sequence(result) or
             is_generic_union(result)):
-        if result not in user_classes:
+        if result not in additional_types and result not in user_classes:
             user_classes.append(result)
 
     add_to_loader(UserLoader, user_classes)
