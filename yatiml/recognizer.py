@@ -3,7 +3,7 @@ import logging
 import os
 import pathlib
 from collections import UserString
-from datetime import datetime
+from datetime import date
 from textwrap import indent
 from typing import Dict, List
 from typing_extensions import Type
@@ -331,7 +331,7 @@ class Recognizer(IRecognizer):
         logger.debug('Recognizing {} as a {}'.format(node, expected_type))
         recognized_types = None
         if expected_type in (
-                str, int, float, bool, bool_union_fix, datetime, None,
+                str, int, float, bool, bool_union_fix, date, None,
                 type(None)):
             recognized_types, message = self.__recognize_scalar(
                     node, expected_type)

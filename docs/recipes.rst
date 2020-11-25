@@ -43,10 +43,22 @@ Timestamps and dates
 --------------------
 
 YAML has a `timestamp` type, which represents a point in time. The
-`ruamel.yaml` library parses this into a python `datetime.datetime` object, and
+`ruamel.yaml` library parses this into a python `datetime.date` object, and
 will serialise such an object back to a YAML `timestamp`. YAtiML supports this
 as well, so all you need to do to use a timestamp or a date is to use
-`datetime.datetime` in your class definition.
+`datetime.date` in your class definition.
+
+Note that the object created by YAtiML may be an instance of `datetime.date` (if
+no time is given) or an instance of `datetime.datetime` (if a time is given)
+which is a subclass of `datetime.date`. Since Python does not have a
+date-without-time type, you cannot currently specify in the type that you want
+only a date, without a time attached to it.
+
+If this is an attribute in a class, and date-with-time is not a legal value,
+then you should add a check to the __init__ method that raises an exception if
+the given value is an instance of `datetime.datetime`. That way, you can't
+accidentally make an instance of the class in Python with an incorrect value
+either.
 
 
 Dashed keys

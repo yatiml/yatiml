@@ -1,5 +1,5 @@
 from collections import abc
-from datetime import datetime
+from datetime import date
 import typing
 from typing import (
         Any, cast, Dict, Mapping, MutableMapping, MutableSequence, List,
@@ -19,7 +19,7 @@ scalar_type_to_tag = {
     bool_union_fix: 'tag:yaml.org,2002:bool',
     None: 'tag:yaml.org,2002:null',
     type(None): 'tag:yaml.org,2002:null',
-    datetime: 'tag:yaml.org,2002:timestamp'
+    date: 'tag:yaml.org,2002:timestamp'
     }
 
 ScalarType = Union[str, int, float, bool, None]

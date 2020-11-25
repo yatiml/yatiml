@@ -69,7 +69,7 @@ find plenty of examples in this tutorial.
 For reference, YAtiML supports these built-in and standard types: ``str``,
 ``int``, ``float``, ``bool``, ``typing.Dict``, ``typing.List``,
 ``typing.Mapping``, ``typing.Sequence``, ``typing.Union``,
-``datetime.datetime`` and ``pathlib.Path``.
+``datetime.date`` and ``pathlib.Path``.
 
 .. code-block:: python
 
