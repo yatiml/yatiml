@@ -2,6 +2,7 @@ import inspect
 import logging
 import os
 import pathlib
+import traceback
 from collections import OrderedDict
 from typing import Any, Generator, List, Union
 from typing_extensions import TYPE_CHECKING, Type
@@ -103,9 +104,12 @@ class Constructor:
                 new_obj.__init__(**mapping)
 
         except Exception as e:
-            raise RecognitionError(
-                    ('{}{}Could not construct object of class {}: {}'.format(
-                     node.start_mark, os.linesep, self.class_.__name__, e)))
+            tb = traceback.format_exc()
+            raise RecognitionError((
+                     '{}{}Could not construct object of class {}: {}\n{}'
+                     ).format(
+                            node.start_mark, os.linesep, self.class_.__name__,
+                            e, tb))
         logger.debug('Done constructing {}'.format(self.class_.__name__))
 
     def __to_plain_containers(self,
