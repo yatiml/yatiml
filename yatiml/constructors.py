@@ -1,6 +1,8 @@
 import inspect
 import logging
 import os
+import pathlib
+import traceback
 from collections import OrderedDict
 from typing import Any, Generator, List, Union
 from typing_extensions import TYPE_CHECKING, Type
@@ -102,9 +104,12 @@ class Constructor:
                 new_obj.__init__(**mapping)
 
         except Exception as e:
-            raise RecognitionError(
-                    ('{}{}Could not construct object of class {}: {}'.format(
-                     node.start_mark, os.linesep, self.class_.__name__, e)))
+            tb = traceback.format_exc()
+            raise RecognitionError((
+                     '{}{}Could not construct object of class {}: {}\n{}'
+                     ).format(
+                            node.start_mark, os.linesep, self.class_.__name__,
+                            e, tb))
         logger.debug('Done constructing {}'.format(self.class_.__name__))
 
     def __to_plain_containers(self,
@@ -422,4 +427,38 @@ class UserStringConstructor:
         # ruamel.yaml expects us to yield an incomplete object, but strings are
         # immutable, so we'll have to make the whole thing right away.
         new_obj = self.class_(node.value)
+        yield new_obj
+
+
+class PathConstructor:
+    """A constructor for pathlib.Path objects.
+
+    This constructor expects a string and produces a Path object.
+    """
+
+    def __call__(
+            self, loader: 'Loader', node: yaml.Node
+            ) -> Generator[Any, None, None]:
+        """Construct a Path object from a yaml node.
+
+        This expects the node to contain a string with the path.
+
+        Args:
+            loader: The yatiml.loader that is creating this object.
+            node: The node to construct from.
+
+        Yields:
+            The incomplete constructed object.
+        """
+        logger.debug('Constructing an object of type pathlib.Path')
+
+        if not isinstance(node, yaml.ScalarNode) or not isinstance(
+                node.value, str):
+            raise RecognitionError(
+                    ('{}{}Expected a string containing a Path.').format(
+                        node.start_mark, os.linesep))
+
+        # ruamel.yaml expects us to yield an incomplete object, but Paths are
+        # special, so we'll have to make the whole thing right away.
+        new_obj = pathlib.Path(node.value)
         yield new_obj

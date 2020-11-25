@@ -182,13 +182,13 @@ _yatiml_recognize missing required argument
 
 If you get
 
-.. code-block::
+.. code-block:: python
 
   TypeError: _yatiml_recognize() missing 1 required positional argument: 'node'
 
 or
 
-.. code-block::
+.. code-block:: python
 
   TypeError: yatiml_savorize() missing 1 required positional argument: 'node'
 

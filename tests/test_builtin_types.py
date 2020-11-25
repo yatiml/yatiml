@@ -1,6 +1,6 @@
 """Tests for the yatiml module."""
 import collections
-from datetime import datetime
+from datetime import date, datetime
 from typing import (
         Dict, List, Mapping, MutableMapping, MutableSequence, Optional,
         Sequence, Union)
@@ -43,12 +43,19 @@ def test_load_bool() -> None:
     assert data is True
 
 
-def test_load_datetime() -> None:
-    load = yatiml.load_function(datetime)
+def test_load_date() -> None:
+    load = yatiml.load_function(date)
     data = load('2018-10-27T06:05:23Z')
     assert isinstance(data, datetime)
     assert data.year == 2018
     assert data.second == 23
+
+    load = yatiml.load_function(date)
+    data = load('2020-11-15')
+    assert isinstance(data, date)
+    assert data.year == 2020
+    assert data.month == 11
+    assert data.day == 15
 
 
 def test_load_list() -> None:

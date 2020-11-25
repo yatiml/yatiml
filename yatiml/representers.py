@@ -1,5 +1,6 @@
 import inspect
 import logging
+import pathlib
 from typing import Any, cast
 from typing_extensions import TYPE_CHECKING, Type
 
@@ -201,4 +202,30 @@ class UserStringRepresenter:
             represented = snode.yaml_node
 
         logger.debug('End representing {}'.format(data))
+        return represented
+
+
+class PathRepresenter:
+    """A yaml Representer class for pathlib.Path.
+
+    For ruamel.yaml to dump a class correctly, it needs a representer
+    function for that class. YAtiML provides this representer for
+    pathlib.Path objects.
+    """
+
+    def __call__(self, dumper: 'Dumper', path: pathlib.Path) -> yaml.Node:
+        """Represents the class as a Node.
+
+        Args:
+            dumper: The dumper to use.
+            path: The Path object to dump.
+
+        Returns:
+            A yaml.Node representing the object.
+        """
+        logger.info('Representing {} of class pathlib.Path'.format(path))
+
+        represented = dumper.represent_str(str(path))   # type: yaml.Node
+
+        logger.debug('End representing {}'.format(path))
         return represented

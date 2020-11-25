@@ -49,8 +49,6 @@ def defaulted_attributes(class_: Type) -> Dict[str, Any]:
     else:
         user_defaults = {}
 
-    print('c: {}, ud: {}'.format(class_, user_defaults))
-
     result = dict()     # type: Dict[str, Any]
     for i, default in enumerate(defaults):
         arg_name = argspec.args[first_optional + i]
