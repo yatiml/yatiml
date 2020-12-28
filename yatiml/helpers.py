@@ -882,6 +882,14 @@ class Node:
 
     # Functions for sequences
 
+    def is_empty(self) -> bool:
+        """Returns whether a sequence or mapping is empty.
+
+        Use only if :meth:`is_sequence` or :meth:`is_mapping` returns
+        True.
+        """
+        return len(self.yaml_node.value) == 0
+
     def seq_items(self) -> List['Node']:
         """Returns the items in the sequence.
 
