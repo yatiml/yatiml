@@ -621,6 +621,265 @@ class Node:
                                      start_mark, end_mark)
         self.set_attribute(attribute, seq_node)
 
+    def index_attribute_to_map(
+            self,
+            attribute: str,
+            key_attribute: str,
+            value_attribute: Optional[str] = None
+            ) -> None:
+        """Converts an index attribute to a map.
+
+        It is often convenient to represent a collection of objects by
+        a dict mapping a name of each object to that object (let's call
+        that an *index*). If each object knows its own name, then the
+        name is stored twice, which is not nice to have to type and
+        keep synchronised in YAML.
+
+        In YAML, such an index is a mapping of mappings, where the key
+        of the outer mapping matches the value of one of the items in
+        the corresponding inner mapping. This function removes the
+        redundant key/value from the inner mapping. If that leaves only
+        a single key in the inner mapping, and it matches
+        ``value_attribute``, then the value corresponding to that key
+        becomes the value for the item in the outer mapping.
+
+        An example probably helps. Let's say we have a class
+        ``Employee`` and a ``Company`` which has employees:
+
+        .. code-block:: python
+
+          class Employee:
+              def __init__(self, name: str, role: str) -> None:
+                  ...
+
+          class Company:
+              def __init__(
+                      self, employees: Dict[str, Employee]
+                      ) -> None:
+                  ...
+
+          my_company = Company({
+              'Mary': Employee('Mary', 'Director'),
+              'Vishnu': Employee('Vishnu', 'Sales'),
+              'Susan': Employee('Susan', 'Engineering')})
+
+        By default, this will turn into the following YAML when saved:
+
+        .. code-block:: yaml
+
+          employees:
+            Mary:
+              name: Mary
+              role: Director
+            Vishnu:
+              name: Vishnu
+              role: Sales
+            Susan:
+              name: Susan
+              role: Engineering
+
+        If you call
+        ``node.index_attribute_to_map('employees', 'name')`` in
+        ``Company._yatiml_sweeten()``, then the output will be
+
+        .. code-block:: yaml
+
+          employees:
+            Mary:
+              role: Director
+            Vishnu:
+              role: Sales
+            Susan:
+              role: Engineering
+
+        If you call
+        ``node.index_attribute_to_map('employees', 'name', 'role')``
+        then it will turn into
+
+        .. code-block:: yaml
+
+          employees:
+            Mary: Director
+            Vishnu: Sales
+            Susan: Engineering
+
+        If the attribute does not exist, or is not a mapping of
+        mappings, this function will silently do nothing.
+
+        See :meth:`map_attribute_to_index` for the reverse.
+
+        With thanks to the makers of the Common Workflow Language for
+        the idea.
+
+        Args:
+            attribute: Name of the attribute whose value to modify.
+            key_attribute: Name of the attribute in each item to
+                    remove.
+            value_attribute: Name of the attribute in each item to use
+                    for the value in the new mapping, if only a key and
+                    value have been given.
+        """
+        if not self.has_attribute(attribute):
+            return
+
+        attr_node = self.get_attribute(attribute)
+        if not attr_node.is_mapping():
+            return
+
+        new_value = list()
+        for key_node, value_node in attr_node.yaml_node.value:
+            if not isinstance(value_node, yaml.MappingNode):
+                raise SeasoningError(
+                    ('Values must be mappings for attribute {}, but {} is not'
+                     ' a mapping.').format(attribute, value_node))
+
+            # filter out key atttribute
+            value_node.value = [
+                    (k, v) for k, v in value_node.value
+                    if k.value != key_attribute]
+
+            # replace mapping with value attribute, if it's the only one
+            if (
+                    len(value_node.value) == 1 and
+                    value_node.value[0][0].value == value_attribute):
+                new_value.append((key_node, value_node.value[0][1]))
+            else:
+                new_value.append((key_node, value_node))
+
+        attr_node.yaml_node.value = new_value
+
+    def map_attribute_to_index(
+            self,
+            attribute: str,
+            key_attribute: str,
+            value_attribute: Optional[str] = None) -> None:
+        """Converts a mapping attribute to an index .
+
+        It is often convenient to represent a collection of objects by
+        a dict mapping a name of each object to that object (let's call
+        that an *index*). If each object knows its own name, then the
+        name is stored twice, which is not nice to have to type and
+        keep synchronised in YAML.
+
+        In YAML, such an index is a mapping of mappings, where the key
+        of the outer mapping matches the value of one of the items in
+        the corresponding inner mapping.
+
+        This function enables a short-hand notation for the above,
+        where the name of the object is mentioned only in the key of
+        the mapping and not again in the values, and, if
+        ``value_attribute`` is specified, converting any entries with
+        a scalar value (rather than a mapping) to a mapping with
+        ''value_attribute'' as the key and the original value as the
+        value.
+
+        An example probably helps. Let's say we have a class
+        ``Employee`` and a ``Company`` which has employees:
+
+        .. code-block:: python
+
+          class Employee:
+              def __init__(
+                      self, name: str, role: str, hours: int = 40
+                      ) -> None:
+                  ...
+
+          class Company:
+              def __init__(
+                      self, employees: Dict[str, Employee]
+                      ) -> None:
+                  ...
+
+          my_company = Company({
+              'Mary': Employee('Mary', 'Director'),
+              'Vishnu': Employee('Vishnu', 'Sales'),
+              'Susan': Employee('Susan', 'Engineering')})
+
+        By default, to load this from YAML, you have to write:
+
+        .. code-block:: yaml
+
+          employees:
+            Mary:
+              name: Mary
+              role: Director
+            Vishnu:
+              name: Vishnu
+              role: Sales
+            Susan:
+              name: Susan
+              role: Engineering
+
+        If you call
+        ``node.map_attribute_to_index('employees', 'name')`` in
+        ``Company._yatiml_savorize()``, then the following will also
+        work:
+
+        .. code-block:: yaml
+
+          employees:
+            Mary:
+              role: Director
+            Vishnu:
+              role: Sales
+            Susan:
+              role: Engineering
+
+        And if you call
+        ``node.map_attribute_to_index('employees', 'name', 'role')``
+        then you can also write:
+
+        .. code-block:: yaml
+
+          employees:
+            Mary: Director
+            Vishnu: Sales
+            Susan: Engineering
+
+        If the attribute does not exist, or is not a mapping of
+        mappings, this function will silently do nothing.
+
+        See :meth:`index_attribute_to_map` for the reverse.
+
+        With thanks to the makers of the Common Workflow Language for
+        the idea.
+
+        Args:
+            attribute: Name of the attribute whose value to modify.
+            key_attribute: Name of the attribute in each item to
+                    add, with the value of the key.
+            value_attribute: Name of the attribute in each item to use
+                    for the value in the new mapping, if only a key and
+                    value have been given.
+        """
+        if not self.has_attribute(attribute):
+            return
+
+        attr_node = self.get_attribute(attribute)
+        if not attr_node.is_mapping():
+            return
+
+        new_value = list()
+        for key_node, value_node in attr_node.yaml_node.value:
+            if not isinstance(value_node, yaml.MappingNode):
+                if value_attribute is not None:
+                    new_key = yaml.ScalarNode(
+                            'tag:yaml.org,2002:str', value_attribute)
+                    new_mapping = yaml.MappingNode(
+                            'tag:yaml.org,2002:map', [(new_key, value_node)],
+                            value_node.start_mark, value_node.end_mark)
+            else:
+                new_mapping = value_node
+
+            if isinstance(new_mapping, yaml.MappingNode):
+                key_key = yaml.ScalarNode(
+                        'tag:yaml.org,2002:str', key_attribute)
+                new_mapping.value.append((key_key, key_node))
+
+            new_value.append((key_node, new_mapping))
+
+        attr_node.yaml_node.value = new_value
+
     # Functions for sequences
 
     def seq_items(self) -> List['Node']:

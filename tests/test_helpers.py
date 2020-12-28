@@ -212,6 +212,96 @@ def test_map_attribute_to_seq(class_node: yatiml.Node) -> None:
             (first_item_id == 'item2' and second_item_id == 'item1'))
 
 
+def test_index_attribute_to_map1(class_node: yatiml.Node) -> None:
+    class_node.index_attribute_to_map('index1', 'item_id')
+
+    assert class_node.has_attribute('index1')
+    new_mapping = class_node.get_attribute('index1')
+    assert new_mapping.is_mapping()
+
+    assert new_mapping.has_attribute('item1')
+    item1_mapping = new_mapping.get_attribute('item1')
+    assert item1_mapping.is_mapping()
+    assert not item1_mapping.has_attribute('item_id')
+    assert item1_mapping.has_attribute('price')
+
+    assert new_mapping.has_attribute('item2')
+    item2_mapping = new_mapping.get_attribute('item2')
+    assert item2_mapping.is_mapping()
+    assert not item2_mapping.has_attribute('item_id')
+    assert item2_mapping.has_attribute('price')
+
+    assert new_mapping.has_attribute('item3')
+    item3_mapping = new_mapping.get_attribute('item3')
+    assert item3_mapping.is_mapping()
+    assert not item3_mapping.has_attribute('item_id')
+    assert item3_mapping.has_attribute('price')
+    assert item3_mapping.has_attribute('on_sale')
+
+    # check that it fails silently if the attribute is missing or not a mapping
+    class_node.index_attribute_to_map('non_existent_attribute', 'item_id')
+    class_node.index_attribute_to_map('attr1', 'item_id')
+
+
+def test_index_attribute_to_map2(class_node: yatiml.Node) -> None:
+    class_node.index_attribute_to_map('index1', 'item_id', 'price')
+
+    assert class_node.has_attribute('index1')
+    new_mapping = class_node.get_attribute('index1')
+    assert new_mapping.is_mapping()
+
+    assert new_mapping.has_attribute('item1')
+    item1 = new_mapping.get_attribute('item1')
+    print(item1.yaml_node)
+    assert item1.is_scalar(float)
+    assert item1.get_value() == 100.0
+
+    assert new_mapping.has_attribute('item2')
+    item2 = new_mapping.get_attribute('item2')
+    assert item2.is_scalar(float)
+    assert item2.get_value() == 200.0
+
+    assert new_mapping.has_attribute('item3')
+    item3_mapping = new_mapping.get_attribute('item3')
+    assert item3_mapping.is_mapping()
+    assert not item3_mapping.has_attribute('item_id')
+    assert item3_mapping.has_attribute('price')
+    assert item3_mapping.has_attribute('on_sale')
+
+
+def test_map_to_index_attribute(class_node: yatiml.Node) -> None:
+    class_node.map_attribute_to_index('dict1', 'item_id', 'price')
+
+    assert class_node.has_attribute_type('dict1', dict)
+    attr_node = class_node.get_attribute('dict1')
+
+    assert attr_node.is_mapping()
+
+    assert attr_node.has_attribute('item1')
+    item1_node = attr_node.get_attribute('item1')
+    assert len(item1_node.yaml_node.value) == 2
+    assert item1_node.has_attribute('item_id')
+    assert item1_node.get_attribute('item_id').get_value() == 'item1'
+    assert item1_node.has_attribute('price')
+    assert item1_node.get_attribute('price').get_value() == 100.0
+
+    assert attr_node.has_attribute('item2')
+    item2_node = attr_node.get_attribute('item2')
+    assert len(item2_node.yaml_node.value) == 2
+    assert item2_node.has_attribute('item_id')
+    assert item2_node.get_attribute('item_id').get_value() == 'item2'
+    assert item2_node.has_attribute('price')
+    assert item2_node.get_attribute('price').get_value() == 200.0
+
+    assert attr_node.has_attribute('item3')
+    item3_node = attr_node.get_attribute('item3')
+    assert len(item3_node.yaml_node.value) == 2
+    assert item3_node.has_attribute('item_id')
+    assert item3_node.get_attribute('item_id').get_value() == 'item3'
+    assert item3_node.has_attribute('price')
+    assert item3_node.get_attribute('price').get_value() == 150.0
+
+
 def test_unders_to_dashes_in_keys(class_node: yatiml.Node) -> None:
     assert class_node.has_attribute('undered_attr')
     assert class_node.has_attribute('attr1')
