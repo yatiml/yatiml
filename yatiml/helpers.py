@@ -864,7 +864,8 @@ class Node:
             if not isinstance(value_node, yaml.MappingNode):
                 if value_attribute is not None:
                     new_key = yaml.ScalarNode(
-                            'tag:yaml.org,2002:str', value_attribute)
+                            'tag:yaml.org,2002:str', value_attribute,
+                            value_node.start_mark, value_node.end_mark)
                     new_mapping = yaml.MappingNode(
                             'tag:yaml.org,2002:map', [(new_key, value_node)],
                             value_node.start_mark, value_node.end_mark)
@@ -873,7 +874,8 @@ class Node:
 
             if isinstance(new_mapping, yaml.MappingNode):
                 key_key = yaml.ScalarNode(
-                        'tag:yaml.org,2002:str', key_attribute)
+                        'tag:yaml.org,2002:str', key_attribute,
+                        key_node.start_mark, key_node.end_mark)
                 new_mapping.value.append((key_key, key_node))
 
             new_value.append((key_node, new_mapping))

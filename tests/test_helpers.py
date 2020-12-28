@@ -269,7 +269,7 @@ def test_index_attribute_to_map2(class_node: yatiml.Node) -> None:
     assert item3_mapping.has_attribute('on_sale')
 
 
-def test_map_to_index_attribute(class_node: yatiml.Node) -> None:
+def test_map_attribute_to_index(class_node: yatiml.Node) -> None:
     class_node.map_attribute_to_index('dict1', 'item_id', 'price')
 
     assert class_node.has_attribute_type('dict1', dict)
