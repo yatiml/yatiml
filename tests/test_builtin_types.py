@@ -190,6 +190,13 @@ def test_dump_str() -> None:
     assert text == 'test\n...\n'
 
 
+def test_dump_ordereddict() -> None:
+    dumps = yatiml.dumps_function()
+    data = collections.OrderedDict([('x', 1), ('y', 2)])
+    text = dumps(data)
+    assert text == 'x: 1\ny: 2\n'
+
+
 def test_dump_str_json() -> None:
     dumps = yatiml.dumps_json_function()
     text = dumps('test')

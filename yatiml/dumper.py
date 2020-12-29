@@ -1,4 +1,4 @@
-from collections import UserString
+from collections import OrderedDict, UserString
 import enum
 import json
 import logging
@@ -143,6 +143,10 @@ class Dumper(yaml.RoundTripDumper):
             elif cur_state == JsonDumperState.MAPPING_VALUE:
                 self._json_state[cur_level] = JsonDumperState.MAPPING_KEY
 
+    def represent_ordereddict(self, data: Any) -> Any:
+        # Override ruamel.yaml to produce a plain dict.
+        return self.represent_dict(data)
+
     def _do_endline(self) -> None:
         """Write EOL and subsequent indent if enabled."""
         if self.requested_indent is not None:
@@ -214,6 +218,8 @@ def dumps_function(*args: Type) -> Callable[[Any], str]:
     class UserDumper(Dumper):
         pass
 
+    UserDumper.add_representer(
+            OrderedDict, Dumper.represent_ordereddict)
     UserDumper.add_representer(PosixPath, PathRepresenter())
     UserDumper.add_representer(WindowsPath, PathRepresenter())
 
