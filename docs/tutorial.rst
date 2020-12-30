@@ -538,7 +538,7 @@ constraint in the ``__init__()`` method.
 
 In fact, the ``_yatiml_recognize()`` method here could be even simpler. In
 every place in our document where a Submission can occur (namely the root),
-only a Submission can occur. The Submission class does not have descendants,
+only a Submission can occur. The Submission class does not have ancestors,
 and it is never part of a Union. So there is never any doubt as to how to treat
 the mapping, and in fact, the following will also work:
 
@@ -563,6 +563,11 @@ However, since data models tend to evolve, it is usually a good idea to do a
 full check anyway, so that if this class ends up being used in a Union, or if
 you or someone else adds derived classes later, things will still work correctly
 and there won't be any unnecessary ambiguity errors for the users.
+
+Speaking of derived classes, note that while ``_yatiml_recognize()`` is
+inherited by derived classes like any other Python method, YAtiML will only use
+it for the class on which it is defined; derived classes will use automatic
+recognition unless they have their own ``_yatiml_recognize()``.
 
 Extra attributes
 ----------------

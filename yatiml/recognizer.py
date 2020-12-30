@@ -189,7 +189,7 @@ class Recognizer(IRecognizer):
         """
         logger.debug('Recognizing as a user-defined class')
         loc_str = '{}{}'.format(node.start_mark, os.linesep)
-        if hasattr(expected_type, '_yatiml_recognize'):
+        if '_yatiml_recognize' in expected_type.__dict__:
             try:
                 unode = UnknownNode(self, node)
                 expected_type._yatiml_recognize(unode)
