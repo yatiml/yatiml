@@ -102,7 +102,7 @@ class Loader(yaml.RoundTripLoader):
             if base_class in self._registered_classes.values():
                 node = self.__savorize(node, base_class)
 
-        if hasattr(expected_type, '_yatiml_savorize'):
+        if '_yatiml_savorize' in expected_type.__dict__:
             logger.debug('Calling {}._yatiml_savorize()'.format(
                 expected_type.__name__))
             cnode = Node(node)

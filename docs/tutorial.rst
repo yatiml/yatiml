@@ -567,7 +567,8 @@ and there won't be any unnecessary ambiguity errors for the users.
 Speaking of derived classes, note that while ``_yatiml_recognize()`` is
 inherited by derived classes like any other Python method, YAtiML will only use
 it for the class on which it is defined; derived classes will use automatic
-recognition unless they have their own ``_yatiml_recognize()``.
+recognition unless they have their own ``_yatiml_recognize()``. The same goes
+for ``_yatiml_savorize()`` and `` _yatiml_sweeten()``.
 
 Extra attributes
 ----------------
