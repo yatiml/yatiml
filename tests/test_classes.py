@@ -513,7 +513,7 @@ def test_enum_dict() -> None:
     assert data['y'] == Color2.ORANGE
 
 
-def test_user_string() -> None:
+def test_load_user_string() -> None:
     load = yatiml.load_function(ConstrainedString)
     data = load('abcd\n')
     assert isinstance(data, ConstrainedString)
@@ -533,6 +533,27 @@ def test_dump_user_string_json() -> None:
     dumps = yatiml.dumps_json_function(ConstrainedString)
     text = dumps(ConstrainedString('abc'))
     assert text == '"abc"'
+
+
+def test_load_user_string_key() -> None:
+    load = yatiml.load_function(
+            Dict[ConstrainedString, int], ConstrainedString)
+    data = load('abcd: 10\n')
+    assert isinstance(data, dict)
+    assert len(data) == 1
+    assert isinstance(list(data.keys())[0], ConstrainedString)
+    assert ConstrainedString('abcd') in data
+    assert data[ConstrainedString('abcd')] == 10
+
+    with pytest.raises(ValueError):
+        load('efgh: 4\n')
+
+
+def test_dump_user_string_key() -> None:
+    dumps = yatiml.dumps_function(ConstrainedString)
+    data = {ConstrainedString('abcd'): 10}
+    text = dumps(data)
+    assert text == 'abcd: 10\n'
 
 
 def test_parsed_class() -> None:

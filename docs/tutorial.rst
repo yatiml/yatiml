@@ -87,8 +87,8 @@ function that can do so. This call makes a function (!) called ``load`` which
 can load and check YAML files containing a dictionary with strings as keys and
 also strings as values. The ``Dict`` type (rather than a plain ``dict``, which
 won't let us specify the key and value types) and square brackets are standard
-Python notation for type annotations. Note that YAtiML does not accept anything
-other than ``str`` for the key type of a ``Dict``.
+Python notation for type annotations. Note that YAtiML only accepts strings for
+the key type of a ``Dict``, either ``str`` or a user defined one (see below).
 
 .. code-block:: python
 

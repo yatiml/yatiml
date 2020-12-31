@@ -1,4 +1,5 @@
 import enum
+from inspect import isclass
 import logging
 import os
 import pathlib
@@ -117,23 +118,37 @@ class Recognizer(IRecognizer):
             expected_type if it was recognized, [] otherwise.
         """
         logger.debug('Recognizing as a dict')
-        if not issubclass(generic_type_args(expected_type)[0], str):
+        key_type = generic_type_args(expected_type)[0]
+        if (
+                not isclass(key_type)
+                or not issubclass(key_type, (str, UserString))):
             raise RuntimeError(
                 'YAtiML only supports dicts with strings as keys')
         if not isinstance(node, yaml.MappingNode):
             message = '{}{}Expected a dict/mapping here'.format(
                 node.start_mark, os.linesep)
             return [], message
+
         value_type = generic_type_args(expected_type)[1]
-        for _, value in node.value:
-            recognized_value_types, message = self.recognize(value, value_type)
+        for key, value in node.value:
+            recognized_key_types, kmessage = self.recognize(key, key_type)
+            if len(recognized_key_types) == 0:
+                return [], kmessage
+            if len(recognized_key_types) > 1:
+                return [
+                    Dict[t, value_type]  # type: ignore
+                    for t in recognized_key_types
+                ], kmessage  # type: ignore
+
+            recognized_value_types, vmessage = self.recognize(
+                    value, value_type)
             if len(recognized_value_types) == 0:
-                return [], message
+                return [], vmessage
             if len(recognized_value_types) > 1:
                 return [
-                    Dict[str, t]  # type: ignore
+                    Dict[key_type, t]  # type: ignore
                     for t in recognized_value_types
-                ], message  # type: ignore
+                ], vmessage  # type: ignore
 
         return [expected_type], ''
 

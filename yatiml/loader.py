@@ -161,10 +161,12 @@ class Loader(yaml.RoundTripLoader):
                 raise RecognitionError('{}{}Expected a {} here'.format(
                     node.start_mark, os.linesep,
                     type_to_desc(expected_type)))
-            node.value = [
-                    (key, self.__process_node(
+            node.value = [(
+                    self.__process_node(
+                        key_node, generic_type_args(recognized_type)[0]),
+                    self.__process_node(
                         value_node, generic_type_args(recognized_type)[1]))
-                    for key, value_node in node.value]
+                    for key_node, value_node in node.value]
 
         elif recognized_type in self._registered_classes.values():
             if (not issubclass(recognized_type, enum.Enum)
