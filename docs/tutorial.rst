@@ -410,6 +410,18 @@ you spell the town using only lowercase letters, you'll get:
 Note that you can't make a TitleCaseString object containing 'piedmont' from
 Python either, so the object model and the YAML format are consistent.
 
+Python's UserString class tries very hard to look like a string by overloading
+various special methods. Most of the time that's fine, but sometimes you have a
+class that's really not much like a string on the Python side, but still should
+be written to YAML as a string. In this case, you can add :class:`yatiml.String`
+as a base class. YAtiML will then expect a string on the YAML side, call
+``__init__`` with that string as the sole argument, and when dumping use
+``str(obj)`` to obtain the string representation to write to the YAML file
+(the result is then passed to ``_yatiml_sweeten()`` if you have it, so you can
+still modify it if desired). Like classes derived from ``str`` and
+``UserString``, such classes can be used as keys for dictionaries, but be sure
+to implement ``__hash__()`` and ``__eq__()`` to make that work on the Python
+side.
 
 Seasoning your YAML
 -------------------
@@ -637,5 +649,5 @@ Further reading
 You've reached the end of this tutorial, which means that you have seen all the
 major features that YAtiML has. If you haven't already started, now is the time
 to start making your awn YAML-based file format. You may want to have a look at
-the :doc:`API documentation<apidocs/yatiml>`, and if you get stuck, there is the
+the :doc:`API documentation<api>`, and if you get stuck, there is the
 :doc:`problem_solving` section to help you out.

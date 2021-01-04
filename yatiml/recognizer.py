@@ -3,7 +3,6 @@ from inspect import isclass
 import logging
 import os
 import pathlib
-from collections import UserString
 from datetime import date
 from textwrap import indent
 from typing import Dict, List
@@ -16,8 +15,10 @@ from yatiml.helpers import Node, UnknownNode
 from yatiml.introspection import class_subobjects
 from yatiml.irecognizer import IRecognizer, RecResult
 from yatiml.util import (
-        generic_type_args, is_generic_mapping, is_generic_sequence,
-        is_generic_union, scalar_type_to_tag, type_to_desc, bool_union_fix)
+        bool_union_fix, generic_type_args, is_generic_mapping,
+        is_generic_sequence, is_generic_union, is_string_like,
+        scalar_type_to_tag, type_to_desc)
+
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +122,7 @@ class Recognizer(IRecognizer):
         key_type = generic_type_args(expected_type)[0]
         if (
                 not isclass(key_type)
-                or not issubclass(key_type, (str, UserString))):
+                or not is_string_like(key_type)):
             raise RuntimeError(
                 'YAtiML only supports dicts with strings as keys')
         if not isinstance(node, yaml.MappingNode):
@@ -226,8 +227,7 @@ class Recognizer(IRecognizer):
                     message = 'Expected an enum value from {}\n{}'.format(
                         expected_type.__class__, loc_str)
                     return [], message
-            elif (issubclass(expected_type, UserString)
-                  or issubclass(expected_type, str)):
+            elif is_string_like(expected_type):
                 if (not isinstance(node, yaml.ScalarNode)
                         or node.tag != 'tag:yaml.org,2002:str'):
                     message = 'Expected a string matching {}\n{}'.format(

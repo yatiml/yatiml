@@ -1,4 +1,4 @@
-from collections import OrderedDict, UserString
+from collections import OrderedDict
 import enum
 import json
 import logging
@@ -13,6 +13,8 @@ from ruamel.yaml.events import (
 
 from yatiml.representers import (EnumRepresenter, Representer,
                                  PathRepresenter, UserStringRepresenter)
+from yatiml.util import is_string_like
+
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +174,7 @@ def add_to_dumper(dumper: Type, classes: List[Type]) -> None:
     for class_ in classes:
         if issubclass(class_, enum.Enum):
             dumper.add_representer(class_, EnumRepresenter(class_))
-        elif issubclass(class_, str) or issubclass(class_, UserString):
+        elif is_string_like(class_):
             dumper.add_representer(class_, UserStringRepresenter(class_))
         else:
             dumper.add_representer(class_, Representer(class_))

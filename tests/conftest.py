@@ -263,6 +263,25 @@ class ConstrainedString(UserString):
             raise ValueError('ConstrainedString must start with an a')
 
 
+class StringLike(yatiml.String):
+    def __init__(self, value: str) -> None:
+        self._value = value
+
+    def __str__(self) -> str:
+        # Needed for serialisation
+        return self._value
+
+    def __hash__(self) -> int:
+        # Needed to use this as a dict key
+        return hash(self._value)
+
+    def __eq__(self, other: Any) -> bool:
+        # Needed to use this as a dict key
+        if not isinstance(other, StringLike):
+            return False
+        return self._value == other._value
+
+
 class Postcode:
     def __init__(self, digits: int, letters: str) -> None:
         self.digits = digits

@@ -19,7 +19,7 @@ from yatiml.dumper import (
         Dumper, add_to_dumper, dump_json_function, dumps_json_function,
         dump_function, dumps_function)
 from yatiml.helpers import Node, UnknownNode
-from yatiml.util import bool_union_fix
+from yatiml.util import bool_union_fix, String
 
 import logging
 
@@ -40,6 +40,6 @@ or for even more::
 
 __all__ = [
     'logger', 'RecognitionError', 'SeasoningError', 'Node', 'UnknownNode',
-    'Loader', 'add_to_loader', 'set_document_type', 'load_function', 'Dumper',
-    'add_to_dumper', 'dump_json_function', 'dumps_json_function',
+    'Loader', 'String', 'add_to_loader', 'set_document_type', 'load_function',
+    'Dumper', 'add_to_dumper', 'dump_json_function', 'dumps_json_function',
     'dump_function', 'dumps_function', 'bool_union_fix']
