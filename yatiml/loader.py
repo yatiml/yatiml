@@ -26,6 +26,12 @@ class Loader(yaml.RoundTripLoader):
 
     Derive your own Loader class from this one, then add classes to it
     using :func:`add_to_loader`.
+
+    .. warning::
+
+        This class is **deprecated**, and will be removed in a
+        future version. You should use :meth:`load_function` or
+        :meth:`load_function` instead.
     """
     _registered_classes = None      # type: ClassVar[Dict[str, Type]]
     document_type = type(None)      # type: ClassVar[Type]
@@ -198,6 +204,11 @@ def set_document_type(loader_cls: Type, type_: Type) -> None:
     Args:
         loader_cls: The loader class to set the document type for.
         type_: The type to loader should process the document into.
+
+    .. warning::
+
+        This function is **deprecated**, and will be removed in a
+        future version. You should use :meth:`load_function` instead.
     """
     loader_cls.document_type = type_
 
@@ -218,6 +229,11 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
         loader_cls: The loader to register the classes with.
         classes: The class(es) to register, a plain Python class or a \
                 list of them.
+
+    .. warning::
+
+        This function is **deprecated**, and will be removed in a
+        future version. You should use :meth:`load_function` instead.
     """
     if not isinstance(classes, list):
         classes = [classes]  # type: ignore

@@ -32,8 +32,14 @@ class Dumper(yaml.RoundTripDumper):
     """The YAtiML Dumper class.
 
     Derive your own Dumper class from this one, then add classes to it
-    using add_to_dumper(). Set ``output_format = "json"`` to output
-    JSON.
+    using :meth:`add_to_dumper`. Set ``output_format = "json"`` to
+    output JSON.
+
+    .. warning::
+
+        This class is **deprecated**, and will be removed in a future
+        version. You should use :meth:`dump_function` or
+        :meth:`dumps_function` instead.
     """
     output_format = 'yaml'
 
@@ -169,6 +175,12 @@ def add_to_dumper(dumper: Type, classes: List[Type]) -> None:
     Args:
         dumper: Your dumper class(!), derived from yatiml.Dumper
         classes: One or more classes to add.
+
+    .. warning::
+
+        This function is **deprecated**, and will be removed in a
+        future version. You should use :meth:`dump_function` or
+        :meth:`dumps_function` instead.
     """
     if not isinstance(classes, list):
         classes = [classes]  # type: ignore
