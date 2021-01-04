@@ -25,6 +25,7 @@ Using YAtiML
 .. toctree::
    :maxdepth: 2
 
+   why
    installation
    basic_tutorial
    advanced_features

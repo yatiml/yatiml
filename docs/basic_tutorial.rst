@@ -1,35 +1,10 @@
 Basic Tutorial
 ==============
 
-Why YAtiML?
------------
-
-YAML-based file formats can be very handy, as YAML is easy to write by humans,
-and parsing support for it is widely available. Just read your YAML file into a
-document structure (a tree of nested dicts and lists), and manipulate that in
-your code.
-
-While this works fine for simple file formats, it does not scale very well to
-more complex file formats like Docker Compose-files, the Common Workflow
-Language (CWL) or the Multiscale Computing Language (yMCL). Manual
-error-checking is lots of work and error-prone, defaults are not set
-automatically (which is especially tricky if you have multiple nested optional
-objects), and the file format often ends up somewhat underspecified.
-
-Furthermore, a small collection of nested dicts and lists may work fine, but for
-more complex file formats, this becomes unwieldy and a set of objects is a
-better choice. Although it is not often used this way, YAML is actually a fully
-fledged object-to-text serialisation protocol. The Python yaml and ruamel.yaml
-libraries will actually construct objects for you, but the class names need to
-be put in the YAML file for that to work, which makes those files harder to
-read and write for humans, and may be a security issue.
-
-YAtiML is a helper library that helps address these issues. With YAtiML, you
-have easy-to-read YAML for the user, and easy-to-use objects for the programmer,
-with validation and automatic type recognition in between. This tutorial shows
-how to use YAtiML by example. You can find the example programs shown below in
-the ``docs/examples/`` directory in the repository.
-
+With YAtiML, you have easy-to-read YAML for the user, and easy-to-use objects
+for the programmer, with validation and automatic type recognition in between.
+This tutorial shows how to use YAtiML by example. You can find the example
+programs shown below in the ``docs/examples/`` directory in the repository.
 
 A first example
 ---------------
