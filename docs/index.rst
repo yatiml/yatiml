@@ -29,11 +29,7 @@ Using YAtiML
    tutorial
    recipes
    problem_solving
-
-.. toctree::
-  :maxdepth: 1
-
-   API reference <api.rst>
+   api
 
 
 Development
@@ -43,7 +39,6 @@ Development
   :maxdepth: 3
 
   development
-  Source code documentation <apidocs/yatiml.rst>
 
 
 Indices and tables

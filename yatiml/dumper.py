@@ -31,8 +31,9 @@ class JsonDumperState(enum.Enum):
 class Dumper(yaml.RoundTripDumper):
     """The YAtiML Dumper class.
 
-    Derive your own Dumper class from this one, then add classes to it \
-    using add_to_dumper(). Set output_format = "json" to output JSON.
+    Derive your own Dumper class from this one, then add classes to it
+    using add_to_dumper(). Set ``output_format = "json"`` to output
+    JSON.
     """
     output_format = 'yaml'
 
@@ -186,7 +187,7 @@ def dumps_function(*args: Type) -> Callable[[Any], str]:
     This function returns a callable object which takes an object
     and returns a string containing the YAML serialisation of that
     object. The type of the object, and any other custom types
-    needed, must have been passed to dumps_function().
+    needed, must have been passed to :meth:`dumps_function`.
 
     Note that only custom classes need to be passed, the built-in
     types are, well, built in.
@@ -204,11 +205,12 @@ def dumps_function(*args: Type) -> Callable[[Any], str]:
           dumps_config = yatiml.dumps_function(Config, Setting)
           yaml_text = dumps_config(my_config)
 
-        Here, Config is the top-level class, and Setting is
-        another class that is used by Config somewhere. Note that any
-        object can be passed to the resulting dumps function, as long
-        as it is of a built-in type or its type and any types needed
-        to represent it have been passed to dumps_function().
+        Here, ``Config`` is the top-level class, and ``Setting`` is
+        another class that is used by ``Config`` somewhere. Note that
+        any object can be passed to the resulting dumps function, as
+        long as it is of a built-in type or its type and any types
+        needed to represent it have been passed to
+        :meth:`dumps_function`.
 
     Args:
         *args: Any custom types needed.
@@ -254,7 +256,8 @@ def dump_function(
     This function returns a callable object which takes an object
     and a stream, Path or file name, and writes the YAML serialisation
     of that object to the target. The type of the object, and any other
-    custom types needed, must have been passed to dump_function().
+    custom types needed, must have been passed to
+    :meth:`dump_function`.
 
     Note that only custom classes should be passed, the built-in
     types are, well, built in.
@@ -274,11 +277,11 @@ def dump_function(
           dump_config = yatiml.dump_function(Config, Setting)
           dump_config(my_config, 'config.yaml')
 
-        Here, Config is the top-level class, and Setting is
-        another class that is used by Config somewhere. Note that any
-        object can be passed to the resulting dump function, as long
+        Here, ``Config`` is the top-level class, and ``Setting`` is
+        another class that is used by ``Config`` somewhere. Note that
+        any object can be passed to the resulting dump function, as long
         as it is of a built-in type or its type and any types needed
-        to represent it have been passed to dump_function().
+        to represent it have been passed to :meth:`dump_function`.
 
     Args:
         *args: Any custom types needed.
@@ -331,14 +334,14 @@ def dumps_json_function(*args: Type) -> Callable[..., str]:
     This function returns a callable object which takes an object
     and returns a string containing the JSON serialisation of that
     object. The type of the object, and any other custom types
-    needed, must have been passed to dumps_json_function().
+    needed, must have been passed to :meth:`dumps_json_function`.
 
     By default, the produced JSON is in ASCII and in a compact format
     without newlines or spaces. To make it more readable, you can
-    pass an `indent` keyword argument to the returned function, which
+    pass an ``indent`` keyword argument to the returned function, which
     causes the output to be formatted with the given indent.
 
-    To output unicode characters as-is, pass `ensure_ascii=False` to
+    To output unicode characters as-is, pass ``ensure_ascii=False`` to
     the returned dumps function.
 
     Note that only custom classes need to be passed, the built-in
@@ -364,11 +367,12 @@ def dumps_json_function(*args: Type) -> Callable[..., str]:
           dumps_config_to_json = yatiml.dumps_json_function(Config, Setting)
           json_text = dumps_config_to_json(my_config)
 
-        Here, Config is the top-level class, and Setting is
-        another class that is used by Config somewhere. Note that any
-        object can be passed to the resulting dumps function, as long
-        as it is of a built-in type or its type and any types needed
-        to represent it have been passed to dumps_json_function().
+        Here, ``Config`` is the top-level class, and ``Setting`` is
+        another class that is used by ``Config`` somewhere. Note that
+        any object can be passed to the resulting dumps function, as
+        long as it is of a built-in type or its type and any types
+        needed to represent it have been passed to
+        :meth:`dumps_json_function`.
 
     Args:
         *args: Any custom types needed.
@@ -417,14 +421,15 @@ def dump_json_function(
     This function returns a callable object which takes an object
     and a stream, Path or file name, and writes the JSON serialisation
     of that object to the target. The type of the object, and any other
-    custom types needed, must have been passed to dump_json_function().
+    custom types needed, must have been passed to
+    :meth:`dump_json_function`.
 
     By default, the produced JSON is in ASCII and in a compact format
     without newlines or spaces. To make it more readable, you can
-    pass an `indent` keyword argument to the returned function, which
+    pass an ``indent`` keyword argument to the returned function, which
     causes the output to be formatted with the given indent.
 
-    To output unicode characters as-is, pass `ensure_ascii=False` to
+    To output unicode characters as-is, pass ``ensure_ascii=False`` to
     the returned dumps function.
 
     Note that only custom classes need to be passed, the built-in
@@ -439,7 +444,7 @@ def dump_json_function(
               dump_json({'x': 1}, f)
           # will write '{"x": 1}' to test.json
 
-          dump_json({'x': 1}, 'test.json')
+          dump_json({'x': 1}, 'test.json', indent=2)
           # will write the same, but nicely formatted
 
         .. code-block:: python
@@ -448,11 +453,12 @@ def dump_json_function(
           dump_config_as_json = yatiml.dump_function(Config, Setting)
           dump_config_as_json(my_config, 'config.json', indent=2)
 
-        Here, Config is the top-level class, and Setting is
-        another class that is used by Config somewhere. Note that any
-        object can be passed to the resulting dump function, as long
-        as it is of a built-in type or its type and any types needed
-        to represent it have been passed to dump_json_function().
+        Here, ``Config`` is the top-level class, and ``Setting`` is
+        another class that is used by ``Config`` somewhere. Note that
+        any object can be passed to the resulting dump function, as
+        long as it is of a built-in type or its type and any types
+        needed to represent it have been passed to
+        :meth:`dump_json_function`.
 
     Args:
         *args: Any custom types needed.

@@ -79,49 +79,11 @@ pygments_style = 'sphinx'
 todo_include_todos = False
 
 
-# -- Run apidoc plug-in manually, as readthedocs doesn't support it -------
-# See https://github.com/rtfd/readthedocs.org/issues/1139
-def run_apidoc(_):
-    here = os.path.dirname(__file__)
-    out = os.path.abspath(os.path.join(here, 'apidocs'))
-    src = os.path.abspath(os.path.join(here, '..', 'yatiml'))
-
-    ignore_paths = []
-
-    argv = [
-        "-f",
-        "-T",
-        "-e",
-        "-M",
-        "-o", out,
-        src
-    ] + ignore_paths
-
-    try:
-        # Sphinx 1.7+
-        from sphinx.ext import apidoc
-        apidoc.main(argv)
-    except ImportError:
-        # Sphinx 1.6 (and earlier)
-        from sphinx import apidoc
-        argv.insert(0, apidoc.__file__)
-        apidoc.main(argv)
-
-
-# Skip the hooks for ruamel.yaml in our Loader class
-# Those are protected, not public, and not part of
-# the public API, so they should not be documented as
-# such.
-def skip_loader_hooks(app, what, name, obj, skip, options):
-    if name == 'get_node' or name == 'get_single_node':
-        return True
-    return skip
-
-
-def setup(app):
-    app.connect('builder-inited', run_apidoc)
-    app.connect('autodoc-skip-member', skip_loader_hooks)
-
+# autodoc configuration
+autodoc_default_options = {
+        'members': True,
+        'member-order': 'bysource',
+        'special-members': '__init__'}
 
 # -- Options for HTML output ----------------------------------------------
 

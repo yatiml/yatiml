@@ -649,5 +649,5 @@ Further reading
 You've reached the end of this tutorial, which means that you have seen all the
 major features that YAtiML has. If you haven't already started, now is the time
 to start making your awn YAML-based file format. You may want to have a look at
-the :doc:`API documentation<api>`, and if you get stuck, there is the
-:doc:`problem_solving` section to help you out.
+the :doc:`api`, and if you get stuck, there is the :doc:`problem_solving`
+section to help you out.

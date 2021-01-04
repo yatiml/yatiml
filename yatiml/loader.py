@@ -22,10 +22,16 @@ logger = logging.getLogger(__name__)
 
 
 class Loader(yaml.RoundTripLoader):
+    """The YAtiML Loader class.
+
+    Derive your own Loader class from this one, then add classes to it
+    using :func:`add_to_loader`.
+    """
     _registered_classes = None      # type: ClassVar[Dict[str, Type]]
     document_type = type(None)      # type: ClassVar[Type]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Create a Loader."""
         super().__init__(*args, **kwargs)
         self.__recognizer = Recognizer(self._registered_classes)
 
@@ -239,7 +245,7 @@ def load_function(
     """Create a load function for the given type.
 
     This function returns a callable object which takes an input
-    (`str` with YAML input, `pathlib.Path`, or an open stream) and
+    (``str`` with YAML input, ``pathlib.Path``, or an open stream) and
     tries to load an object of the type given as the first argument.
     Any user-defined classes needed by the result must be passed as
     the remaining arguments.
@@ -277,12 +283,14 @@ def load_function(
           with open('config.yaml', 'r') as f:
               my_config = load_config(f)
 
-        Here, Config is the top-level class, and Setting is
-        another class that is used by Config somewhere.
+        Here, ``Config`` is the top-level class, and ``Setting`` is
+        another class that is used by ``Config`` somewhere.
 
-        # Needs an ignore, on each line if split over two lines
-        load_int_or_str = yatiml.load_function(     # type: ignore
-                Union[int, str])                    # type: ignore
+        .. code-block:: python
+
+          # Needs an ignore, on each line if split over two lines
+          load_int_or_str = yatiml.load_function(     # type: ignore
+                  Union[int, str])                    # type: ignore
 
     Args:
         result: The top level type, return type of the function.
