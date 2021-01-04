@@ -26,7 +26,8 @@ Using YAtiML
    :maxdepth: 2
 
    installation
-   tutorial
+   basic_tutorial
+   advanced_features
    recipes
    problem_solving
    api
