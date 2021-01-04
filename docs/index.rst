@@ -3,24 +3,39 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to YAtiML's documentation!
-==========================================================
+Welcome to YAtiML
+=================
 
-YAtiML is a small Python library that works with ruamel.yaml, adding functions
-for automatic type recognition to it. YAtiML is not a schema language like XSD
-and Relax-NG are for XML, or JSON Schema is for JSON. YAtiML is also not an
-Object/YAML mapper (YAML is already an object serialisation system, so you don't
-need an extra library for that). However, YAtiML does solve the same kind of
-problems, and more, so if you are looking for a schema language for YAML, YAtiML
-may actually be what you need.
+YAML-based file formats can be very handy, as YAML is easy to write by humans,
+and parsing support for it is widely available. Just read your YAML file into a
+document structure (a tree of nested dicts and lists), and manipulate that in
+your code.
 
-YAtiML supports Python 3.4 and later.
+As long as that YAML file contains exactly what you expect, that works fine.
+But if it contains a mistake, then you're likely to crash the program with a
+cryptic error message, or worse (especially if the YAML file was loaded from the
+Internet) it may do something unexpected.
 
-If you use YAtiML for scientific work, we ask that you cite it. We have provided
-a CITATION.cff file to help you do so quickly and easily.
+To avoid that, you can validate your YAML using various schema checkers. You
+write a description of what your YAML file must look like, then feed that to a
+library which checks the incoming file against the description. That gives you a
+better error message, but it's a lot of work.
 
-Using YAtiML
-============
+YAtiML takes a different approach. Instead of a schema, you write a Python
+class. You probably already know how to do that, so no need to learn anything.
+YAtiML then generates loading and dumping functions for you, which convert
+between YAML and Python objects. If needed, you can add some extra code to make
+the YAML look nicer or implement special features.
+
+YAtiML supports Python 3.5 and later.
+
+If you use YAtiML for scientific work, we ask that you cite it. You can
+`download a citation in various formats at the Research Software Directory
+<https://www.research-software.nl/software/yatiml>`_.
+
+
+Documentation Overview
+======================
 
 .. toctree::
    :maxdepth: 2
@@ -38,7 +53,7 @@ Development
 ===========
 
 .. toctree::
-  :maxdepth: 3
+  :maxdepth: 2
 
   development
 
