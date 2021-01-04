@@ -81,7 +81,7 @@ todo_include_todos = False
 
 # autodoc configuration
 autodoc_default_options = {
-        'members': True,
+        'members': None,
         'member-order': 'bysource',
         'special-members': '__init__'}
 
