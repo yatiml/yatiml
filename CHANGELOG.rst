@@ -5,6 +5,25 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+
+0.7.0
+*****
+
+Incompatible changes
+--------------------
+
+* Use seasoning functions only on the class they're defined on
+
+New functionality
+-----------------
+
+* New yatiml.String to mark string-serialisable classes
+* User-defined strings may be used as dictionary keys
+* Support for index mappings
+* Support for latest ruamel.yaml
+* Documentation improvements
+
+
 0.6.1
 *****
 
