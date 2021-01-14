@@ -7,7 +7,7 @@ Below, you will also find documentation for submodules. That is \
 developer documentation, you do not need it to use YAtiML.
 """
 
-__version__ = '0.6.2.dev'
+__version__ = '0.7.0'
 
 __author__ = 'Lourens Veen'
 __email__ = 'l.veen@esciencecenter.nl'
