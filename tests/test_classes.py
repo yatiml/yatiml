@@ -12,8 +12,8 @@ from .conftest import (BrokenPrivateAttributes, Circle, Color, Color2,
                        ComplexPrivateAttributes, ConstrainedString,
                        DashedAttribute, DictAttribute, Document1, Document2,
                        Document3, Document4, Ellipse, Extensible, Postcode,
-                       PrivateAttributes, Raises, Rectangle, Shape, SubA,
-                       SubA2, SubB, SubB2, Super, Super2, UnionAttribute,
+                       PrivateAttributes, Raises, Rectangle, Shape, StringLike,
+                       SubA, SubA2, SubB, SubB2, Super, Super2, UnionAttribute,
                        Universal, Vector2D)
 
 
@@ -513,7 +513,7 @@ def test_enum_dict() -> None:
     assert data['y'] == Color2.ORANGE
 
 
-def test_user_string() -> None:
+def test_load_user_string() -> None:
     load = yatiml.load_function(ConstrainedString)
     data = load('abcd\n')
     assert isinstance(data, ConstrainedString)
@@ -533,6 +533,65 @@ def test_dump_user_string_json() -> None:
     dumps = yatiml.dumps_json_function(ConstrainedString)
     text = dumps(ConstrainedString('abc'))
     assert text == '"abc"'
+
+
+def test_load_user_string_like() -> None:
+    load = yatiml.load_function(StringLike)
+    data = load('abcd\n')
+    assert isinstance(data, StringLike)
+    assert data._value == 'abcd'
+
+
+def test_dump_user_string_like() -> None:
+    dumps = yatiml.dumps_function(StringLike)
+    text = dumps(StringLike('abcd'))
+    assert text == 'abcd\n...\n'
+
+
+def test_dump_user_string_like_json() -> None:
+    dumps = yatiml.dumps_json_function(StringLike)
+    text = dumps(StringLike('abcd'))
+    assert text == '"abcd"'
+
+
+def test_load_user_string_key() -> None:
+    load = yatiml.load_function(
+            Dict[ConstrainedString, int], ConstrainedString)
+    data = load('abcd: 10\n')
+    assert isinstance(data, dict)
+    assert len(data) == 1
+    assert isinstance(list(data.keys())[0], ConstrainedString)
+    assert ConstrainedString('abcd') in data
+    assert data[ConstrainedString('abcd')] == 10
+
+    with pytest.raises(ValueError):
+        load('efgh: 4\n')
+
+
+def test_dump_user_string_key() -> None:
+    dumps = yatiml.dumps_function(ConstrainedString)
+    data = {ConstrainedString('abcd'): 10}
+    text = dumps(data)
+    assert text == 'abcd: 10\n'
+
+
+def test_load_string_like_key() -> None:
+    load = yatiml.load_function(Dict[StringLike, int], StringLike)
+    data = load('abcd: 10\nefgh: 20\n')
+    assert isinstance(data, dict)
+    assert len(data) == 2
+    assert isinstance(list(data.keys())[0], StringLike)
+    assert isinstance(list(data.keys())[1], StringLike)
+    assert StringLike('abcd') in data
+    assert data[StringLike('abcd')] == 10
+    assert data[StringLike('efgh')] == 20
+
+
+def test_dump_string_like_key() -> None:
+    dumps = yatiml.dumps_function(StringLike)
+    data = {StringLike('abcd'): 13}
+    text = dumps(data)
+    assert text == 'abcd: 13\n'
 
 
 def test_parsed_class() -> None:

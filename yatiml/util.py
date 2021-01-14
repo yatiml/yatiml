@@ -1,4 +1,4 @@
-from collections import abc
+from collections import abc, UserString
 from datetime import date
 import typing
 from typing import (
@@ -23,6 +23,25 @@ scalar_type_to_tag = {
     }
 
 ScalarType = Union[str, int, float, bool, None]
+
+
+class String:
+    """Tag for classes that should be serialised to YAML as a string.
+
+    If your class has this class as a base class, then YAtiML will:
+
+    - expect a string on the YAML side when recognising,
+    - call ``__init__`` with that string as the sole argument when loading,
+    - use ``str(obj)`` to obtain the string representation on dumping.
+
+    You can still override what's written to the YAML file by defining
+    ``_yatiml_sweeten()`` in the usual way.
+
+    Like classes derived from ``str`` and ``UserString``, classes tagged like
+    this can be used as keys for dictionaries. Be sure to implement
+    ``__hash__()`` and ``__eq__()`` to make that work on the Python side.
+    """
+    pass
 
 
 def is_generic_sequence(type_: Type) -> bool:
@@ -181,3 +200,15 @@ def type_to_desc(type_: Type) -> str:
                 type_to_desc(generic_type_args(type_)[1]))
 
     return type_.__name__
+
+
+def is_string_like(type_: Type) -> bool:
+    """Returns whether the type is string-like.
+
+    That means it takes a string as its only constructor argument, and
+    is allowed to be a key in dicts. See UserStringConstructor.
+
+    Args:
+        type_: The type to check.
+    """
+    return issubclass(type_, (str, UserString, String))

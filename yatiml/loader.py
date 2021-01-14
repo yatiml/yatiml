@@ -1,7 +1,6 @@
 import enum
 import logging
 import os
-from collections import UserString
 from pathlib import Path
 from typing import (
         Any, AnyStr, Callable, cast, Dict, IO, List, TypeVar, Union)  # noqa
@@ -17,16 +16,28 @@ from yatiml.introspection import class_subobjects
 from yatiml.recognizer import Recognizer
 from yatiml.util import (
         generic_type_args, is_generic_sequence, is_generic_mapping,
-        is_generic_union, scalar_type_to_tag, type_to_desc)
+        is_generic_union, is_string_like, scalar_type_to_tag, type_to_desc)
 
 logger = logging.getLogger(__name__)
 
 
 class Loader(yaml.RoundTripLoader):
+    """The YAtiML Loader class.
+
+    Derive your own Loader class from this one, then add classes to it
+    using :func:`add_to_loader`.
+
+    .. warning::
+
+        This class is **deprecated**, and will be removed in a
+        future version. You should use :meth:`load_function` or
+        :meth:`load_function` instead.
+    """
     _registered_classes = None      # type: ClassVar[Dict[str, Type]]
     document_type = type(None)      # type: ClassVar[Type]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Create a Loader."""
         super().__init__(*args, **kwargs)
         self.__recognizer = Recognizer(self._registered_classes)
 
@@ -102,7 +113,7 @@ class Loader(yaml.RoundTripLoader):
             if base_class in self._registered_classes.values():
                 node = self.__savorize(node, base_class)
 
-        if hasattr(expected_type, '_yatiml_savorize'):
+        if '_yatiml_savorize' in expected_type.__dict__:
             logger.debug('Calling {}._yatiml_savorize()'.format(
                 expected_type.__name__))
             cnode = Node(node)
@@ -161,15 +172,16 @@ class Loader(yaml.RoundTripLoader):
                 raise RecognitionError('{}{}Expected a {} here'.format(
                     node.start_mark, os.linesep,
                     type_to_desc(expected_type)))
-            node.value = [
-                    (key, self.__process_node(
+            node.value = [(
+                    self.__process_node(
+                        key_node, generic_type_args(recognized_type)[0]),
+                    self.__process_node(
                         value_node, generic_type_args(recognized_type)[1]))
-                    for key, value_node in node.value]
+                    for key_node, value_node in node.value]
 
         elif recognized_type in self._registered_classes.values():
             if (not issubclass(recognized_type, enum.Enum)
-                    and not issubclass(recognized_type, str)
-                    and not issubclass(recognized_type, UserString)):
+                    and not is_string_like(recognized_type)):
                 for attr_name, type_, _ in class_subobjects(recognized_type):
                     cnode = Node(node)
                     if cnode.has_attribute(attr_name):
@@ -192,6 +204,11 @@ def set_document_type(loader_cls: Type, type_: Type) -> None:
     Args:
         loader_cls: The loader class to set the document type for.
         type_: The type to loader should process the document into.
+
+    .. warning::
+
+        This function is **deprecated**, and will be removed in a
+        future version. You should use :meth:`load_function` instead.
     """
     loader_cls.document_type = type_
 
@@ -212,6 +229,11 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
         loader_cls: The loader to register the classes with.
         classes: The class(es) to register, a plain Python class or a \
                 list of them.
+
+    .. warning::
+
+        This function is **deprecated**, and will be removed in a
+        future version. You should use :meth:`load_function` instead.
     """
     if not isinstance(classes, list):
         classes = [classes]  # type: ignore
@@ -220,7 +242,7 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
         tag = '!{}'.format(class_.__name__)
         if issubclass(class_, enum.Enum):
             loader_cls.add_constructor(tag, EnumConstructor(class_))
-        elif issubclass(class_, str) or issubclass(class_, UserString):
+        elif is_string_like(class_):
             loader_cls.add_constructor(tag, UserStringConstructor(class_))
         else:
             loader_cls.add_constructor(tag, Constructor(class_))
@@ -239,7 +261,7 @@ def load_function(
     """Create a load function for the given type.
 
     This function returns a callable object which takes an input
-    (`str` with YAML input, `pathlib.Path`, or an open stream) and
+    (``str`` with YAML input, ``pathlib.Path``, or an open stream) and
     tries to load an object of the type given as the first argument.
     Any user-defined classes needed by the result must be passed as
     the remaining arguments.
@@ -277,12 +299,14 @@ def load_function(
           with open('config.yaml', 'r') as f:
               my_config = load_config(f)
 
-        Here, Config is the top-level class, and Setting is
-        another class that is used by Config somewhere.
+        Here, ``Config`` is the top-level class, and ``Setting`` is
+        another class that is used by ``Config`` somewhere.
 
-        # Needs an ignore, on each line if split over two lines
-        load_int_or_str = yatiml.load_function(     # type: ignore
-                Union[int, str])                    # type: ignore
+        .. code-block:: python
+
+          # Needs an ignore, on each line if split over two lines
+          load_int_or_str = yatiml.load_function(     # type: ignore
+                  Union[int, str])                    # type: ignore
 
     Args:
         result: The top level type, return type of the function.

@@ -98,7 +98,7 @@ class Representer:
                 logger.debug('Sweetening for class {}'.format(
                     self.class_.__name__))
                 self.__sweeten(dumper, base_class, node)
-        if hasattr(class_, '_yatiml_sweeten'):
+        if '_yatiml_sweeten' in class_.__dict__:
             class_._yatiml_sweeten(node)
             if not isinstance(node.yaml_node, yaml.Node):
                 raise RuntimeError(

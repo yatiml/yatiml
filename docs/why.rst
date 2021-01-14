@@ -1,10 +1,5 @@
-.. YAtiML documentation master file, created by
-   sphinx-quickstart on Thu Jun 21 11:07:11 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to YAtiML
-=================
+Why YAtiML?
+==============
 
 YAML-based file formats can be very handy, as YAML is easy to write by humans,
 and parsing support for it is widely available. Just read your YAML file into a
@@ -24,43 +19,16 @@ better error message, but it's a lot of work.
 YAtiML takes a different approach. Instead of a schema, you write a Python
 class. You probably already know how to do that, so no need to learn anything.
 YAtiML then generates loading and dumping functions for you, which convert
-between YAML and Python objects. If needed, you can add some extra code to make
-the YAML look nicer or implement special features.
+between YAML and Python objects. On loading, the input is checked to ensure that
+it matches the intended type, using standard Python type annotations on the
+class. If there is an error, a (very!) nice error message is produced. Default
+values, specified as usual in the ``__init__`` method, are applied
+automatically, saving you another big headache.
 
-YAtiML supports Python 3.5 and later.
-
-If you use YAtiML for scientific work, we ask that you cite it. You can
-`download a citation in various formats at the Research Software Directory
-<https://www.research-software.nl/software/yatiml>`_.
-
-
-Documentation Overview
-======================
-
-.. toctree::
-   :maxdepth: 2
-
-   why
-   installation
-   basic_tutorial
-   advanced_features
-   recipes
-   problem_solving
-   api
-
-
-Development
-===========
-
-.. toctree::
-  :maxdepth: 2
-
-  development
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+If you want to go further, and create a more complex YAML-based file format
+like Docker Compose-files or the Common Workflow Language, then YAtiML has you
+covered too. It lets you hook into the loading and dumping processes, modifying
+the formatting of the YAML file without affecting the Python side, which lets
+you implement all sorts of nice formatting features. YAtiML supports class
+hierarchies, enumerations, and extension points (parts of the YAML document
+where anything goes) as well.

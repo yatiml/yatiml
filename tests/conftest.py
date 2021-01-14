@@ -263,6 +263,25 @@ class ConstrainedString(UserString):
             raise ValueError('ConstrainedString must start with an a')
 
 
+class StringLike(yatiml.String):
+    def __init__(self, value: str) -> None:
+        self._value = value
+
+    def __str__(self) -> str:
+        # Needed for serialisation
+        return self._value
+
+    def __hash__(self) -> int:
+        # Needed to use this as a dict key
+        return hash(self._value)
+
+    def __eq__(self, other: Any) -> bool:
+        # Needed to use this as a dict key
+        if not isinstance(other, StringLike):
+            return False
+        return self._value == other._value
+
+
 class Postcode:
     def __init__(self, digits: int, letters: str) -> None:
         self.digits = digits
@@ -367,7 +386,59 @@ def yaml_map_node() -> yaml.Node:
 
 
 @pytest.fixture
-def yaml_node(yaml_seq_node: yaml.Node, yaml_map_node: yaml.Node) -> yaml.Node:
+def yaml_index_node() -> yaml.Node:
+    # A yaml.MappingNode representing a mapping of mappings indexed
+    # by item id
+    tag1 = 'tag:yaml.org,2002:map'
+    item1_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item_id')
+    item1_value1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item1')
+    item1_key2_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'price')
+    item1_value2_node = yaml.ScalarNode('tag:yaml.org,2002:float', '100.0')
+    value1 = [
+            (item1_key1_node, item1_value1_node),
+            (item1_key2_node, item1_value2_node)]
+
+    item1 = yaml.MappingNode(tag1, value1)
+    key1 = yaml.ScalarNode('tag:yaml.org,2002:str', 'item1')
+
+    tag2 = 'tag:yaml.org,2002:map'
+    item2_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item_id')
+    item2_value1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item2')
+    item2_key2_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'price')
+    item2_value2_node = yaml.ScalarNode('tag:yaml.org,2002:float', '200.0')
+    value2 = [
+            (item2_key1_node, item2_value1_node),
+            (item2_key2_node, item2_value2_node)]
+
+    item2 = yaml.MappingNode(tag2, value2)
+    key2 = yaml.ScalarNode('tag:yaml.org,2002:str', 'item2')
+
+    tag3 = 'tag:yaml.org,2002:map'
+    item3_key1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item_id')
+    item3_value1_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'item3')
+    item3_key2_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'price')
+    item3_value2_node = yaml.ScalarNode('tag:yaml.org,2002:float', '150.0')
+    item3_key3_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'on_sale')
+    item3_value3_node = yaml.ScalarNode('tag:yaml.org,2002:bool', 'true')
+    value3 = [
+            (item3_key1_node, item3_value1_node),
+            (item3_key2_node, item3_value2_node),
+            (item3_key3_node, item3_value3_node)]
+
+    item3 = yaml.MappingNode(tag3, value3)
+    key3 = yaml.ScalarNode('tag:yaml.org,2002:str', 'item3')
+
+    outer_map_value = [(key1, item1), (key2, item2), (key3, item3)]
+    outer_tag = 'tag:yaml.org,2002:map'
+    outer_map = yaml.MappingNode(outer_tag, outer_map_value)
+
+    return outer_map
+
+
+@pytest.fixture
+def yaml_node(
+        yaml_seq_node: yaml.Node, yaml_map_node: yaml.Node,
+        yaml_index_node: yaml.Node) -> yaml.Node:
     tag = 'tag:yaml.org,2002:map'
 
     attr1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'attr1')
@@ -378,6 +449,8 @@ def yaml_node(yaml_seq_node: yaml.Node, yaml_map_node: yaml.Node) -> yaml.Node:
 
     list1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'list1')
     dict1_key_node = yaml.ScalarNode('tag:yaml.org,2002:map', 'dict1')
+
+    index1_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'index1')
 
     dashed_key_node = yaml.ScalarNode('tag:yaml.org,2002:str', 'dashed-attr')
     dashed_value_node = yaml.ScalarNode('tag:yaml.org,2002:int', '13')
@@ -390,6 +463,7 @@ def yaml_node(yaml_seq_node: yaml.Node, yaml_map_node: yaml.Node) -> yaml.Node:
             (null_attr_key_node, null_attr_value_node),
             (list1_key_node, yaml_seq_node),
             (dict1_key_node, yaml_map_node),
+            (index1_key_node, yaml_index_node),
             (dashed_key_node, dashed_value_node),
             (undered_key_node, undered_value_node)
             ]
