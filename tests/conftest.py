@@ -2,6 +2,7 @@ import enum
 import math
 from collections import OrderedDict, UserString
 from pathlib import Path
+import sys
 from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Type
 
@@ -322,6 +323,15 @@ class Raises:
     def __init__(self, x: int) -> None:
         if x >= 10:
             raise RuntimeError('x must be less than 10')
+
+
+if sys.version_info >= (3, 7):
+    from dataclasses import dataclass
+
+    @dataclass
+    class DataClass:
+        attr1: str
+        attr2: int = 42
 
 
 @pytest.fixture

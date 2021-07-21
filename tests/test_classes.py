@@ -3,6 +3,7 @@
 
 """Tests for the yatiml module."""
 from collections import OrderedDict
+import sys
 from typing import Dict, List
 
 import pytest  # type: ignore
@@ -612,3 +613,22 @@ def test_dump_parsed_class_json() -> None:
     dumps = yatiml.dumps_json_function(Postcode)
     text = dumps(Postcode(1098, 'XG'))
     assert text == '"1098 XG"'
+
+
+if sys.version_info >= (3, 7):
+
+    from .conftest import DataClass
+
+    def test_load_data_class() -> None:
+        load = yatiml.load_function(DataClass)
+        data = load('attr1: test_value')
+        assert isinstance(data, DataClass)
+        assert data.attr1 == 'test_value'
+        assert data.attr2 == 42
+
+    def test_dump_data_class() -> None:
+        dumps = yatiml.dumps_function(DataClass)
+        text = dumps(DataClass('test'))
+        assert text == (
+                'attr1: test\n'
+                'attr2: 42\n')

@@ -198,6 +198,18 @@ may allow for objects of multiple types (using a ``Union``, or when specifying a
 base class that has multiple subclasses), in the object you get from reading a
 YAML file, each attribute has one specific type.
 
+Note that on Python 3.7 or later, you can also use
+`dataclasses <https://docs.python.org/3/library/dataclasses.html>`_, like this:
+
+.. literalinclude:: examples/data_classes.py
+  :caption: ``docs/examples/data_classes.py``
+  :language: python
+
+However, since you're not writing the ``__init__`` function yourself, checks for
+valid values like above are not possible in this case, so if you want those
+you'll have to do it with a normal class.
+
+
 Default values
 --------------
 
