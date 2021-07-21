@@ -49,9 +49,9 @@ setup(
         'sphinx-rtd-theme'
     ],
     tests_require=[
-        'coverage<5',
+        'coverage',
         'mypy',
-        'pytest>=3.5,<6.2',
+        'pytest>=3.5',
         'pytest-cov',
         'pycodestyle',
         'pytest-flake8',
