@@ -2,9 +2,9 @@ import os
 from typing import (  # noqa: F401
     Any,
     List,
+    NewType,
     Optional,
     Set,
-    TypeVar,
     Union,
     cast)
 from typing_extensions import Type
@@ -17,7 +17,7 @@ from yatiml.introspection import defaulted_attributes
 from yatiml.irecognizer import IRecognizer
 from yatiml.util import ScalarType, scalar_type_to_tag
 
-_Any = TypeVar('_Any')
+_Any = NewType('_Any', int)
 
 
 class Node:
