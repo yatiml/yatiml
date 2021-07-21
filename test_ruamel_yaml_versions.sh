@@ -22,27 +22,27 @@
 outfile=$(mktemp)
 
 for i in $(seq 71 1 100) ; do
-    pip install --upgrade ruamel.yaml==0.15.$i
+    pip install --upgrade "ruamel.yaml==0.15.$i"
     python setup.py test
     if (( $? != 0 )); then
-        echo "Version 0.15.$i: broken" >>${outfile}
+        echo "Version 0.15.$i: broken" >>"${outfile}"
         break
     else
-        echo "Version 0.15.$i: works" >>${outfile}
+        echo "Version 0.15.$i: works" >>"${outfile}"
     fi
 done
 
 for i in $(seq 0 1 10) ; do
-    pip install --upgrade ruamel.yaml==0.16.$i
+    pip install --upgrade "ruamel.yaml==0.16.$i"
     python setup.py test
     if (( $? != 0 )); then
-        echo "Version 0.16.$i: broken" >>${outfile}
+        echo "Version 0.16.$i: broken" >>"${outfile}"
         # break
     else
-        echo "Version 0.16.$i: works" >>${outfile}
+        echo "Version 0.16.$i: works" >>"${outfile}"
     fi
 done
 
-cat ${outfile}
-rm ${outfile}
+cat "${outfile}"
+rm "${outfile}"
 
