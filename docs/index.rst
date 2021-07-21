@@ -27,7 +27,7 @@ YAtiML then generates loading and dumping functions for you, which convert
 between YAML and Python objects. If needed, you can add some extra code to make
 the YAML look nicer or implement special features.
 
-YAtiML supports Python 3.5 and later.
+YAtiML supports Python 3.6 and later.
 
 If you use YAtiML for scientific work, we ask that you cite it. You can
 `download a citation in various formats at the Research Software Directory

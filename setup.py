@@ -55,9 +55,7 @@ setup(
         'pytest-cov',
         'pycodestyle',
         'pytest-flake8',
-        'pytest-mypy>=0.4.0',
-        # see https://github.com/python/importlib_metadata/issues/259
-        'importlib-metadata==2.1.0'
+        'pytest-mypy>=0.4.0'
     ],
     extras_require={
         'dev':  ['yapf', 'isort'],

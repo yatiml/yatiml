@@ -83,7 +83,7 @@ attributes will be written out in the order in which you've defined them, rather
 than in random order, which really improves the readability of the result
 (assuming that the order of your definition is logical, of course.)
 
-YAtiML supports Python 3.5 and later.
+YAtiML supports Python 3.6 and later.
 
 
 Documentation and Help
