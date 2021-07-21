@@ -11,7 +11,7 @@ jobs:
     - name: Run the test suite
       run: |
         cd $GITHUB_WORKSPACE
-        pip3 install pip setuptools wheel
+        pip3 install pip setuptools wheel ruamel.yaml==0.16.12
         python3 setup.py test
 
     - name: Upload coverage report to Codacy
