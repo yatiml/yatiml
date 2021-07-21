@@ -6,12 +6,12 @@
     :target: https://github.com/yatiml/yatiml/actions
     :alt: Build Status
 
-.. image:: https://api.codacy.com/project/badge/Grade/e9cf088f3f6d44cc82fd6aead08202e1
-    :target: https://www.codacy.com/app/LourensVeen/yatiml
+.. image:: https://app.codacy.com/project/badge/Grade/bca7a121d9c742d2905eae08a75676c3
+    :target: https://www.codacy.com/gh/yatiml/yatiml/dashboard
     :alt: Codacy Grade
 
-.. image:: https://api.codacy.com/project/badge/Coverage/e9cf088f3f6d44cc82fd6aead08202e1
-    :target: https://www.codacy.com/app/LourensVeen/yatiml
+.. image:: https://app.codacy.com/project/badge/Coverage/bca7a121d9c742d2905eae08a75676c3
+    :target: https://www.codacy.com/gh/yatiml/yatiml/dashboard
     :alt: Code Coverage
 
 .. image:: https://requires.io/github/yatiml/yatiml/requirements.svg?branch=develop
