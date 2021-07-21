@@ -163,6 +163,11 @@ class Dumper(yaml.RoundTripDumper):
             self.stream.write(' ' * self._cur_indent)
 
 
+Dumper.add_representer(OrderedDict, Dumper.represent_ordereddict)
+Dumper.add_representer(PosixPath, PathRepresenter())
+Dumper.add_representer(WindowsPath, PathRepresenter())
+
+
 # Python errors if we define classes as Union[List[Type], Type]
 # So List[Type] it is, and if the user ignores that and passes
 # a single class, it'll work anyway, with a little mypy override.
@@ -234,11 +239,6 @@ def dumps_function(*args: Type) -> Callable[[Any], str]:
     class UserDumper(Dumper):
         pass
 
-    UserDumper.add_representer(
-            OrderedDict, Dumper.represent_ordereddict)
-    UserDumper.add_representer(PosixPath, PathRepresenter())
-    UserDumper.add_representer(WindowsPath, PathRepresenter())
-
     add_to_dumper(UserDumper, list(args))
 
     class DumpsFunction:
@@ -304,9 +304,6 @@ def dump_function(
     """
     class UserDumper(Dumper):
         pass
-
-    UserDumper.add_representer(PosixPath, PathRepresenter())
-    UserDumper.add_representer(WindowsPath, PathRepresenter())
 
     add_to_dumper(UserDumper, list(args))
 
