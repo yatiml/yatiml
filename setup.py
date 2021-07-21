@@ -35,7 +35,7 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     install_requires=[
-        'ruamel.yaml>=0.15.71,<=0.16.12',
+        'ruamel.yaml>=0.15.71,<0.17',
         'typing>=3.6; python_version<"3.5"',
         'typing_extensions'
     ],
