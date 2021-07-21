@@ -51,7 +51,7 @@ setup(
     tests_require=[
         'coverage',
         'mypy',
-        'pytest>=3.5,<6.2',
+        'pytest>=3.5',
         'pytest-cov',
         'pycodestyle',
         'pytest-flake8',
