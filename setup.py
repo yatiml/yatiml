@@ -18,8 +18,7 @@ setup(
     packages=[
         'yatiml',
     ],
-    package_dir={'yatiml':
-                 'yatiml'},
+    package_dir={'yatiml': 'yatiml'},
     include_package_data=True,
     license="Apache Software License 2.0",
     zip_safe=False,
@@ -30,23 +29,13 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9'
     ],
     install_requires=[
         'ruamel.yaml>=0.15.71,<0.17',
-        'typing>=3.6; python_version<"3.5"',
         'typing_extensions'
-    ],
-    test_suite='tests',
-    setup_requires=[
-        # dependencies for `python setup.py build_sphinx`
-        'sphinx',
-        'recommonmark',
-        'sphinx-rtd-theme'
-    ],
-    extras_require={
-        'dev':  ['yapf', 'isort'],
-    }
+    ]
 )
