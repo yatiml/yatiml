@@ -3,7 +3,8 @@ import logging
 import os
 from pathlib import Path
 from typing import (
-        Any, AnyStr, Callable, cast, Dict, IO, List, TypeVar, Union)  # noqa
+        Any, AnyStr, Callable, cast, Dict, IO, List, overload, TypeVar, Union
+        )  # noqa
 from typing_extensions import ClassVar, Type    # noqa
 
 import ruamel.yaml as yaml
@@ -261,12 +262,25 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
         loader_cls._registered_classes[tag] = class_
 
 
+class _AnyYAML:
+    """Dummy class for load_function default value."""
+
+
 T = TypeVar('T')
 
 
+# https://github.com/python/mypy/issues/3737
+@overload
+def load_function() -> Callable[[Union[str, Path, IO[AnyStr]]], Any]: ...
+
+
+@overload
 def load_function(
         result: Type[T], *args: Type
-        ) -> Callable[[Union[str, Path, IO[AnyStr]]], T]:
+        ) -> Callable[[Union[str, Path, IO[AnyStr]]], T]: ...
+
+
+def load_function(result=_AnyYAML, *args):     # type: ignore
     """Create a load function for the given type.
 
     This function returns a callable object which takes an input
@@ -341,12 +355,16 @@ def load_function(
     if not (
             is_generic_mapping(result) or
             is_generic_sequence(result) or
-            is_generic_union(result)):
+            is_generic_union(result) or
+            result is Any):
         if result not in additional_types and result not in user_classes:
             user_classes.append(result)
 
     add_to_loader(UserLoader, user_classes)
-    set_document_type(UserLoader, result)
+    if result is _AnyYAML:
+        set_document_type(UserLoader, Any)      # type: ignore
+    else:
+        set_document_type(UserLoader, result)
 
     class LoadFunction:
         """Validates YAML input and constructs objects."""

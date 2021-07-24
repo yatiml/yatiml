@@ -271,13 +271,13 @@ class Constructor:
                          node.start_mark, os.linesep, key,
                          self.class_.__name__))
 
-            if key in argspec.args and not self.__type_matches(
-                    value, argspec.annotations[key]):
-                raise RecognitionError(('{}{}Expected attribute {} to be of'
-                                        ' type {} but it is a(n) {}').format(
-                                            node.start_mark, os.linesep, key,
-                                            argspec.annotations[key],
-                                            type(value)))
+            if key in argspec.args and key in argspec.annotations:
+                if not self.__type_matches(value, argspec.annotations[key]):
+                    raise RecognitionError(
+                            ('{}{}Expected attribute {} to be of type {} but'
+                             ' it is a(n) {}').format(
+                                    node.start_mark, os.linesep, key,
+                                    argspec.annotations[key], type(value)))
 
     def __strip_extra_attributes(self, node: yaml.Node,
                                  known_attrs: List[str]) -> None:

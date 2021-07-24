@@ -142,6 +142,12 @@ class Document5:
         self.attr2 = attr2
 
 
+class Document6:
+    def __init__(self, attr1, attr2):
+        self.attr1 = attr1
+        self.attr2 = attr2
+
+
 class Super:
     def __init__(self, subclass: str) -> None:
         pass

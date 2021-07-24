@@ -4,7 +4,7 @@
 """Tests for the yatiml module."""
 from collections import OrderedDict
 import sys
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import pytest  # type: ignore
 import yatiml
@@ -13,8 +13,8 @@ from .conftest import (
         BrokenPrivateAttributes, Circle, Color, Color2,
         ComplexPrivateAttributes, ConstrainedString, DashedAttribute,
         DictAttribute, Document1, Document2, Document3, Document4, Document5,
-        Ellipse, Extensible, Postcode, PrivateAttributes, Raises, Rectangle,
-        Shape, StringLike, SubA, SubA2, SubB, SubB2, Super, Super2,
+        Document6, Ellipse, Extensible, Postcode, PrivateAttributes, Raises,
+        Rectangle, Shape, StringLike, SubA, SubA2, SubB, SubB2, Super, Super2,
         UnionAttribute, Universal, Vector2D)
 
 
@@ -130,9 +130,6 @@ def test_missing_discriminator() -> None:
 
 
 def test_any_typed_attributes() -> None:
-    import logging
-    yatiml.logger.setLevel(logging.DEBUG)
-
     load = yatiml.load_function(Document5)
     text = (
             'attr1: 10\n'
@@ -154,9 +151,6 @@ def test_any_typed_attributes() -> None:
 
 
 def test_any_object_tag_strip() -> None:
-    import logging
-    yatiml.logger.setLevel(logging.DEBUG)
-
     load = yatiml.load_function(Document5)
     text = (
             'attr1: test\n'
@@ -174,6 +168,78 @@ def test_any_object_tag_strip() -> None:
     assert 'attr2' in data.attr2
     assert isinstance(data.attr2['attr2'], str)
     assert data.attr2['attr2'] == 'test'
+
+
+def test_any_document() -> None:
+    load = yatiml.load_function(Any)
+    text = '42'
+    data = load(text)
+    assert data == 42
+
+
+def test_dump_any() -> None:
+    dumps = yatiml.dumps_function(Document5)
+    data = Document5(42, 'YAtiML')
+    text = dumps(data)
+    assert text == (
+            'attr1: 42\n'
+            'attr2: YAtiML\n')
+
+
+def test_untyped_attributes() -> None:
+    load = yatiml.load_function(Document6)
+    text = (
+            'attr1: test\n'
+            'attr2: [12, 76]')
+    data = load(text)
+    assert isinstance(data, Document6)
+    assert isinstance(data.attr1, str)
+    assert data.attr1 == 'test'
+    assert isinstance(data.attr2, list)
+    assert data.attr2 == [12, 76]
+
+
+def test_missing_untyped_attributes() -> None:
+    load = yatiml.load_function(Document6)
+    text = 'attr2: x'
+    with pytest.raises(yatiml.RecognitionError):
+        load(text)
+
+
+def test_untyped_attributes_tag_strip() -> None:
+    load = yatiml.load_function(Document6)
+    text = (
+            'attr1: test\n'
+            'attr2: !Document6\n'
+            '    attr1: 3\n'
+            '    attr2: test')
+    data = load(text)
+    assert isinstance(data, Document6)
+    assert isinstance(data.attr2, dict)
+
+    assert 'attr1' in data.attr2
+    assert isinstance(data.attr2['attr1'], int)
+    assert data.attr2['attr1'] == 3
+
+    assert 'attr2' in data.attr2
+    assert isinstance(data.attr2['attr2'], str)
+    assert data.attr2['attr2'] == 'test'
+
+
+def test_untyped_document() -> None:
+    load = yatiml.load_function()
+    text = 'Testing!'
+    data = load(text)
+    assert data == 'Testing!'
+
+
+def test_dump_untyped() -> None:
+    dumps = yatiml.dumps_function(Document6)
+    data = Document6(24, 'LMitAY')
+    text = dumps(data)
+    assert text == (
+            'attr1: 24\n'
+            'attr2: LMitAY\n')
 
 
 def test_yatiml_extra() -> None:
