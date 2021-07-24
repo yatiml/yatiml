@@ -220,24 +220,25 @@ def is_string_like(type_: Type) -> bool:
     return issubclass(type_, (str, UserString, String))
 
 
-def strip_tags(loader: yaml.Loader, node: yaml.Node) -> None:
+def strip_tags(resolver: yaml.VersionedResolver, node: yaml.Node) -> None:
     """Strips tags from mappings in the tree headed by node.
 
     This keeps yaml from constructing any objects in this tree.
 
     Args:
+        resolver: Resolver to tag scalar nodes with
         node: Head of the tree to strip
     """
     if isinstance(node, yaml.ScalarNode):
         if not node.tag.startswith('tag:yaml.org,2002:'):
-            node.tag = loader.resolve(
+            node.tag = resolver.resolve(
                     yaml.ScalarNode, node.value, (True, False))
     elif isinstance(node, yaml.SequenceNode):
         node.tag = 'tag:yaml.org,2002:seq'
         for subnode in node.value:
-            strip_tags(loader, subnode)
+            strip_tags(resolver, subnode)
     elif isinstance(node, yaml.MappingNode):
         node.tag = 'tag:yaml.org,2002:map'
         for key_node, value_node in node.value:
-            strip_tags(loader, key_node)
-            strip_tags(loader, value_node)
+            strip_tags(resolver, key_node)
+            strip_tags(resolver, value_node)
