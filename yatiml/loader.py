@@ -35,12 +35,14 @@ class Loader(yaml.RoundTripLoader):
         :meth:`load_function` instead.
     """
     _registered_classes = None      # type: ClassVar[Dict[str, Type]]
+    _additional_classes = None      # type: ClassVar[Dict[Type, str]]
     document_type = type(None)      # type: ClassVar[Type]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Create a Loader."""
         super().__init__(*args, **kwargs)
-        self.__recognizer = Recognizer(self._registered_classes)
+        self.__recognizer = Recognizer(
+                self._registered_classes, self._additional_classes)
 
     def get_single_node(self) -> yaml.Node:
         """Hook used when loading a single document.
@@ -92,6 +94,9 @@ class Loader(yaml.RoundTripLoader):
 
         if type_ in self._registered_classes.values():
             return '!{}'.format(type_.__name__)
+
+        if type_ in self._additional_classes:
+            return self._additional_classes[type_]
 
         raise RuntimeError((
             'Unknown type {} in type_to_tag,'  # pragma: no cover
@@ -324,10 +329,10 @@ def load_function(
         pass
 
     # add loaders for additional types
-    if UserLoader._registered_classes is None:
-        UserLoader._registered_classes = dict()
+    if UserLoader._additional_classes is None:
+        UserLoader._additional_classes = dict()
     UserLoader.add_constructor('!Path', PathConstructor())
-    UserLoader._registered_classes['!Path'] = Path
+    UserLoader._additional_classes[Path] = '!Path'
 
     additional_types = (Path,)
 

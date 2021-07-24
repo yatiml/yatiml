@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
 class Recognizer(IRecognizer):
     """Functions for recognizing objects as types."""
 
-    def __init__(self, registered_classes: Dict[str, Type]) -> None:
+    def __init__(
+            self, registered_classes: Dict[str, Type],
+            additional_classes: Dict[Type, str]) -> None:
         """Create a Recognizer.
 
         Args:
@@ -34,6 +36,7 @@ class Recognizer(IRecognizer):
                     classes.
         """
         self.__registered_classes = registered_classes
+        self.__additional_classes = additional_classes
 
     def __recognize_scalar(self, node: yaml.Node,
                            expected_type: Type) -> RecResult:
@@ -350,7 +353,7 @@ class Recognizer(IRecognizer):
                 type(None)):
             recognized_types, message = self.__recognize_scalar(
                     node, expected_type)
-        elif expected_type in (pathlib.Path,):
+        elif expected_type in self.__additional_classes:
             recognized_types, message = self.__recognize_additional(
                     node, expected_type)
         elif is_generic_union(expected_type):

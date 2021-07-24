@@ -498,20 +498,26 @@ def scalar_node() -> yatiml.Node:
 
 
 @pytest.fixture
-def unknown_node(yaml_node: yaml.Node) -> yatiml.UnknownNode:
-    return yatiml.UnknownNode(Recognizer({}), yaml_node)
+def recognizer() -> Recognizer:
+    return Recognizer({}, {})
 
 
 @pytest.fixture
-def unknown_scalar_node() -> yatiml.UnknownNode:
+def unknown_node(
+        recognizer: Recognizer, yaml_node: yaml.Node) -> yatiml.UnknownNode:
+    return yatiml.UnknownNode(recognizer, yaml_node)
+
+
+@pytest.fixture
+def unknown_scalar_node(recognizer: Recognizer) -> yatiml.UnknownNode:
     ynode = yaml.ScalarNode('tag:yaml.org,2002:int', '23')
-    return yatiml.UnknownNode(Recognizer({}), ynode)
+    return yatiml.UnknownNode(recognizer, ynode)
 
 
 @pytest.fixture
-def unknown_sequence_node() -> yatiml.UnknownNode:
+def unknown_sequence_node(recognizer: Recognizer) -> yatiml.UnknownNode:
     ynode = yaml.SequenceNode('tag:yaml.org,2002:seq', [])
-    return yatiml.UnknownNode(Recognizer({}), ynode)
+    return yatiml.UnknownNode(recognizer, ynode)
 
 
 @pytest.fixture
