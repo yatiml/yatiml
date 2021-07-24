@@ -4,7 +4,7 @@ import pathlib
 from typing import Any, cast
 from typing_extensions import TYPE_CHECKING, Type
 
-from ruamel import yaml
+import ruamel.yaml as yaml
 
 from yatiml.helpers import Node
 

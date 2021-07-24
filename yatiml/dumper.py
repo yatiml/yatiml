@@ -6,7 +6,7 @@ from pathlib import Path, PosixPath, WindowsPath
 from typing import Any, AnyStr, Callable, IO, List, Optional, Union, cast
 from typing_extensions import Type
 
-from ruamel import yaml
+import ruamel.yaml as yaml
 from ruamel.yaml.events import (
         AliasEvent, DocumentEndEvent, MappingEndEvent, MappingStartEvent,
         ScalarEvent, SequenceEndEvent, SequenceStartEvent)

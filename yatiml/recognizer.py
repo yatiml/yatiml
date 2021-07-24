@@ -8,7 +8,7 @@ from textwrap import indent
 from typing import Any, Dict, List
 from typing_extensions import Type
 
-from ruamel import yaml
+import ruamel.yaml as yaml
 
 from yatiml.exceptions import RecognitionError
 from yatiml.helpers import Node, UnknownNode

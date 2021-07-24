@@ -9,7 +9,7 @@ from typing import (  # noqa: F401
     cast)
 from typing_extensions import Type
 
-from ruamel import yaml
+import ruamel.yaml as yaml
 from ruamel.yaml.error import StreamMark
 
 from yatiml.exceptions import RecognitionError, SeasoningError

@@ -2,7 +2,7 @@ import abc
 from typing import List, Tuple
 from typing_extensions import Type
 
-from ruamel import yaml
+import ruamel.yaml as yaml
 
 RecResult = Tuple[List[Type], str]
 """A recognition result.

@@ -41,21 +41,10 @@ setup(
     ],
     test_suite='tests',
     setup_requires=[
-        # dependency for `python setup.py test`
-        'pytest-runner',
         # dependencies for `python setup.py build_sphinx`
         'sphinx',
         'recommonmark',
         'sphinx-rtd-theme'
-    ],
-    tests_require=[
-        'coverage',
-        'mypy',
-        'pytest>=3.5',
-        'pytest-cov',
-        'pycodestyle',
-        'pytest-flake8',
-        'pytest-mypy>=0.4.0'
     ],
     extras_require={
         'dev':  ['yapf', 'isort'],
