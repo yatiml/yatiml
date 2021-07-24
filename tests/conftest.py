@@ -136,6 +136,12 @@ class Document4:
         node.remove_attributes_with_default_values(cls)
 
 
+class Document5:
+    def __init__(self, attr1: Any, attr2: Any) -> None:
+        self.attr1 = attr1
+        self.attr2 = attr2
+
+
 class Super:
     def __init__(self, subclass: str) -> None:
         pass

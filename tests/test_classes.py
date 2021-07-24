@@ -9,13 +9,13 @@ from typing import Dict, List
 import pytest  # type: ignore
 import yatiml
 
-from .conftest import (BrokenPrivateAttributes, Circle, Color, Color2,
-                       ComplexPrivateAttributes, ConstrainedString,
-                       DashedAttribute, DictAttribute, Document1, Document2,
-                       Document3, Document4, Ellipse, Extensible, Postcode,
-                       PrivateAttributes, Raises, Rectangle, Shape, StringLike,
-                       SubA, SubA2, SubB, SubB2, Super, Super2, UnionAttribute,
-                       Universal, Vector2D)
+from .conftest import (
+        BrokenPrivateAttributes, Circle, Color, Color2,
+        ComplexPrivateAttributes, ConstrainedString, DashedAttribute,
+        DictAttribute, Document1, Document2, Document3, Document4, Document5,
+        Ellipse, Extensible, Postcode, PrivateAttributes, Raises, Rectangle,
+        Shape, StringLike, SubA, SubA2, SubB, SubB2, Super, Super2,
+        UnionAttribute, Universal, Vector2D)
 
 
 def test_load_class() -> None:
@@ -127,6 +127,53 @@ def test_missing_discriminator() -> None:
     load = yatiml.load_function(Super, SubA, SubB)
     with pytest.raises(yatiml.RecognitionError):
         load('subclas: A')
+
+
+def test_any_typed_attributes() -> None:
+    import logging
+    yatiml.logger.setLevel(logging.DEBUG)
+
+    load = yatiml.load_function(Document5)
+    text = (
+            'attr1: 10\n'
+            'attr2: test\n')
+    data = load(text)
+    assert data.attr1 == 10
+    assert data.attr2 == 'test'
+
+    text = (
+            'attr1: [10, 13]\n'
+            'attr2:\n'
+            '    x: 12.4\n'
+            '    y: 78.9\n')
+    data = load(text)
+    assert data.attr1 == [10, 13]
+    assert isinstance(data.attr2, dict)
+    assert data.attr2['x'] == 12.4
+    assert data.attr2['y'] == 78.9
+
+
+def test_any_object_tag_strip() -> None:
+    import logging
+    yatiml.logger.setLevel(logging.DEBUG)
+
+    load = yatiml.load_function(Document5)
+    text = (
+            'attr1: test\n'
+            'attr2: !Document5\n'
+            '    attr1: 3\n'
+            '    attr2: test')
+    data = load(text)
+    assert isinstance(data, Document5)
+    assert isinstance(data.attr2, dict)
+
+    assert 'attr1' in data.attr2
+    assert isinstance(data.attr2['attr1'], int)
+    assert data.attr2['attr1'] == 3
+
+    assert 'attr2' in data.attr2
+    assert isinstance(data.attr2['attr2'], str)
+    assert data.attr2['attr2'] == 'test'
 
 
 def test_yatiml_extra() -> None:

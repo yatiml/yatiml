@@ -5,7 +5,7 @@ import os
 import pathlib
 from datetime import date
 from textwrap import indent
-from typing import Dict, List
+from typing import Any, Dict, List
 from typing_extensions import Type
 
 from ruamel import yaml
@@ -344,7 +344,7 @@ class Recognizer(IRecognizer):
             A list of matching types.
         """
         logger.debug('Recognizing {} as a {}'.format(node, expected_type))
-        recognized_types = None
+        recognized_types = None     # type: Any
         if expected_type in (
                 str, int, float, bool, bool_union_fix, date, None,
                 type(None)):
@@ -365,6 +365,8 @@ class Recognizer(IRecognizer):
         elif expected_type in self.__registered_classes.values():
             recognized_types, message = self.__recognize_user_classes(
                     node, expected_type)
+        elif expected_type in (Any,):
+            recognized_types, message = [Any], ''
 
         if recognized_types is None:
             raise RecognitionError(

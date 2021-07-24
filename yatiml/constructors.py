@@ -208,6 +208,8 @@ class Constructor:
             return True
         elif type_ is bool_union_fix:
             return isinstance(obj, bool)
+        elif type_ is Any:
+            return True
         else:
             return isinstance(obj, type_)
 

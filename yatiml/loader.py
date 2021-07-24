@@ -8,15 +8,16 @@ from typing_extensions import ClassVar, Type    # noqa
 
 import ruamel.yaml as yaml
 
-from yatiml.constructors import (Constructor, EnumConstructor,
-                                 PathConstructor, UserStringConstructor)
+from yatiml.constructors import (
+        Constructor, EnumConstructor, PathConstructor, UserStringConstructor)
 from yatiml.exceptions import RecognitionError
 from yatiml.helpers import Node
 from yatiml.introspection import class_subobjects
 from yatiml.recognizer import Recognizer
 from yatiml.util import (
         generic_type_args, is_generic_sequence, is_generic_mapping,
-        is_generic_union, is_string_like, scalar_type_to_tag, type_to_desc)
+        is_generic_union, is_string_like, scalar_type_to_tag, strip_tags,
+        type_to_desc)
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +194,10 @@ class Loader(yaml.RoundTripLoader):
             logger.debug('Not a generic class or a user-defined class, not'
                          ' recursing')
 
-        node.tag = self.__type_to_tag(recognized_type)
+        if recognized_type is Any:
+            strip_tags(self, node)
+        else:
+            node.tag = self.__type_to_tag(recognized_type)
         logger.debug('Finished processing node {}'.format(node))
         return node
 
