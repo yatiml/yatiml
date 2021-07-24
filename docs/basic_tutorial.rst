@@ -1,214 +1,230 @@
 Basic Tutorial
 ==============
 
-With YAtiML, you have easy-to-read YAML for the user, and easy-to-use objects
-for the programmer, with validation and automatic type recognition in between.
+YAtiML is a library for reading and writing YAML from Python.
+
 This tutorial shows how to use YAtiML by example. You can find the example
 programs shown below in the ``docs/examples/`` directory in the repository.
 
 A first example
 ---------------
 
-For a first example, we will pass on object conversion and just read a simple
-dictionary (or in YAML terms, a mapping). Let's say that we're organising a
-drawing contest for kids, and are tracking submissions in YAML files.
+Let's say that we're organising a drawing contest for kids, and are tracking
+submissions in YAML files. We'll need to read the files into a Python program in
+order to process them. Here's how to do that with YAtiML:
 
 For the example to run, make sure that you have :ref:`installed YAtiML
 <installing>` first.
 
-.. literalinclude:: examples/dict_of_strings.py
-  :caption: ``docs/examples/dict_of_strings.py``
+.. literalinclude:: examples/load_any_yaml.py
+  :caption: ``docs/examples/load_any_yaml.py``
   :language: python
 
 If you run this program, it will output
 
 .. code-block:: none
 
-  ordereddict([('name', 'Janice'), ('age', 'Six')])
+  ordereddict([('name', 'Janice'), ('age', 6)])
 
 
-There is quite a bit going on in this example, so let's take it one bit at a
-time.
-
-.. code-block:: python
-
-  from typing import Dict
-
-
-To tell YAtiML which type of objects it should construct, and therefore which
-kind of document it should expect, we use the built-in Python types, and the
-definitions from the standard ``typing`` module. If you use type annotations in
-your Python code, then you will already be familiar with them. If not, you will
-find plenty of examples in this tutorial.
-
-For reference, YAtiML supports these built-in and standard types: ``str``,
-``int``, ``float``, ``bool``, ``typing.Dict``, ``typing.List``,
-``typing.Mapping``, ``typing.Sequence``, ``typing.Union``,
-``datetime.date`` and ``pathlib.Path``.
+Here is the example again one line at a time.
 
 .. code-block:: python
 
   import yatiml
 
 
-Here is where we import the YAtiML library itself.
+This loads the YAtiML package, so that we can use it in our Python script.
 
 .. code-block:: python
 
-  load = yatiml.load_function(Dict[str, str])
+  yaml_text = (
+          'name: Janice\n'
+          'age: 6\n')
 
-This is where we first start using YAtiML. To load a YAML file, we need a
-function that can do so. This call makes a function (!) called ``load`` which
-can load and check YAML files containing a dictionary with strings as keys and
-also strings as values. The ``Dict`` type (rather than a plain ``dict``, which
-won't let us specify the key and value types) and square brackets are standard
-Python notation for type annotations. Note that YAtiML only accepts strings for
-the key type of a ``Dict``, either ``str`` or a user defined one (see below).
+
+This makes a string with a YAML document in it. The parentheses are so we can
+split the string over multiple lines, and we need a ``\n`` at the end of each
+line to explicitly mark it as the end, otherwise everything will be glued
+together on a single line and we end up with invalid YAML.
+
+.. code-block:: python
+
+  load = yatiml.load_function()
+
+
+To load our document from the string, we need a load function. YAtiML doesn't
+have a built-in load function. Instead, it makes a custom load function just for
+you, if you call :meth:`yatiml.load_function`. We'll call the result ``load``.
+
+This probably looks a bit funny, but it will become clear why we're doing this
+in the next example.
 
 .. code-block:: python
 
   doc = load(yaml_text)
 
-
-Here, we load the YAML document using our newly created function. Other than a
-string, you can also open a stream object (an opened file) or a ``pathlib.Path``
-object pointing to a file.
-
-.. code-block:: none
-
-  ordereddict([('name', 'Janice'), ('age', 'Six')])
+  print(doc)
 
 
-One immediately visible difference is in the result: it is not a plain Python
-``dict``, but an ``OrderedDict``. This is a standard Python type from the
-``collections`` module that works just like a normal ``dict``, but remembers the
-order of the entries.  Saving a ``dict`` to a YAML file using plain PyYAML will
-put the attributes in a random order, which is usually difficult to read.
-YAtiML keeps the order of the attributes, so you can make your YAML file more
-readable.
-
-Type errors
------------
-
-So far, we have defined the type of our document, and read a matching YAML file.
-But what if we are given a YAML file that does not match? Let's modify our input
-a bit, writing the age as a number:
-
-.. literalinclude:: examples/type_error.py
-  :caption: ``docs/examples/type_error.py``
-  :language: python
-
-Running this modified version gives an exception traceback ending with:
+Here we call our shiny new load function to load the YAML into a Python object.
+Then we print the result so that we can see what happened. We will get
 
 .. code-block:: none
 
-  yatiml.exceptions.RecognitionError: Failed to recognize a string
-    in "<unicode string>", line 2, column 6:
-      age: 6
-           ^ (line: 2)
+  ordereddict([('name', 'Janice'), ('age', 6)])
 
 
-What has happened here is that YAML has recognised ``6`` as an ``int``. Since it
-is a value in the dictionary, YAtiML then compared that ``int`` type to the
-second argument of ``Dict``, which is ``str``, found a mismatch, and gave an
-error message.
+This again looks a bit funny, but this is almost the same thing as the
+dictionary ``{'name': 'Janice', 'age': 6}`` that you probably expected.
 
-In particular, it raised a ``yatiml.RecognitionError``. In general,
-if your input document does not match the type you specified, this exception
-will be raised, with an error message pointing to the point in the YAML file
-where the problem was found.
+Until recently, Python dictionaries held their entries in random order. For
+accessing items that's not a problem, because you look them up based on the key
+anyway. But having the lines of a YAML file reorganised in a random order can
+make the file really hard to read! So YAtiML reads the file into a special
+ordered dictionary, which preserves the order. That way, you can save it again
+later without making a big mess. Otherwise it works just like a plain Python
+``dict``, so you can do ``doc['name']`` and so on as usual.
 
-One way to solve this problem is to tell YAtiML to accept both ints and strings
-as values in the dictionary. We can do this using a ``Union`` type:
+Checking the input
+------------------
 
-.. literalinclude:: examples/union_dict.py
-  :caption: ``docs/examples/union_dict.py``
+In the example above, we didn't specify any constraints on what the input should
+look like. This is often inconvenient. For example, if we have an age limit of
+12 on our drawing contest and want to write a program that reads in the YAML
+file for each submission, checks the age and then prints out the names of any
+kids that are too old, then we really need to have both the name and the age in
+each file, or it's not going to work.
+
+The example code above will happily read any input. If there's a list of numbers
+in the file, then ``doc`` will hold a list of numbers instead of a ``dict``, and
+your program will probably crash somewhere with an error ``TypeError: list
+indices must be integers or slices, not str`` and then you get to figure out
+what went wrong and where.
+
+It would be much better if we could check that our input is a really a
+dictionary with keys ``name`` and ``age``. We could do that by hand, after
+reading, but with YAtiML there's a better way to do it. We're going to make a
+Python class that shows what the YAML should look like:
+
+.. literalinclude:: examples/untyped_class.py
+  :caption: ``docs/examples/untyped_class.py``
   :language: python
 
-However, this will also make YAtiML accept an ``int`` for the ``name``
-attribute, which may not be what we want. In order to improve on this, we'll
-have to abandon the use of a dict, and define a custom class.
 
-Custom classes
---------------
+The main new bit of this example is the ``Submission`` class:
 
-Custom classes in YAtiML are actually quite ordinary Python classes. They have
-an ``__init__`` method, which is very important to YAtiML, and may have some
-other special methods that interact with YAtiML. Here's our example again, but
-now using a custom class:
+.. code-block:: python
 
-.. literalinclude:: examples/custom_class.py
-  :caption: ``docs/examples/custom_class.py``
-  :language: python
+  class Submission:
+      def __init__(self, name, age):
+          self.name = name
+          self.age = age
 
-We have added a new class ``Submission``, which represents a submission for our
-drawing contest. It has an ``__init__`` method with two arguments (and ``self``,
-of course). While this is an ordinary Python ``__init__`` method, for YAtiML
-there are two special things about it: the order of the parameters, and the type
-annotations.
 
-The order of the parameters is used by YAtiML when saving an object of this
-class to YAML, they'll be saved in this order. So you should make sure that the
-order makes sense, because that is what people will see. Note that it is the
-order of the parameters of the ``__init__`` method that matters, not the order
-in which the arguments are assigned to the attributes in the body of that
-method.
+This creates a Python class named ``Submission``. If you've never seen one, a
+class is basically a group of variables, in this case ``name`` and ``age``.
+Classes also have an *init function* with the special name ``__init__`` which is
+used to create a variable containing an object holding those variables. So here
+we have a class named ``Submission``. It can be used like this:
 
-The type annotations on the ``__init__`` method are used by YAtiML to check that
-the YAML document it is reading is in the correct form. For a custom class like
-this, it will expect to see a mapping (dict) with keys ``name`` and ``age``,
-with a string value for ``name``, and either an int or a string for ``age``. If
-it finds this, it will create a ``Submission`` object, passing the values from
-the YAML document to the constructor.
+.. code-block:: python
 
-In this example, the attributes themselves do not have a type annotation. You
-are free to add some, but YAtiML will not use them. For YAtiML, the types of the
-attributes are determined by the annotations on the ``__init__`` method only.
+  submission = Submission('Janice', 6)
+  print(submission.name)    # prints Janice
+  print(submission.age)     # prints 6
 
-Sometimes, you want to add further constraints on the attributes of the class.
-For example, maybe our contestants' ``age`` may be at most ``12``. The standard
-thing to do in this situation is to add a check to ``__init__``, and raise a
-``ValueError`` if it fails. If that happens during loading, then YAtiML will
-output the associated message and point out where in the input the problem is.
+  submission.age = 7
+  print(submission.age)     # prints 7
 
-Note that the loader is now passed our custom class, rather than a ``Dict``:
+
+Now, we can pass this class to YAtiML when we ask it to create our load
+function:
 
 .. code-block:: python
 
   load = yatiml.load_function(Submission)
 
-For more complex file formats, you will likely have a custom class that
-describes the document, which has attributes that themselves are of a custom
-class type. In this case, all these custom class types need to be added to the
-arguments, with the one that describes the whole document first.
 
-This new example outputs the following:
+YAtiML will now create a load function for us that expects to read in a
+dictionary containing keys ``name`` and ``age``.
 
-.. code-block:: none
+We use the load function as before, and it will read the YAML file and convert
+it into a ``Submission`` object. We can check that we really got one using
+``type()``, and inspect the name and age of our contestant.
 
-  <class '__main__.Submission'>
-  Janice
-  6
-  <class 'int'>
+Of course, we got exactly the input we expected, so in this case everything went
+fine. What if there's an error? Then you get an error message.
 
-Note that the main document has been recognised as a ``Submission``, and an
-object of this class was returned. Attribute ``age`` is of type ``int``, because
-that is what was actually in the YAML file. While the definition of an attribute
-may allow for objects of multiple types (using a ``Union``, or when specifying a
-base class that has multiple subclasses), in the object you get from reading a
-YAML file, each attribute has one specific type.
+.. admonition:: Exercise
 
-Note that on Python 3.7 or later, you can also use
-`dataclasses <https://docs.python.org/3/library/dataclasses.html>`_, like this:
+  Change the input in various ways in the previous example, and see what error
+  messages you get when you try to load the incorrect input.
 
-.. literalinclude:: examples/data_classes.py
-  :caption: ``docs/examples/data_classes.py``
+
+Checking types
+--------------
+
+If you have played around a little bit with the previous example, then you may
+have noticed that there's a certain kind of problem that is not detected when
+you load the YAML input into a ``Submission`` object, and that is that the
+values for ``name`` and ``age`` may not be of the right type. For example,
+someone could write their age as ``six`` instead of as ``6``, and you would
+suddenly have a string where you expected a number. That would almost certainly
+mess up the ``submission.age <= 12`` in your age check!
+
+So it would be better if we could make sure that the inputs are of the right
+type too, and give an error on loading if they are not. Here's how to do that:
+
+.. literalinclude:: examples/typed_class.py
+  :caption: ``docs/examples/untyped_class.py``
   :language: python
 
-However, since you're not writing the ``__init__`` function yourself, checks for
-valid values like above are not possible in this case, so if you want those
-you'll have to do it with a normal class.
 
+This example is almost the same as the previous one, except that the
+``__init__`` function of our ``Submission`` class now has some *type
+annotations*: instead of ``name`` it says ``name: str`` and instead of ``age``
+it says ``age: int``. That is all it takes to make sure that any values given
+for those keys in the YAML file are checked. (There's also ``-> None`` at the
+end, which specifies that the function does not return anything. YAtiML ignores
+this bit, and so can you if you want to.)
+
+.. admonition:: Exercise
+
+  Try changing the input to use values of a different type and see what happens.
+
+
+``int`` and ``str`` are standard Python types, and adding them to the function
+parameters as in the example is standard Python. For decimal numbers, you can
+use ``float`` and for truth values (e.g. true, false, yes, no) the type
+``bool``.
+
+Lists and dicts are also supported, but they require some special types from the
+standard Python ``typing`` package. For example, to allow multiple contestants
+to make a drawing together, we could allow a list of strings for the ``name``
+field, and a dictionary mapping each name to the corresponding age for ``age``.
+That would look like this.
+
+.. literalinclude:: examples/collaborative_submissions.py
+  :caption: ``docs/examples/collaborative_submissions.py``
+  :language: python
+
+
+For dates you can use ``date`` from the ``datetime`` package, and if you need to
+read the location of a file from a YAML file then you can use ``Path`` from
+Python's ``pathlib``. If you want to explicitly accept any kind of YAML, then
+you can use ``Any`` from ``typing``, which is the same as not specifying a type
+at all like we did in the beginning.
+
+Finally, ``Union`` from ``typing`` makes it possible to accept multiple
+different types. Try this for example:
+
+.. literalinclude:: examples/custom_class.py
+  :caption: ``docs/examples/custom_class.py``
+  :language: python
+
+
+and see what YAML inputs it will accept.
 
 Default values
 --------------
