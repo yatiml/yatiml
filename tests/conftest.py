@@ -223,6 +223,11 @@ class SubB3(Super3):
     pass
 
 
+class Super3Clone:
+    def __init__(self, attr: str) -> None:
+        self.attr = attr
+
+
 class Universal:
     def __init__(self, a: int, b: List[int]) -> None:
         self.a = a

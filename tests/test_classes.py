@@ -4,7 +4,7 @@
 """Tests for the yatiml module."""
 from collections import OrderedDict
 import sys
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import pytest  # type: ignore
 import yatiml
@@ -15,7 +15,8 @@ from .conftest import (
         DictAttribute, Document1, Document2, Document3, Document4, Document5,
         Document6, Ellipse, Extensible, Postcode, PrivateAttributes, Raises,
         Rectangle, Shape, StringLike, SubA, SubA2, SubA3, SubB, SubB2, SubB3,
-        Super, Super2, Super3, UnionAttribute, Universal, Vector2D)
+        Super, Super2, Super3, Super3Clone, UnionAttribute, Universal,
+        Vector2D)
 
 
 def test_load_class() -> None:
@@ -322,6 +323,20 @@ def test_user_class_unknown_override() -> None:
         load(
                 '!Ellipse\n'
                 'subclass: A2\n')
+
+
+def test_disambiguated_union() -> None:
+    load = yatiml.load_function(
+            Union[Super3, Super3Clone], Super3, Super3Clone)
+    with pytest.raises(yatiml.RecognitionError):
+        load(
+                'attr: X\n')
+
+    data = load(
+            '!Super3\n'
+            'attr: X\n')
+    assert isinstance(data, Super3)
+    assert not isinstance(data, Super3Clone)
 
 
 def test_savorize() -> None:
