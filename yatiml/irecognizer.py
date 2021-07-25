@@ -1,15 +1,14 @@
 import abc
-from typing import List, Tuple
+from typing import Set, Tuple
 from typing_extensions import Type
 
 import ruamel.yaml as yaml
 
-RecResult = Tuple[List[Type], str]
+RecResult = Tuple[Set[Type], str]
 """A recognition result.
 
-The first list is a list of recognised types, the second list an error
-message to display if no type was recognised or more than one type was
-recognised.
+The set is a set of recognised types, the string an error message to
+display if no type was recognised or more than one type was recognised.
 """
 
 

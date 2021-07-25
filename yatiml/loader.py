@@ -154,7 +154,7 @@ class Loader(yaml.RoundTripLoader):
         if len(recognized_types) != 1:
             raise RecognitionError(message)
 
-        recognized_type = recognized_types[0]
+        recognized_type = next(iter(recognized_types))
 
         # remove syntactic sugar
         logger.debug('Savorizing node {}'.format(node))
