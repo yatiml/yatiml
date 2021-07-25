@@ -15,8 +15,8 @@ from .conftest import (
         DictAttribute, Document1, Document2, Document3, Document4, Document5,
         Document6, Ellipse, Extensible, Postcode, PrivateAttributes, Raises,
         Rectangle, Shape, StringLike, SubA, SubA2, SubA3, SubB, SubB2, SubB3,
-        Super, Super2, Super3, Super3Clone, UnionAttribute, Universal,
-        Vector2D)
+        Super, Super2, Super3, Super3Clone, Super4, Super5, Sub45,
+        UnionAttribute, Universal, Vector2D)
 
 
 def test_load_class() -> None:
@@ -299,9 +299,6 @@ def test_user_class_override() -> None:
 
 
 def test_user_class_override2() -> None:
-    import logging
-    yatiml.logger.setLevel(logging.DEBUG)
-
     load = yatiml.load_function(Super, SubA, SubB)
     data = load(
             '!Super\n'
@@ -337,6 +334,12 @@ def test_disambiguated_union() -> None:
             'attr: X\n')
     assert isinstance(data, Super3)
     assert not isinstance(data, Super3Clone)
+
+
+def test_different_recognitions_of_the_same_type() -> None:
+    load = yatiml.load_function(Union[Super4, Super5], Super4, Super5, Sub45)
+    data = load('attr: 42')
+    assert isinstance(data, Sub45)
 
 
 def test_savorize() -> None:

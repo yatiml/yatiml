@@ -228,6 +228,21 @@ class Super3Clone:
         self.attr = attr
 
 
+class Super4:
+    def __init__(self, attr: int) -> None:
+        self.attr = attr
+
+
+class Super5:
+    def __init__(self, attr: int) -> None:
+        self.attr = attr
+
+
+class Sub45(Super4, Super5):
+    def __init__(self, attr: int) -> None:
+        self.attr = attr
+
+
 class Universal:
     def __init__(self, a: int, b: List[int]) -> None:
         self.a = a
