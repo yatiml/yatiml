@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The :mod:`yatiml` module is the main API for YAtiML.
 
 This module contains all the functions you need to use YAtiML.

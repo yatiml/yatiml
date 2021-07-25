@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """Tests for the yatiml module."""
 from collections import OrderedDict
 import sys
