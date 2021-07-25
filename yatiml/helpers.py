@@ -924,7 +924,7 @@ class Node:
 class UnknownNode:
     """Utility functions for recognizing nodes.
 
-    This class defines a number of helper function for you to use \
+    This class defines a number of helper function for you to use
     when writing _yatiml_recognize() functions.
 
     Attributes:
@@ -949,8 +949,8 @@ class UnknownNode:
     def require_scalar(self, *args: Type) -> None:
         """Require the node to be a scalar.
 
-        If additional arguments are passed, these are taken as a list \
-        of valid types; if the node matches one of these, then it is \
+        If additional arguments are passed, these are taken as a list
+        of valid types; if the node matches one of these, then it is
         accepted.
 
         Example:

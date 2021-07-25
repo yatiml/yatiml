@@ -174,7 +174,7 @@ Dumper.add_representer(WindowsPath, PathRepresenter())
 def add_to_dumper(dumper: Type, classes: List[Type]) -> None:
     """Register user-defined classes with the Dumper.
 
-    This enables the Dumper to write objects of your classes to a \
+    This enables the Dumper to write objects of your classes to a
     YAML file. Note that all the arguments are types, not instances!
 
     Args:

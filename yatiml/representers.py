@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 class Representer:
     """A yaml Representer class for user-defined types.
 
-    For ruamel.yaml to dump a class correctly, it needs a representer \
-    function for that class. YAtiML provides this generic representer \
-    which represents classes based on their public attributes by \
+    For ruamel.yaml to dump a class correctly, it needs a representer
+    function for that class. YAtiML provides this generic representer
+    which represents classes based on their public attributes by
     default, with an optional user override using a member function.
     """
 
@@ -84,8 +84,8 @@ class Representer:
     def __sweeten(self, dumper: 'Dumper', class_: Type, node: Node) -> None:
         """Applies the user's _yatiml_sweeten() function(s), if any.
 
-        Sweetening is done for the base classes first, then for the \
-        derived classes, down the hierarchy to the class we're \
+        Sweetening is done for the base classes first, then for the
+        derived classes, down the hierarchy to the class we're
         constructing.
 
         Args:
@@ -111,9 +111,9 @@ class Representer:
 class EnumRepresenter:
     """A yaml Representer class for user-defined enum types.
 
-    For ruamel.yaml to dump a class correctly, it needs a representer \
-    function for that class. YAtiML provides this generic representer \
-    which represents enum classes based on the names of their values by \
+    For ruamel.yaml to dump a class correctly, it needs a representer
+    function for that class. YAtiML provides this generic representer
+    which represents enum classes based on the names of their values by
     default, with an optional user override using a member function.
     """
 
@@ -159,8 +159,8 @@ class EnumRepresenter:
 class UserStringRepresenter:
     """A yaml Representer class for user-defined string types.
 
-    For ruamel.yaml to dump a class correctly, it needs a representer \
-    function for that class. YAtiML provides this generic representer \
+    For ruamel.yaml to dump a class correctly, it needs a representer
+    function for that class. YAtiML provides this generic representer
     which represents user-defined string classes as strings.
     """
 

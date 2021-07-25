@@ -32,7 +32,7 @@ class Recognizer(IRecognizer):
         """Create a Recognizer.
 
         Args:
-            registered_classes: The registered tags and corresponding \
+            registered_classes: The registered tags and corresponding
                     classes.
         """
         self.__registered_classes = registered_classes
@@ -194,8 +194,8 @@ class Recognizer(IRecognizer):
                                expected_type: Type) -> RecResult:
         """Recognize a user-defined class in the node.
 
-        This tries to recognize only exactly the specified class. It \
-        recurses down into the class's attributes, but not to its \
+        This tries to recognize only exactly the specified class. It
+        recurses down into the class's attributes, but not to its
         subclasses. See also __recognize_user_classes().
 
         Args:
@@ -276,10 +276,10 @@ class Recognizer(IRecognizer):
                                  expected_type: Type) -> RecResult:
         """Recognize a user-defined class in the node.
 
-        This returns a list of classes from the inheritance hierarchy \
-        headed by expected_type which match the given node and which \
-        do not have a registered derived class that matches the given \
-        node. So, the returned classes are the most derived matching \
+        This returns a list of classes from the inheritance hierarchy
+        headed by expected_type which match the given node and which
+        do not have a registered derived class that matches the given
+        node. So, the returned classes are the most derived matching
         classes that inherit from expected_type.
 
         This function recurses down the user's inheritance hierarchy.
@@ -359,17 +359,17 @@ class Recognizer(IRecognizer):
     def recognize(self, node: yaml.Node, expected_type: Type) -> RecResult:
         """Figure out how to interpret this node.
 
-        This is not quite a type check. This function makes a list of \
-        all types that match the expected type and also the node, and \
-        returns that list. The goal here is not to test validity, but \
+        This is not quite a type check. This function makes a list of
+        all types that match the expected type and also the node, and
+        returns that list. The goal here is not to test validity, but
         to determine how to process this node further.
 
-        That said, it will recognize built-in types only in case of \
+        That said, it will recognize built-in types only in case of
         an exact match.
 
         Args:
             node: The YAML node to recognize.
-            expected_type: The type we expect this node to be, based \
+            expected_type: The type we expect this node to be, based
                     on the context provided by our type definitions.
 
         Returns:

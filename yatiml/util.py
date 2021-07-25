@@ -169,8 +169,8 @@ def generic_type_args(type_: Type) -> List[Type]:
 def type_to_desc(type_: Type) -> str:
     """Convert a type to a human-readable description.
 
-    This is used for generating nice error messages. We want users \
-    to see a nice readable text, rather than something like \
+    This is used for generating nice error messages. We want users
+    to see a nice readable text, rather than something like
     "typing.List<~T>[str]".
 
     Args:

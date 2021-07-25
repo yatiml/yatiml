@@ -48,8 +48,8 @@ class Loader(yaml.RoundTripLoader):
     def get_single_node(self) -> yaml.Node:
         """Hook used when loading a single document.
 
-        This is the hook we use to hook yatiml into ruamel.yaml. It is \
-        called by the yaml libray when the user uses load() to load a \
+        This is the hook we use to hook yatiml into ruamel.yaml. It is
+        called by the yaml libray when the user uses load() to load a
         YAML document.
 
         Returns:
@@ -63,8 +63,8 @@ class Loader(yaml.RoundTripLoader):
     def get_node(self) -> yaml.Node:
         """Hook used when reading a multi-document stream.
 
-        This is the hook we use to hook yatiml into ruamel.yaml. It is \
-        called by the yaml library when the user uses load_all() to \
+        This is the hook we use to hook yatiml into ruamel.yaml. It is
+        called by the yaml library when the user uses load_all() to
         load multiple documents from a stream.
 
         Returns:
@@ -106,7 +106,7 @@ class Loader(yaml.RoundTripLoader):
     def __savorize(self, node: yaml.Node, expected_type: Type) -> yaml.Node:
         """Removes syntactic sugar from the node.
 
-        This calls _yatiml_savorize(), first on the class's base \
+        This calls _yatiml_savorize(), first on the class's base
         classes, then on the class itself.
 
         Args:
@@ -132,9 +132,9 @@ class Loader(yaml.RoundTripLoader):
                        expected_type: Type) -> yaml.Node:
         """Processes a node.
 
-        This is the main function that implements yatiml's \
-        functionality. It figures out how to interpret this node \
-        (recognition), then applies syntactic sugar, and finally \
+        This is the main function that implements yatiml's
+        functionality. It figures out how to interpret this node
+        (recognition), then applies syntactic sugar, and finally
         recurses to the subnodes, if any.
 
         Args:
@@ -232,12 +232,12 @@ def set_document_type(loader_cls: Type, type_: Type) -> None:
 def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
     """Registers one or more classes with a YAtiML loader.
 
-    Once a class has been registered, it can be recognized and \
+    Once a class has been registered, it can be recognized and
     constructed when reading a YAML text.
 
     Args:
         loader_cls: The loader to register the classes with.
-        classes: The class(es) to register, a plain Python class or a \
+        classes: The class(es) to register, a plain Python class or a
                 list of them.
 
     .. warning::

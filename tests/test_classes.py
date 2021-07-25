@@ -52,6 +52,17 @@ def test_recognize_subclass() -> None:
     assert data.center.y == 12.3
 
 
+def test_missing_attribute_class() -> None:
+    # omitting Vector2D from the list here
+    load = yatiml.load_function(
+            Document2, Color2, Shape, Rectangle, Circle)
+    with pytest.raises(yatiml.RecognitionError):
+        load(
+                'cursor_at:\n'
+                '  x: 42.0\n'
+                '  y: 42.1\n')
+
+
 def test_missing_attribute() -> None:
     load = yatiml.load_function(Universal)
     with pytest.raises(yatiml.RecognitionError):
