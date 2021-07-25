@@ -14,7 +14,7 @@ from yatiml.exceptions import RecognitionError
 from yatiml.introspection import class_subobjects
 from yatiml.util import (
         bool_union_fix, generic_type_args, is_generic_sequence,
-        is_generic_mapping, is_generic_union)
+        is_generic_mapping, is_generic_union, strip_tags)
 
 if TYPE_CHECKING:
     from yatiml.loader import Loader  # noqa: F401
@@ -68,6 +68,8 @@ class Constructor:
                 ('{}{}Expected a MappingNode. There'
                  ' is probably something wrong with your _yatiml_savorize()'
                  ' function.').format(node.start_mark, os.linesep))
+
+        self.__loader = loader
 
         # figure out which keys are extra and strip them of tags
         # to prevent constructing objects we haven't type checked
@@ -310,24 +312,7 @@ class Constructor:
                      ' string are not supported by YAtiML.').format(
                          node.start_mark, os.linesep))
             if key_node.value not in known_keys:
-                self.__strip_tags(value_node)
-
-    def __strip_tags(self, node: yaml.Node) -> None:
-        """Strips tags from mappings in the tree headed by node.
-
-        This keeps yaml from constructing any objects in this tree.
-
-        Args:
-            node: Head of the tree to strip
-        """
-        if isinstance(node, yaml.SequenceNode):
-            for subnode in node.value:
-                self.__strip_tags(subnode)
-        elif isinstance(node, yaml.MappingNode):
-            node.tag = 'tag:yaml.org,2002:map'
-            for key_node, value_node in node.value:
-                self.__strip_tags(key_node)
-                self.__strip_tags(value_node)
+                strip_tags(self.__loader, value_node)
 
 
 class EnumConstructor:
