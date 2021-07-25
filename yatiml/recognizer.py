@@ -292,10 +292,7 @@ class Recognizer(IRecognizer):
         Returns:
             A list containing matched user-defined classes.
         """
-        # Let the user override with an explicit tag
-        if node.tag in self.__registered_classes:
-            return [self.__registered_classes[node.tag]], ''
-
+        logger.debug('Recognizing user class {}'.format(expected_type))
         recognized_subclasses = []
         message = ''
         for other_class in self.__registered_classes.values():
@@ -305,6 +302,9 @@ class Recognizer(IRecognizer):
                 recognized_subclasses.extend(sub_subclasses)
                 if len(sub_subclasses) == 0:
                     message += msg
+
+        logger.debug('Recognized subclasses of {}: {}'.format(
+                expected_type, recognized_subclasses))
 
         if len(recognized_subclasses) == 0:
             recognized_subclasses, msg = self.__recognize_user_class(
@@ -317,13 +317,43 @@ class Recognizer(IRecognizer):
                        ' error(s):\n{}').format(expected_type.__name__,
                                                 node.start_mark,
                                                 indent(msg, '    '))
+            logger.debug(message)
             return [], message
 
         if len(recognized_subclasses) > 1:
+            # Let the user disambiguate with an explicit tag
+            if node.tag in self.__registered_classes:
+                typ = self.__registered_classes[node.tag]
+                if typ in recognized_subclasses:
+                    return [typ], ''
+
             message = ('{}{} Could not determine which of the following types'
                        ' this is: {}').format(node.start_mark, os.linesep,
                                               recognized_subclasses)
+            logger.debug(message)
             return recognized_subclasses, message
+
+        # Tags that don't match with what we recognized are an error,
+        # because silently ignoring the conflict would get confusing.
+        if not node.tag.startswith('tag:yaml.org,2002'):
+            if node.tag in self.__registered_classes:
+                tagged_class = self.__registered_classes[node.tag]
+                if tagged_class is not recognized_subclasses[0]:
+                    message = ('{}{} Expected a {} and found it, but there\'s'
+                               ' a tag here claiming this is a(n) {}. That'
+                               ' makes no sense.').format(
+                                       node.start_mark, os.linesep,
+                                       expected_type, tagged_class)
+                    logger.debug(message)
+                    return [], message
+            else:
+                message = ('{}{} Expected a {} and found it, but there\'s'
+                           ' a tag here claiming this is a(n) {}, which type'
+                           ' I don\'t know.').format(
+                                   node.start_mark, os.linesep,
+                                   expected_type, node.tag[1:])
+                logger.debug(message)
+                return [], message
 
         return recognized_subclasses, ''
 

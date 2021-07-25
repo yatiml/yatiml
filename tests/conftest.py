@@ -210,6 +210,19 @@ class SubB2(Super2):
         node.set_attribute('subclass', 'B2')
 
 
+class Super3:
+    def __init__(self, attr: str) -> None:
+        self.attr = attr
+
+
+class SubA3(Super3):
+    pass
+
+
+class SubB3(Super3):
+    pass
+
+
 class Universal:
     def __init__(self, a: int, b: List[int]) -> None:
         self.a = a

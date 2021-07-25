@@ -14,8 +14,8 @@ from .conftest import (
         ComplexPrivateAttributes, ConstrainedString, DashedAttribute,
         DictAttribute, Document1, Document2, Document3, Document4, Document5,
         Document6, Ellipse, Extensible, Postcode, PrivateAttributes, Raises,
-        Rectangle, Shape, StringLike, SubA, SubA2, SubB, SubB2, Super, Super2,
-        UnionAttribute, Universal, Vector2D)
+        Rectangle, Shape, StringLike, SubA, SubA2, SubA3, SubB, SubB2, SubB3,
+        Super, Super2, Super3, UnionAttribute, Universal, Vector2D)
 
 
 def test_load_class() -> None:
@@ -290,19 +290,38 @@ def test_missing_class() -> None:
 
 
 def test_user_class_override() -> None:
-    load = yatiml.load_function(Super, SubA, SubB)
+    load = yatiml.load_function(Super3, SubA3, SubB3)
     data = load(
-            '!SubA\n'
-            'subclass: x\n')
-    assert isinstance(data, SubA)
+            '!SubA3\n'
+            'attr: x\n')
+    assert isinstance(data, SubA3)
 
 
 def test_user_class_override2() -> None:
+    import logging
+    yatiml.logger.setLevel(logging.DEBUG)
+
     load = yatiml.load_function(Super, SubA, SubB)
     data = load(
             '!Super\n'
             'subclass: A\n')
     assert isinstance(data, Super)
+
+
+def test_user_class_conflicting_override() -> None:
+    load = yatiml.load_function(Super2, SubA2, SubB2, Ellipse)
+    with pytest.raises(yatiml.RecognitionError):
+        load(
+                '!Ellipse\n'
+                'subclass: A2\n')
+
+
+def test_user_class_unknown_override() -> None:
+    load = yatiml.load_function(Super2, SubA2, SubB2)
+    with pytest.raises(yatiml.RecognitionError):
+        load(
+                '!Ellipse\n'
+                'subclass: A2\n')
 
 
 def test_savorize() -> None:
