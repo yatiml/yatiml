@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # To use this:
-# - remove the version constraint on ruamel.yaml in setup.py
 # - modify the seq commands in the for loops to select the versions to test
 # - create and activate a venv
 # - run the script from the root directory
 
 # It will test all the selected versions, and print an overview of which worked
 # and which didn't.
+
+# Note that it modifies setup.py, so you'll want to restore that afterwards.
 
 # Tip: $(seq 1 0) gives an empty list
 
@@ -22,8 +23,8 @@
 outfile=$(mktemp)
 
 for i in $(seq 71 1 100) ; do
-    pip install --upgrade "ruamel.yaml==0.15.$i"
-    python setup.py test
+    sed -i "s/'ruamel.yaml[^']*'/'ruamel.yaml==0.15.$i'/" setup.py
+    tox -r
     if (( $? != 0 )); then
         echo "Version 0.15.$i: broken" >>"${outfile}"
         break
@@ -33,8 +34,8 @@ for i in $(seq 71 1 100) ; do
 done
 
 for i in $(seq 10 1 13) ; do
-    pip install --upgrade "ruamel.yaml==0.16.$i"
-    python setup.py test
+    sed -i "s/'ruamel.yaml[^']*'/'ruamel.yaml==0.16.$i'/" setup.py
+    tox -r
     if (( $? != 0 )); then
         echo "Version 0.16.$i: broken" >>"${outfile}"
         # break
@@ -44,8 +45,8 @@ for i in $(seq 10 1 13) ; do
 done
 
 for i in $(seq 0 1 10) ; do
-    pip install --upgrade "ruamel.yaml==0.17.$i"
-    python setup.py test
+    sed -i "s/'ruamel.yaml[^']*'/'ruamel.yaml==0.17.$i'/" setup.py
+    tox -r
     if (( $? != 0 )); then
         echo "Version 0.17.$i: broken" >>"${outfile}"
         # break
