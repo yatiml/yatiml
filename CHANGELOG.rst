@@ -1,9 +1,40 @@
-###########
+##########
 Change Log
-###########
+##########
 
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
+
+0.8.0
+*****
+
+Incompatible changes
+--------------------
+
+* Accept explicit tags only if compatible with the recognised type(s)
+
+New functionality
+-----------------
+
+* Support for untyped documents and attributes
+* Support for Any-typed documents and attributes
+* Support for Python dataclasses
+
+
+Fixes
+-----
+
+* Dumping of OrderedDict to a file (but not to a string) produced a stray
+  !!omap.
+* Various fixes and improvements to development infrastructure
+
+
+Removed
+-------
+
+* Official support for Python 3.5, which is no longer supported upstream. It
+  will probably still work, but getting anything to install on 3.5 is getting to
+  be pretty difficult so it's probably time to upgrade.
 
 
 0.7.0

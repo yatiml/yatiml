@@ -4,7 +4,7 @@ import pathlib
 from typing import Any, cast
 from typing_extensions import TYPE_CHECKING, Type
 
-from ruamel import yaml
+import ruamel.yaml as yaml
 
 from yatiml.helpers import Node
 
@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 class Representer:
     """A yaml Representer class for user-defined types.
 
-    For ruamel.yaml to dump a class correctly, it needs a representer \
-    function for that class. YAtiML provides this generic representer \
-    which represents classes based on their public attributes by \
+    For ruamel.yaml to dump a class correctly, it needs a representer
+    function for that class. YAtiML provides this generic representer
+    which represents classes based on their public attributes by
     default, with an optional user override using a member function.
     """
 
@@ -84,8 +84,8 @@ class Representer:
     def __sweeten(self, dumper: 'Dumper', class_: Type, node: Node) -> None:
         """Applies the user's _yatiml_sweeten() function(s), if any.
 
-        Sweetening is done for the base classes first, then for the \
-        derived classes, down the hierarchy to the class we're \
+        Sweetening is done for the base classes first, then for the
+        derived classes, down the hierarchy to the class we're
         constructing.
 
         Args:
@@ -95,10 +95,10 @@ class Representer:
         """
         for base_class in class_.__bases__:
             if base_class in dumper.yaml_representers:
-                logger.debug('Sweetening for class {}'.format(
-                    self.class_.__name__))
                 self.__sweeten(dumper, base_class, node)
         if '_yatiml_sweeten' in class_.__dict__:
+            logger.debug('Sweetening {} for class {}'.format(
+                node, class_.__name__))
             class_._yatiml_sweeten(node)
             if not isinstance(node.yaml_node, yaml.Node):
                 raise RuntimeError(
@@ -111,9 +111,9 @@ class Representer:
 class EnumRepresenter:
     """A yaml Representer class for user-defined enum types.
 
-    For ruamel.yaml to dump a class correctly, it needs a representer \
-    function for that class. YAtiML provides this generic representer \
-    which represents enum classes based on the names of their values by \
+    For ruamel.yaml to dump a class correctly, it needs a representer
+    function for that class. YAtiML provides this generic representer
+    which represents enum classes based on the names of their values by
     default, with an optional user override using a member function.
     """
 
@@ -159,8 +159,8 @@ class EnumRepresenter:
 class UserStringRepresenter:
     """A yaml Representer class for user-defined string types.
 
-    For ruamel.yaml to dump a class correctly, it needs a representer \
-    function for that class. YAtiML provides this generic representer \
+    For ruamel.yaml to dump a class correctly, it needs a representer
+    function for that class. YAtiML provides this generic representer
     which represents user-defined string classes as strings.
     """
 

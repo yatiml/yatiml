@@ -3,20 +3,22 @@ import logging
 import os
 from pathlib import Path
 from typing import (
-        Any, AnyStr, Callable, cast, Dict, IO, List, TypeVar, Union)  # noqa
+        Any, AnyStr, Callable, cast, Dict, IO, List, overload, TypeVar, Union
+        )  # noqa
 from typing_extensions import ClassVar, Type    # noqa
 
 import ruamel.yaml as yaml
 
-from yatiml.constructors import (Constructor, EnumConstructor,
-                                 PathConstructor, UserStringConstructor)
+from yatiml.constructors import (
+        Constructor, EnumConstructor, PathConstructor, UserStringConstructor)
 from yatiml.exceptions import RecognitionError
 from yatiml.helpers import Node
 from yatiml.introspection import class_subobjects
 from yatiml.recognizer import Recognizer
 from yatiml.util import (
         generic_type_args, is_generic_sequence, is_generic_mapping,
-        is_generic_union, is_string_like, scalar_type_to_tag, type_to_desc)
+        is_generic_union, is_string_like, scalar_type_to_tag, strip_tags,
+        type_to_desc)
 
 logger = logging.getLogger(__name__)
 
@@ -34,18 +36,20 @@ class Loader(yaml.RoundTripLoader):
         :meth:`load_function` instead.
     """
     _registered_classes = None      # type: ClassVar[Dict[str, Type]]
+    _additional_classes = None      # type: ClassVar[Dict[Type, str]]
     document_type = type(None)      # type: ClassVar[Type]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Create a Loader."""
         super().__init__(*args, **kwargs)
-        self.__recognizer = Recognizer(self._registered_classes)
+        self.__recognizer = Recognizer(
+                self._registered_classes, self._additional_classes)
 
     def get_single_node(self) -> yaml.Node:
         """Hook used when loading a single document.
 
-        This is the hook we use to hook yatiml into ruamel.yaml. It is \
-        called by the yaml libray when the user uses load() to load a \
+        This is the hook we use to hook yatiml into ruamel.yaml. It is
+        called by the yaml libray when the user uses load() to load a
         YAML document.
 
         Returns:
@@ -59,8 +63,8 @@ class Loader(yaml.RoundTripLoader):
     def get_node(self) -> yaml.Node:
         """Hook used when reading a multi-document stream.
 
-        This is the hook we use to hook yatiml into ruamel.yaml. It is \
-        called by the yaml library when the user uses load_all() to \
+        This is the hook we use to hook yatiml into ruamel.yaml. It is
+        called by the yaml library when the user uses load_all() to
         load multiple documents from a stream.
 
         Returns:
@@ -92,6 +96,9 @@ class Loader(yaml.RoundTripLoader):
         if type_ in self._registered_classes.values():
             return '!{}'.format(type_.__name__)
 
+        if type_ in self._additional_classes:
+            return self._additional_classes[type_]
+
         raise RuntimeError((
             'Unknown type {} in type_to_tag,'  # pragma: no cover
             ' please report a YAtiML bug.').format(type_))
@@ -99,7 +106,7 @@ class Loader(yaml.RoundTripLoader):
     def __savorize(self, node: yaml.Node, expected_type: Type) -> yaml.Node:
         """Removes syntactic sugar from the node.
 
-        This calls _yatiml_savorize(), first on the class's base \
+        This calls _yatiml_savorize(), first on the class's base
         classes, then on the class itself.
 
         Args:
@@ -125,9 +132,9 @@ class Loader(yaml.RoundTripLoader):
                        expected_type: Type) -> yaml.Node:
         """Processes a node.
 
-        This is the main function that implements yatiml's \
-        functionality. It figures out how to interpret this node \
-        (recognition), then applies syntactic sugar, and finally \
+        This is the main function that implements yatiml's
+        functionality. It figures out how to interpret this node
+        (recognition), then applies syntactic sugar, and finally
         recurses to the subnodes, if any.
 
         Args:
@@ -147,7 +154,7 @@ class Loader(yaml.RoundTripLoader):
         if len(recognized_types) != 1:
             raise RecognitionError(message)
 
-        recognized_type = recognized_types[0]
+        recognized_type = next(iter(recognized_types))
 
         # remove syntactic sugar
         logger.debug('Savorizing node {}'.format(node))
@@ -193,7 +200,10 @@ class Loader(yaml.RoundTripLoader):
             logger.debug('Not a generic class or a user-defined class, not'
                          ' recursing')
 
-        node.tag = self.__type_to_tag(recognized_type)
+        if recognized_type is Any:
+            strip_tags(self, node)
+        else:
+            node.tag = self.__type_to_tag(recognized_type)
         logger.debug('Finished processing node {}'.format(node))
         return node
 
@@ -222,12 +232,12 @@ def set_document_type(loader_cls: Type, type_: Type) -> None:
 def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
     """Registers one or more classes with a YAtiML loader.
 
-    Once a class has been registered, it can be recognized and \
+    Once a class has been registered, it can be recognized and
     constructed when reading a YAML text.
 
     Args:
         loader_cls: The loader to register the classes with.
-        classes: The class(es) to register, a plain Python class or a \
+        classes: The class(es) to register, a plain Python class or a
                 list of them.
 
     .. warning::
@@ -252,12 +262,25 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
         loader_cls._registered_classes[tag] = class_
 
 
+class _AnyYAML:
+    """Dummy class for load_function default value."""
+
+
 T = TypeVar('T')
 
 
+# https://github.com/python/mypy/issues/3737
+@overload
+def load_function() -> Callable[[Union[str, Path, IO[AnyStr]]], Any]: ...
+
+
+@overload
 def load_function(
         result: Type[T], *args: Type
-        ) -> Callable[[Union[str, Path, IO[AnyStr]]], T]:
+        ) -> Callable[[Union[str, Path, IO[AnyStr]]], T]: ...
+
+
+def load_function(result=_AnyYAML, *args):     # type: ignore
     """Create a load function for the given type.
 
     This function returns a callable object which takes an input
@@ -320,10 +343,10 @@ def load_function(
         pass
 
     # add loaders for additional types
-    if UserLoader._registered_classes is None:
-        UserLoader._registered_classes = dict()
+    if UserLoader._additional_classes is None:
+        UserLoader._additional_classes = dict()
     UserLoader.add_constructor('!Path', PathConstructor())
-    UserLoader._registered_classes['!Path'] = Path
+    UserLoader._additional_classes[Path] = '!Path'
 
     additional_types = (Path,)
 
@@ -332,12 +355,16 @@ def load_function(
     if not (
             is_generic_mapping(result) or
             is_generic_sequence(result) or
-            is_generic_union(result)):
+            is_generic_union(result) or
+            result is Any):
         if result not in additional_types and result not in user_classes:
             user_classes.append(result)
 
     add_to_loader(UserLoader, user_classes)
-    set_document_type(UserLoader, result)
+    if result is _AnyYAML:
+        set_document_type(UserLoader, Any)      # type: ignore
+    else:
+        set_document_type(UserLoader, result)
 
     class LoadFunction:
         """Validates YAML input and constructs objects."""

@@ -3,31 +3,27 @@
 Development
 ***********
 
-To install yatiml in development mode, do:
+To get the source code from GitHub, you can do
 
 .. code-block:: console
 
   git clone git@github.com:yatiml/yatiml.git
   cd yatiml
-  pip install -e .[dev]
 
-The -e option links the installed files to the source files in the repository,
-rather than copying them, so that changes are reflected immediately in the
-installed copy. The additional ``[dev]`` installs the development tools, which
-you can then use as follows.
 
 Run tests (including coverage and type checking) with:
 
 .. code-block:: console
 
-  python setup.py test
+  pip install tox
+  tox
 
 
 A local copy of the documentation can be generated using:
 
 .. code-block:: console
 
-  python setup.py build_sphinx
+  tox -e docs
 
 
 Contributing
@@ -78,6 +74,15 @@ branching model. Making a release involves quite a few steps, so they're listed
 here to help make the process more reliable; this information is really only
 useful for the maintainers.
 
+Check metadata
+--------------
+
+- Check the metadata in ``setup.py``, and update as necessary.
+
+- Check the copyright date and owners in README.rst and docs/conf.py and update
+  as necessary.
+
+
 Update the changelog
 ....................
 
@@ -127,7 +132,7 @@ be run locally to test:
 
 .. code-block:: bash
 
-  python setup.py build_sphinx
+  tox -e docs
 
 It may give some warnings about missing references; they should disappear if
 you run the command a second time. Next, point your web browser to
@@ -139,8 +144,7 @@ Run tests
 .........
 
 Before we make a commit, the tests should be run, and this is a good idea anyway
-if we're making a release. So run ``python setup.py test`` and check that
-everything is in order.
+if we're making a release. So run ``tox`` and check that everything is in order.
 
 Commit the version update
 .........................

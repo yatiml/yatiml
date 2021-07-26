@@ -6,7 +6,7 @@ from pathlib import Path, PosixPath, WindowsPath
 from typing import Any, AnyStr, Callable, IO, List, Optional, Union, cast
 from typing_extensions import Type
 
-from ruamel import yaml
+import ruamel.yaml as yaml
 from ruamel.yaml.events import (
         AliasEvent, DocumentEndEvent, MappingEndEvent, MappingStartEvent,
         ScalarEvent, SequenceEndEvent, SequenceStartEvent)
@@ -163,13 +163,18 @@ class Dumper(yaml.RoundTripDumper):
             self.stream.write(' ' * self._cur_indent)
 
 
+Dumper.add_representer(OrderedDict, Dumper.represent_ordereddict)
+Dumper.add_representer(PosixPath, PathRepresenter())
+Dumper.add_representer(WindowsPath, PathRepresenter())
+
+
 # Python errors if we define classes as Union[List[Type], Type]
 # So List[Type] it is, and if the user ignores that and passes
 # a single class, it'll work anyway, with a little mypy override.
 def add_to_dumper(dumper: Type, classes: List[Type]) -> None:
     """Register user-defined classes with the Dumper.
 
-    This enables the Dumper to write objects of your classes to a \
+    This enables the Dumper to write objects of your classes to a
     YAML file. Note that all the arguments are types, not instances!
 
     Args:
@@ -233,11 +238,6 @@ def dumps_function(*args: Type) -> Callable[[Any], str]:
     """
     class UserDumper(Dumper):
         pass
-
-    UserDumper.add_representer(
-            OrderedDict, Dumper.represent_ordereddict)
-    UserDumper.add_representer(PosixPath, PathRepresenter())
-    UserDumper.add_representer(WindowsPath, PathRepresenter())
 
     add_to_dumper(UserDumper, list(args))
 
@@ -304,9 +304,6 @@ def dump_function(
     """
     class UserDumper(Dumper):
         pass
-
-    UserDumper.add_representer(PosixPath, PathRepresenter())
-    UserDumper.add_representer(WindowsPath, PathRepresenter())
 
     add_to_dumper(UserDumper, list(args))
 

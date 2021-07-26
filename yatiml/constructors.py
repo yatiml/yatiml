@@ -14,7 +14,7 @@ from yatiml.exceptions import RecognitionError
 from yatiml.introspection import class_subobjects
 from yatiml.util import (
         bool_union_fix, generic_type_args, is_generic_sequence,
-        is_generic_mapping, is_generic_union)
+        is_generic_mapping, is_generic_union, strip_tags)
 
 if TYPE_CHECKING:
     from yatiml.loader import Loader  # noqa: F401
@@ -37,21 +37,21 @@ class Constructor:
                  node: yaml.Node) -> Generator[Any, None, None]:
         """Construct an object from a yaml node.
 
-        This constructs an object of the user-defined type that this \
-        is the constructor for. It is registered with the yaml library, \
-        and called by it. Recursion is handled by calling the yaml \
-        library, so we only need to construct an object using the keys \
-        and values of the given MappingNode, and those values have been \
+        This constructs an object of the user-defined type that this
+        is the constructor for. It is registered with the yaml library,
+        and called by it. Recursion is handled by calling the yaml
+        library, so we only need to construct an object using the keys
+        and values of the given MappingNode, and those values have been
         converted recursively for us.
 
-        Since Python does not do type checks, we do a type check \
-        manually, to ensure that the class's constructor gets the types \
-        it expects. This avoids confusing errors, but moreover is a \
-        security feature that ensures that regardless of the content \
-        of the YAML file, we produce the objects that the programmer \
+        Since Python does not do type checks, we do a type check
+        manually, to ensure that the class's constructor gets the types
+        it expects. This avoids confusing errors, but moreover is a
+        security feature that ensures that regardless of the content
+        of the YAML file, we produce the objects that the programmer
         defined and expects.
 
-        Note that this yields rather than returns, in a somewhat odd \
+        Note that this yields rather than returns, in a somewhat odd
         way. That's directly from the PyYAML/ruamel.yaml documentation.
 
         Args:
@@ -68,6 +68,8 @@ class Constructor:
                 ('{}{}Expected a MappingNode. There'
                  ' is probably something wrong with your _yatiml_savorize()'
                  ' function.').format(node.start_mark, os.linesep))
+
+        self.__loader = loader
 
         # figure out which keys are extra and strip them of tags
         # to prevent constructing objects we haven't type checked
@@ -119,7 +121,7 @@ class Constructor:
 
         Stops at anything that isn't a sequence or a mapping.
 
-        One day, we'll extract the comments and formatting and store \
+        One day, we'll extract the comments and formatting and store
         them out-of-band.
 
         Args:
@@ -148,14 +150,14 @@ class Constructor:
                                      known_attrs: List[str]) -> CommentedMap:
         """Separates the extra attributes in mapping into _yatiml_extra.
 
-        This returns a mapping containing all key-value pairs from \
-        mapping whose key is in known_attrs, and an additional key \
-        _yatiml_extra which maps to a dict containing the remaining \
+        This returns a mapping containing all key-value pairs from
+        mapping whose key is in known_attrs, and an additional key
+        _yatiml_extra which maps to a dict containing the remaining
         key-value pairs.
 
         Args:
             mapping: The mapping to split
-            known_attrs: Attributes that should be kept in the main \
+            known_attrs: Attributes that should be kept in the main
                     map, and not moved to _yatiml_extra.
 
         Returns:
@@ -175,7 +177,7 @@ class Constructor:
     def __type_matches(self, obj: Any, type_: Type) -> bool:
         """Checks that the object matches the given type.
 
-        Like isinstance(), but will work with union types using Union, \
+        Like isinstance(), but will work with union types using Union,
         Dict and List.
 
         Args:
@@ -208,6 +210,8 @@ class Constructor:
             return True
         elif type_ is bool_union_fix:
             return isinstance(obj, bool)
+        elif type_ is Any:
+            return True
         else:
             return isinstance(obj, type_)
 
@@ -221,7 +225,7 @@ class Constructor:
             mapping: The mapping with subobjects of this object.
 
         Raises:
-            RecognitionError: if an attribute is missing or the type \
+            RecognitionError: if an attribute is missing or the type
                 is incorrect.
         """
         logger.debug('Checking presence of required attributes')
@@ -242,16 +246,16 @@ class Constructor:
                                 argspec: inspect.FullArgSpec) -> None:
         """Ensure all attributes have a matching constructor argument.
 
-        This checks that there is a constructor argument with a \
+        This checks that there is a constructor argument with a
         matching type for each existing attribute.
 
-        If the class has a _yatiml_extra attribute, then extra \
+        If the class has a _yatiml_extra attribute, then extra
         attributes are okay and no error will be raised if they exist.
 
         Args:
             node: The node we're processing
             mapping: The mapping with constructed subobjects
-            constructor_attrs: The attributes of the constructor, \
+            constructor_attrs: The attributes of the constructor,
                     including self and _yatiml_extra, if applicable
         """
         logger.debug('Checking for extraneous attributes')
@@ -269,21 +273,21 @@ class Constructor:
                          node.start_mark, os.linesep, key,
                          self.class_.__name__))
 
-            if key in argspec.args and not self.__type_matches(
-                    value, argspec.annotations[key]):
-                raise RecognitionError(('{}{}Expected attribute {} to be of'
-                                        ' type {} but it is a(n) {}').format(
-                                            node.start_mark, os.linesep, key,
-                                            argspec.annotations[key],
-                                            type(value)))
+            if key in argspec.args and key in argspec.annotations:
+                if not self.__type_matches(value, argspec.annotations[key]):
+                    raise RecognitionError(
+                            ('{}{}Expected attribute {} to be of type {} but'
+                             ' it is a(n) {}').format(
+                                    node.start_mark, os.linesep, key,
+                                    argspec.annotations[key], type(value)))
 
     def __strip_extra_attributes(self, node: yaml.Node,
                                  known_attrs: List[str]) -> None:
         """Strips tags from extra attributes.
 
-        This prevents nodes under attributes that are not part of our \
-        data model from being converted to objects. They'll be plain \
-        CommentedMaps instead, which then get converted to OrderedDicts \
+        This prevents nodes under attributes that are not part of our
+        data model from being converted to objects. They'll be plain
+        CommentedMaps instead, which then get converted to OrderedDicts
         for the user.
 
         Args:
@@ -308,30 +312,13 @@ class Constructor:
                      ' string are not supported by YAtiML.').format(
                          node.start_mark, os.linesep))
             if key_node.value not in known_keys:
-                self.__strip_tags(value_node)
-
-    def __strip_tags(self, node: yaml.Node) -> None:
-        """Strips tags from mappings in the tree headed by node.
-
-        This keeps yaml from constructing any objects in this tree.
-
-        Args:
-            node: Head of the tree to strip
-        """
-        if isinstance(node, yaml.SequenceNode):
-            for subnode in node.value:
-                self.__strip_tags(subnode)
-        elif isinstance(node, yaml.MappingNode):
-            node.tag = 'tag:yaml.org,2002:map'
-            for key_node, value_node in node.value:
-                self.__strip_tags(key_node)
-                self.__strip_tags(value_node)
+                strip_tags(self.__loader, value_node)
 
 
 class EnumConstructor:
     """A constructor for user enum classes to register with YAML.
 
-    This constructor should be used in place of Constructor for enums, \
+    This constructor should be used in place of Constructor for enums,
     i.e. classes derived from enum.Enum.
     """
 
@@ -347,11 +334,11 @@ class EnumConstructor:
                  node: yaml.Node) -> Generator[Any, None, None]:
         """Construct an enum value from a yaml node.
 
-        This constructs an object of the user-defined enum that this \
-        is the constructor for. It is registered with the yaml library, \
+        This constructs an object of the user-defined enum that this
+        is the constructor for. It is registered with the yaml library,
         and called by it.
 
-        Note that this yields rather than returns, in a somewhat odd \
+        Note that this yields rather than returns, in a somewhat odd
         way. That's directly from the PyYAML/ruamel.yaml documentation.
 
         Args:
@@ -384,8 +371,8 @@ class EnumConstructor:
 class UserStringConstructor:
     """A constructor for user-defined string classes to register with YAML.
 
-    This constructor should be used in place of Constructor for \
-    user-defined strings, i.e. classes derived from str or \
+    This constructor should be used in place of Constructor for
+    user-defined strings, i.e. classes derived from str or
     collections.UserString.
     """
 
@@ -401,11 +388,11 @@ class UserStringConstructor:
                  node: yaml.Node) -> Generator[Any, None, None]:
         """Construct an user string value from a yaml node.
 
-        This constructs an object of the user-defined string class that \
-        this is the constructor for. It is registered with the yaml \
+        This constructs an object of the user-defined string class that
+        this is the constructor for. It is registered with the yaml
         library, and called by it.
 
-        Note that this yields rather than returns, in a somewhat odd \
+        Note that this yields rather than returns, in a somewhat odd
         way. That's directly from the PyYAML/ruamel.yaml documentation.
 
         Args:

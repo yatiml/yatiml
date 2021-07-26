@@ -6,12 +6,12 @@
     :target: https://github.com/yatiml/yatiml/actions
     :alt: Build Status
 
-.. image:: https://api.codacy.com/project/badge/Grade/e9cf088f3f6d44cc82fd6aead08202e1
-    :target: https://www.codacy.com/app/LourensVeen/yatiml
+.. image:: https://app.codacy.com/project/badge/Grade/bca7a121d9c742d2905eae08a75676c3
+    :target: https://www.codacy.com/gh/yatiml/yatiml/dashboard
     :alt: Codacy Grade
 
-.. image:: https://api.codacy.com/project/badge/Coverage/e9cf088f3f6d44cc82fd6aead08202e1
-    :target: https://www.codacy.com/app/LourensVeen/yatiml
+.. image:: https://app.codacy.com/project/badge/Coverage/bca7a121d9c742d2905eae08a75676c3
+    :target: https://www.codacy.com/gh/yatiml/yatiml/dashboard
     :alt: Code Coverage
 
 .. image:: https://requires.io/github/yatiml/yatiml/requirements.svg?branch=master
@@ -28,63 +28,32 @@
 YAtiML
 ################################################################################
 
-YAtiML is a small Python library that works with ruamel.yaml, adding functions
-for automatic type recognition to it. YAtiML is not a schema language like XSD
-and Relax-NG are for XML, or JSON Schema is for JSON. YAtiML is also not an
-Object/YAML mapper (YAML is already an object serialisation system, so you don't
-need an extra library for that). However, YAtiML does solve the same kind of
-problems, and more, so if you are looking for a schema language for YAML, YAtiML
-may actually be what you need.
-
-If you use YAtiML for scientific work, we ask that you cite it. Click the
-`rsd` badge above to download a citation file in your favourite format.
-
-How it works
-************
-
 YAML-based file formats can be very handy, as YAML is easy to write by humans,
 and parsing support for it is widely available. Just read your YAML file into a
 document structure (a tree of nested dicts and lists), and manipulate that in
 your code.
 
-While this works fine for simple file formats, it does not scale very well to
-more complex file formats such as the Common Workflow Language (CWL) or the
-Multiscale Computing Language (yMCL). Manual error-checking is lots of work and
-error-prone, defaults are not set automatically (which is especially tricky if
-you have multiple nested optional objects), and the file format often ends up
-somewhat underspecified.
+As long as that YAML file contains exactly what you expect, that works fine.
+But if it contains a mistake, then you're likely to crash the program with a
+cryptic error message, or worse (especially if the YAML file was loaded from the
+Internet) it may do something unexpected.
 
-Furthermore, a small collection of nested dicts and lists may work fine, but for
-more complex file formats, this becomes unwieldy and a set of objects is a
-better choice. Although it is not often used this way, YAML is actually a fully
-fledged object-to-text serialisation protocol. The Python yaml and ruamel.yaml
-libraries will actually construct objects for you, but the class names need to
-be put in the YAML file for that to work, which makes those files harder to
-read and write for humans.
+To avoid that, you can validate your YAML using various schema checkers. You
+write a description of what your YAML file must look like, then feed that to a
+library which checks the incoming file against the description. That gives you a
+better error message, but it's a lot of work.
 
-With YAtiML, you describe your file format by defining a set of ordinary Python
-classes. You then create a Loader class, which you can then use with the normal
-ruamel.yaml.load(). However, objects of the types you have defined will now be
-recognised automatically in the input YAML text, a type check will be performed
-so that you can be sure that you're getting what you were expecting, and the
-resulting data structure will consist of instances of your classes. Also, with a
-few lines of extra code, you can add some syntactic sugar to the YAML text
-format, making it easier for your users to write files in your format by hand in
-a variety of ways, while you still get consistent objects. Of course, YAtiML
-supports the reverse as well, making a Dumper for you to use with yaml.dump(),
-which ensures an easy-to-read, clean YAML output.
+YAtiML takes a different approach. Instead of a schema, you write a Python
+class. You probably already know how to do that, so no need to learn anything.
+YAtiML then generates loading and dumping functions for you, which convert
+between YAML and Python objects. If needed, you can add some extra code to make
+the YAML look nicer or implement special features.
 
-There are still some limitations on round-tripping data, so reading a YAML file
-and then saving it again may change the order of attributes, and will strip
-comments. Round-trip support is still in development in ruamel.yaml, and there
-is not much YAtiML can do to improve this at the moment. YAtiML does contribute
-a small but important feature to generating YAML files by your software:
-attributes will be written out in the order in which you've defined them, rather
-than in random order, which really improves the readability of the result
-(assuming that the order of your definition is logical, of course.)
+YAtiML supports Python 3.6 and later.
 
-YAtiML supports Python 3.5 and later.
-
+If you use YAtiML for scientific work, we ask that you cite it. You can
+`download a citation in various formats at the Research Software Directory
+<https://www.research-software.nl/software/yatiml>`_.
 
 Documentation and Help
 **********************
@@ -141,7 +110,7 @@ With that, we should be able to fix the problem.
 License
 *******
 
-YAtiML is Copyright 2018, Netherlands eScience Center, University of Amsterdam,
-and VU University Amsterdam
+YAtiML is Copyright 2018-2021, Netherlands eScience Center, University of
+Amsterdam, and VU University Amsterdam
 
 Distributed under the Apache Software License 2.0.

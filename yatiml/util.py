@@ -6,6 +6,8 @@ from typing import (
         Sequence, Union)
 from typing_extensions import Type
 
+import ruamel.yaml as yaml
+
 
 class bool_union_fix:
     pass
@@ -21,6 +23,7 @@ scalar_type_to_tag = {
     type(None): 'tag:yaml.org,2002:null',
     date: 'tag:yaml.org,2002:timestamp'
     }
+
 
 ScalarType = Union[str, int, float, bool, None]
 
@@ -166,8 +169,8 @@ def generic_type_args(type_: Type) -> List[Type]:
 def type_to_desc(type_: Type) -> str:
     """Convert a type to a human-readable description.
 
-    This is used for generating nice error messages. We want users \
-    to see a nice readable text, rather than something like \
+    This is used for generating nice error messages. We want users
+    to see a nice readable text, rather than something like
     "typing.List<~T>[str]".
 
     Args:
@@ -199,6 +202,9 @@ def type_to_desc(type_: Type) -> str:
         return 'dict of string to ({})'.format(
                 type_to_desc(generic_type_args(type_)[1]))
 
+    if type_ is Any:
+        return 'string, int, float, boolean, null value, list or dict'
+
     return type_.__name__
 
 
@@ -212,3 +218,27 @@ def is_string_like(type_: Type) -> bool:
         type_: The type to check.
     """
     return issubclass(type_, (str, UserString, String))
+
+
+def strip_tags(resolver: yaml.VersionedResolver, node: yaml.Node) -> None:
+    """Strips tags from mappings in the tree headed by node.
+
+    This keeps yaml from constructing any objects in this tree.
+
+    Args:
+        resolver: Resolver to tag scalar nodes with
+        node: Head of the tree to strip
+    """
+    if isinstance(node, yaml.ScalarNode):
+        if not node.tag.startswith('tag:yaml.org,2002:'):
+            node.tag = resolver.resolve(
+                    yaml.ScalarNode, node.value, (True, False))
+    elif isinstance(node, yaml.SequenceNode):
+        node.tag = 'tag:yaml.org,2002:seq'
+        for subnode in node.value:
+            strip_tags(resolver, subnode)
+    elif isinstance(node, yaml.MappingNode):
+        node.tag = 'tag:yaml.org,2002:map'
+        for key_node, value_node in node.value:
+            strip_tags(resolver, key_node)
+            strip_tags(resolver, value_node)

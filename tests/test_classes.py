@@ -1,20 +1,19 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """Tests for the yatiml module."""
 from collections import OrderedDict
-from typing import Dict, List
+import sys
+from typing import Any, Dict, List, Union
 
 import pytest  # type: ignore
 import yatiml
 
-from .conftest import (BrokenPrivateAttributes, Circle, Color, Color2,
-                       ComplexPrivateAttributes, ConstrainedString,
-                       DashedAttribute, DictAttribute, Document1, Document2,
-                       Document3, Document4, Ellipse, Extensible, Postcode,
-                       PrivateAttributes, Raises, Rectangle, Shape, StringLike,
-                       SubA, SubA2, SubB, SubB2, Super, Super2, UnionAttribute,
-                       Universal, Vector2D)
+from .conftest import (
+        BrokenPrivateAttributes, Circle, Color, Color2,
+        ComplexPrivateAttributes, ConstrainedString, DashedAttribute,
+        DictAttribute, Document1, Document2, Document3, Document4, Document5,
+        Document6, Ellipse, Extensible, Postcode, PrivateAttributes, Raises,
+        Rectangle, Shape, StringLike, SubA, SubA2, SubA3, SubB, SubB2, SubB3,
+        Super, Super2, Super3, Super3Clone, Super4, Super5, Sub45,
+        UnionAttribute, Universal, Vector2D)
 
 
 def test_load_class() -> None:
@@ -48,6 +47,17 @@ def test_recognize_subclass() -> None:
     assert isinstance(data, Shape)
     assert data.center.x == 10.0
     assert data.center.y == 12.3
+
+
+def test_missing_attribute_class() -> None:
+    # omitting Vector2D from the list here
+    load = yatiml.load_function(
+            Document2, Color2, Shape, Rectangle, Circle)
+    with pytest.raises(yatiml.RecognitionError):
+        load(
+                'cursor_at:\n'
+                '  x: 42.0\n'
+                '  y: 42.1\n')
 
 
 def test_missing_attribute() -> None:
@@ -128,6 +138,119 @@ def test_missing_discriminator() -> None:
         load('subclas: A')
 
 
+def test_any_typed_attributes() -> None:
+    load = yatiml.load_function(Document5)
+    text = (
+            'attr1: 10\n'
+            'attr2: test\n')
+    data = load(text)
+    assert data.attr1 == 10
+    assert data.attr2 == 'test'
+
+    text = (
+            'attr1: [10, 13]\n'
+            'attr2:\n'
+            '    x: 12.4\n'
+            '    y: 78.9\n')
+    data = load(text)
+    assert data.attr1 == [10, 13]
+    assert isinstance(data.attr2, dict)
+    assert data.attr2['x'] == 12.4
+    assert data.attr2['y'] == 78.9
+
+
+def test_any_object_tag_strip() -> None:
+    load = yatiml.load_function(Document5)
+    text = (
+            'attr1: test\n'
+            'attr2: !Document5\n'
+            '    attr1: 3\n'
+            '    attr2: test')
+    data = load(text)
+    assert isinstance(data, Document5)
+    assert isinstance(data.attr2, dict)
+
+    assert 'attr1' in data.attr2
+    assert isinstance(data.attr2['attr1'], int)
+    assert data.attr2['attr1'] == 3
+
+    assert 'attr2' in data.attr2
+    assert isinstance(data.attr2['attr2'], str)
+    assert data.attr2['attr2'] == 'test'
+
+
+def test_any_document() -> None:
+    load = yatiml.load_function(Any)
+    text = '42'
+    data = load(text)
+    assert data == 42
+
+
+def test_dump_any() -> None:
+    dumps = yatiml.dumps_function(Document5)
+    data = Document5(42, 'YAtiML')
+    text = dumps(data)
+    assert text == (
+            'attr1: 42\n'
+            'attr2: YAtiML\n')
+
+
+def test_untyped_attributes() -> None:
+    load = yatiml.load_function(Document6)
+    text = (
+            'attr1: test\n'
+            'attr2: [12, 76]')
+    data = load(text)
+    assert isinstance(data, Document6)
+    assert isinstance(data.attr1, str)
+    assert data.attr1 == 'test'
+    assert isinstance(data.attr2, list)
+    assert data.attr2 == [12, 76]
+
+
+def test_missing_untyped_attributes() -> None:
+    load = yatiml.load_function(Document6)
+    text = 'attr2: x'
+    with pytest.raises(yatiml.RecognitionError):
+        load(text)
+
+
+def test_untyped_attributes_tag_strip() -> None:
+    load = yatiml.load_function(Document6)
+    text = (
+            'attr1: test\n'
+            'attr2: !Document6\n'
+            '    attr1: 3\n'
+            '    attr2: test')
+    data = load(text)
+    assert isinstance(data, Document6)
+    assert isinstance(data.attr2, dict)
+
+    assert 'attr1' in data.attr2
+    assert isinstance(data.attr2['attr1'], int)
+    assert data.attr2['attr1'] == 3
+
+    assert 'attr2' in data.attr2
+    assert isinstance(data.attr2['attr2'], str)
+    assert data.attr2['attr2'] == 'test'
+
+
+def test_untyped_document() -> None:
+    load = yatiml.load_function()
+    text = 'Testing!'
+    data = load(text)
+    assert data == 'Testing!'
+
+
+def test_dump_untyped() -> None:
+    dumps = yatiml.dumps_function(Document6)
+    data = Document6(24, 'LMitAY')
+    text = dumps(data)
+    assert text == (
+            'attr1: 24\n'
+            'attr2: LMitAY\n')
+
+
 def test_yatiml_extra() -> None:
     load = yatiml.load_function(Extensible)
     data = load(
@@ -176,11 +299,11 @@ def test_missing_class() -> None:
 
 
 def test_user_class_override() -> None:
-    load = yatiml.load_function(Super, SubA, SubB)
+    load = yatiml.load_function(Super3, SubA3, SubB3)
     data = load(
-            '!SubA\n'
-            'subclass: x\n')
-    assert isinstance(data, SubA)
+            '!SubA3\n'
+            'attr: x\n')
+    assert isinstance(data, SubA3)
 
 
 def test_user_class_override2() -> None:
@@ -189,6 +312,42 @@ def test_user_class_override2() -> None:
             '!Super\n'
             'subclass: A\n')
     assert isinstance(data, Super)
+
+
+def test_user_class_conflicting_override() -> None:
+    load = yatiml.load_function(Super2, SubA2, SubB2, Ellipse)
+    with pytest.raises(yatiml.RecognitionError):
+        load(
+                '!Ellipse\n'
+                'subclass: A2\n')
+
+
+def test_user_class_unknown_override() -> None:
+    load = yatiml.load_function(Super2, SubA2, SubB2)
+    with pytest.raises(yatiml.RecognitionError):
+        load(
+                '!Ellipse\n'
+                'subclass: A2\n')
+
+
+def test_disambiguated_union() -> None:
+    load = yatiml.load_function(
+            Union[Super3, Super3Clone], Super3, Super3Clone)
+    with pytest.raises(yatiml.RecognitionError):
+        load(
+                'attr: X\n')
+
+    data = load(
+            '!Super3\n'
+            'attr: X\n')
+    assert isinstance(data, Super3)
+    assert not isinstance(data, Super3Clone)
+
+
+def test_different_recognitions_of_the_same_type() -> None:
+    load = yatiml.load_function(Union[Super4, Super5], Super4, Super5, Sub45)
+    data = load('attr: 42')
+    assert isinstance(data, Sub45)
 
 
 def test_savorize() -> None:
@@ -612,3 +771,22 @@ def test_dump_parsed_class_json() -> None:
     dumps = yatiml.dumps_json_function(Postcode)
     text = dumps(Postcode(1098, 'XG'))
     assert text == '"1098 XG"'
+
+
+if sys.version_info >= (3, 7):
+
+    from .conftest import DataClass
+
+    def test_load_data_class() -> None:
+        load = yatiml.load_function(DataClass)
+        data = load('attr1: test_value')
+        assert isinstance(data, DataClass)
+        assert data.attr1 == 'test_value'
+        assert data.attr2 == 42
+
+    def test_dump_data_class() -> None:
+        dumps = yatiml.dumps_function(DataClass)
+        text = dumps(DataClass('test'))
+        assert text == (
+                'attr1: test\n'
+                'attr2: 42\n')

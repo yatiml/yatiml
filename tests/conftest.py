@@ -2,6 +2,7 @@ import enum
 import math
 from collections import OrderedDict, UserString
 from pathlib import Path
+import sys
 from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Type
 
@@ -135,6 +136,18 @@ class Document4:
         node.remove_attributes_with_default_values(cls)
 
 
+class Document5:
+    def __init__(self, attr1: Any, attr2: Any) -> None:
+        self.attr1 = attr1
+        self.attr2 = attr2
+
+
+class Document6:
+    def __init__(self, attr1, attr2):
+        self.attr1 = attr1
+        self.attr2 = attr2
+
+
 class Super:
     def __init__(self, subclass: str) -> None:
         pass
@@ -195,6 +208,39 @@ class SubB2(Super2):
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         node.set_attribute('subclass', 'B2')
+
+
+class Super3:
+    def __init__(self, attr: str) -> None:
+        self.attr = attr
+
+
+class SubA3(Super3):
+    pass
+
+
+class SubB3(Super3):
+    pass
+
+
+class Super3Clone:
+    def __init__(self, attr: str) -> None:
+        self.attr = attr
+
+
+class Super4:
+    def __init__(self, attr: int) -> None:
+        self.attr = attr
+
+
+class Super5:
+    def __init__(self, attr: int) -> None:
+        self.attr = attr
+
+
+class Sub45(Super4, Super5):
+    def __init__(self, attr: int) -> None:
+        self.attr = attr
 
 
 class Universal:
@@ -322,6 +368,15 @@ class Raises:
     def __init__(self, x: int) -> None:
         if x >= 10:
             raise RuntimeError('x must be less than 10')
+
+
+if sys.version_info >= (3, 7):
+    from dataclasses import dataclass
+
+    @dataclass
+    class DataClass:
+        attr1: str
+        attr2: int = 42
 
 
 @pytest.fixture
@@ -482,20 +537,26 @@ def scalar_node() -> yatiml.Node:
 
 
 @pytest.fixture
-def unknown_node(yaml_node: yaml.Node) -> yatiml.UnknownNode:
-    return yatiml.UnknownNode(Recognizer({}), yaml_node)
+def recognizer() -> Recognizer:
+    return Recognizer({}, {})
 
 
 @pytest.fixture
-def unknown_scalar_node() -> yatiml.UnknownNode:
+def unknown_node(
+        recognizer: Recognizer, yaml_node: yaml.Node) -> yatiml.UnknownNode:
+    return yatiml.UnknownNode(recognizer, yaml_node)
+
+
+@pytest.fixture
+def unknown_scalar_node(recognizer: Recognizer) -> yatiml.UnknownNode:
     ynode = yaml.ScalarNode('tag:yaml.org,2002:int', '23')
-    return yatiml.UnknownNode(Recognizer({}), ynode)
+    return yatiml.UnknownNode(recognizer, ynode)
 
 
 @pytest.fixture
-def unknown_sequence_node() -> yatiml.UnknownNode:
+def unknown_sequence_node(recognizer: Recognizer) -> yatiml.UnknownNode:
     ynode = yaml.SequenceNode('tag:yaml.org,2002:seq', [])
-    return yatiml.UnknownNode(Recognizer({}), ynode)
+    return yatiml.UnknownNode(recognizer, ynode)
 
 
 @pytest.fixture
