@@ -1,5 +1,5 @@
-.. image:: https://readthedocs.org/projects/yatiml/badge/?version=develop
-    :target: https://yatiml.readthedocs.io/en/latest/?badge=develop
+.. image:: https://readthedocs.org/projects/yatiml/badge/?version=latest
+    :target: https://yatiml.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Build Status
 
 .. image:: https://github.com/yatiml/yatiml/workflows/continuous_integration/badge.svg
@@ -14,8 +14,8 @@
     :target: https://www.codacy.com/gh/yatiml/yatiml/dashboard
     :alt: Code Coverage
 
-.. image:: https://requires.io/github/yatiml/yatiml/requirements.svg?branch=develop
-    :target: https://requires.io/github/yatiml/yatiml/requirements/?branch=develop
+.. image:: https://requires.io/github/yatiml/yatiml/requirements.svg?branch=master
+    :target: https://requires.io/github/yatiml/yatiml/requirements/?branch=master
     :alt: Requirements Status
 
 .. image:: https://zenodo.org/badge/147202299.svg
