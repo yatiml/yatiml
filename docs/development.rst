@@ -132,7 +132,7 @@ be run locally to test:
 
 .. code-block:: bash
 
-  python setup.py build_sphinx
+  tox -e docs
 
 It may give some warnings about missing references; they should disappear if
 you run the command a second time. Next, point your web browser to
@@ -144,8 +144,7 @@ Run tests
 .........
 
 Before we make a commit, the tests should be run, and this is a good idea anyway
-if we're making a release. So run ``python setup.py test`` and check that
-everything is in order.
+if we're making a release. So run ``tox`` and check that everything is in order.
 
 Commit the version update
 .........................
