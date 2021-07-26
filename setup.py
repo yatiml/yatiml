@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 from setuptools import setup
 
 with open('README.rst') as readme_file:
@@ -9,7 +6,7 @@ with open('README.rst') as readme_file:
 setup(
     name='yatiml',
     version='0.7.1.dev',
-    description="A library for making YAML-based file formats",
+    description="Reading, checking and writing YAML from Python",
     long_description=readme + '\n\n',
     author="Lourens Veen",
     author_email='l.veen@esciencecenter.nl',

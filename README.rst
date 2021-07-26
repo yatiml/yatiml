@@ -110,7 +110,7 @@ With that, we should be able to fix the problem.
 License
 *******
 
-YAtiML is Copyright 2018, Netherlands eScience Center, University of Amsterdam,
-and VU University Amsterdam
+YAtiML is Copyright 2018-2021, Netherlands eScience Center, University of
+Amsterdam, and VU University Amsterdam
 
 Distributed under the Apache Software License 2.0.
