@@ -10,7 +10,7 @@ class Genotype(enum.Enum):
     HETERO_SV = 'htz-sv'
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         # enum.Enum has a __members__ attribute which contains its
         # members, which we reverse here to make a look-up table that
         # converts values in the YAML file to names expected by YAtiML.
@@ -25,6 +25,6 @@ class Genotype(enum.Enum):
                 node.set_value(yaml_to_python[node.get_value()])
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         # Here we just use cls.__members__ directly to convert.
         node.set_value(cls.__members__[node.get_value()].value)

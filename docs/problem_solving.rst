@@ -190,7 +190,7 @@ or
 
 .. code-block:: python
 
-  TypeError: yatiml_savorize() missing 1 required positional argument: 'node'
+  TypeError: _yatiml_savorize() missing 1 required positional argument: 'node'
 
 then you have probably forgotten to add the ``@classmethod`` decorator to your
 ``_yatiml_recognize()`` or ``_yatiml_savorize()`` function.
