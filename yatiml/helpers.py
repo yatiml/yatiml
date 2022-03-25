@@ -96,7 +96,7 @@ class Node:
             return self.yaml_node.value in ['TRUE', 'True', 'true']
         if self.yaml_node.tag == 'tag:yaml.org,2002:null':
             return None
-        raise RuntimeError('This node with tag {} is not of the right type'
+        raise RuntimeError('This node with tag "{}" is not of the right type'
                            ' for get_value()'.format(self.yaml_node.tag))
 
     def set_value(self, value: ScalarType) -> None:
@@ -500,7 +500,7 @@ class Node:
             if key_attr_node.get_value() in seen_keys:
                 if strict:
                     raise SeasoningError(
-                        ('Found a duplicate key {}: {} when'
+                        ('Found a duplicate key "{}": {} when'
                          ' converting from sequence to mapping'.format(
                              key_attribute, key_attr_node.get_value())))
                 return
@@ -741,8 +741,8 @@ class Node:
         for key_node, value_node in attr_node.yaml_node.value:
             if not isinstance(value_node, yaml.MappingNode):
                 raise SeasoningError(
-                    ('Values must be mappings for attribute {}, but {} is not'
-                     ' a mapping.').format(attribute, value_node))
+                    ('Values must be mappings for attribute "{}", but {} is'
+                     ' not a mapping.').format(attribute, value_node))
 
             # filter out key atttribute
             value_node.value = [
@@ -1007,7 +1007,7 @@ class UnknownNode:
         ]
         if len(attr_nodes) == 0:
             raise RecognitionError(
-                ('{}{}Missing required attribute {}').format(
+                ('{}{}Missing required attribute "{}"').format(
                     self.yaml_node.start_mark, os.linesep, attribute))
         attr_node = attr_nodes[0]
 
@@ -1055,7 +1055,7 @@ class UnknownNode:
 
         if not found:
             raise RecognitionError(
-                ('{}{}Required attribute {} not found').format(
+                ('{}{}Required attribute "{}" not found').format(
                     self.yaml_node.start_mark, os.linesep, attribute))
 
     def require_attribute_value_not(
@@ -1092,5 +1092,5 @@ class UnknownNode:
 
         if not found:
             raise RecognitionError(
-                ('{}{}Required attribute {} not found').format(
+                ('{}{}Required attribute "{}" not found').format(
                     self.yaml_node.start_mark, os.linesep, attribute))
