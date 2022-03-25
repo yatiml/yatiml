@@ -32,8 +32,8 @@ class Loader(yaml.RoundTripLoader):
     .. warning::
 
         This class is **deprecated**, and will be removed in a
-        future version. You should use :meth:`load_function` or
-        :meth:`load_function` instead.
+        future version. You should use :meth:`load_function`
+        instead.
     """
     _registered_classes = None      # type: ClassVar[Dict[str, Type]]
     _additional_classes = None      # type: ClassVar[Dict[Type, str]]
