@@ -242,5 +242,12 @@ Make sure that the badges are set to develop, and that the version number is
 set to the next expected version x.y.{z+1}.dev (it's fine if x.{y+1}.0 is what
 ends up being released eventually). Then you can commit and continue developing.
 
+Update issues
+.............
+
+Go through the issues on GitHub and close the ones for which a fix was released.
+Or if they were created by someone else, ask the user to check that the new
+version solves their problem and then close the issue if it does.
+
 .. _`Git Flow`: http://nvie.com/posts/a-successful-git-branching-model/
 .. _`Semantic Versioning`: http://www.semver.org
