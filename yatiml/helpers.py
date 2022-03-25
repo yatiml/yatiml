@@ -1,3 +1,4 @@
+from copy import copy
 import os
 from typing import (  # noqa: F401
     Any,
@@ -886,7 +887,7 @@ class Node:
                 key_key = yaml.ScalarNode(
                         'tag:yaml.org,2002:str', key_attribute,
                         key_node.start_mark, key_node.end_mark)
-                new_mapping.value.append((key_key, key_node))
+                new_mapping.value.append((key_key, copy(key_node)))
 
             new_value.append((key_node, new_mapping))
 
