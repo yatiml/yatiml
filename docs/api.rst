@@ -35,13 +35,3 @@ Miscellaneous
 Deprecated
 ----------
 
-.. autoclass:: yatiml.Dumper
-    :exclude-members: emit, emit_json
-
-.. autofunction:: yatiml.add_to_dumper
-
-.. autoclass:: yatiml.Loader
-    :exclude-members: get_node, get_single_node
-
-.. autofunction:: yatiml.add_to_loader
-.. autofunction:: yatiml.set_document_type
