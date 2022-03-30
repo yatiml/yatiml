@@ -165,8 +165,8 @@ Fix badges
 
 The badges in the README.rst normally point to the development branch versions
 of everything. For the master branch, they should point to the master version.
-Note that for the ReadTheDocs badge, `develop` should be changed to `latest`,
-and that for Codacy there is only one badge, so no change is needed.
+Note that for the ReadTheDocs badge, ``develop`` should be changed to
+``latest``, and that for Codacy there is only one badge, so no change is needed.
 
 .. code-block:: bash
 
@@ -220,6 +220,74 @@ And if all seems well, we can upload to the real PyPI:
 .. code-block:: bash
 
   twine upload dist/yatiml-x.y.z*
+
+Update conda-forge feedstock
+............................
+
+(Note: we're skipping a local rerender here in favour of letting the conda-forge
+bot handle it on GitHub. If that becomes an issue we'll change it, but this way
+we don't need to have conda installed locally.)
+
+First, we need a fork of https://github.com/conda-forge/yatiml-feedstock, so
+create one if you don't have one yet, and clone it locally. Then
+
+.. code-block:: bash
+  git checkout main
+  git pull
+  git checkout -b release-x.y.z
+
+This creates a branch to work on. Next, we need to get a checksum for the
+package we uploaded to PyPI. In the main yatiml directory, run:
+
+.. code-block:: bash
+  sha256sum dist/yatiml-x.y.z.tar.gz
+
+Next, in ``yatiml-feedstock``, edit ``recipe/meta.yaml``:
+
+- Update to the new version at the top
+- Replace the checksum with the one for the new release
+
+We can then test the new build by running ``python3 build-locally.py``. This
+will build the package inside of a Docker container, so you need to have Docker
+installed and have a couple GB of free disk space.
+
+If it all works, then we can commit the changes to the local branch:
+
+.. code-block:: bash
+  git add recipe/meta.yaml
+  git commit -m 'Update to version x.y.z'
+  git push --set-upstream origin release-x.y.z
+
+Note that this pushes to the fork, not to ``conda-forge/yatiml-feedstock``,
+which is exactly what we want. Pushing to upstream directly will break the
+automation.
+
+Instead, go to the fork, and make a pull request for merging the changes into
+``conda-forge/yatiml-feedstock:main``. Run through the checklist in the
+template. To check whether the license file is included, in the yatiml
+directory do:
+
+.. code-block:: bash
+  tar tf dist/yatiml-x.y.z.tar.gz
+
+and check that LICENSE and NOTICE are both there.
+
+Add a ``@conda-forge-admin, please rerender`` to the text to rerender the
+feedstock. This will upgrade the auto-generated parts of ``meta.yaml`` to the
+latest configuration, so it adds another commit to the branch.
+
+So, wait for the ``conda-forge-linter`` to lint, and for ``conda-forge-admin``
+to rerender, and then merge the PR using the GitHub GUI. The new package will
+now be staged and built and copied over to the Anaconda repository. This may
+take a couple of hours, so don't worry if it doesn't appear immediately.
+
+As a final test, you can do:
+
+.. code-block:: bash
+  docker run -ti conda/miniconda3
+  # conda install -c conda-forge yatiml
+
+which should install the new version.
 
 Make a GitHub Release
 .....................
