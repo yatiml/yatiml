@@ -5,6 +5,33 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.9.0
+*****
+
+New functionality
+-----------------
+
+* Support for Python 3.10 (worked fine already, now official)
+* Error messages now quote attribute names, making them easier to read.
+
+
+Fixes
+-----
+
+* `map_attribute_to_index()` caused load failure for dictionaries indexed by
+  a user-defined string class.
+* All examples in the documentation now use the new `_yatiml_*` function names,
+  instead of the old ones without the leading underscore.
+
+
+Removed
+-------
+
+* Loader and Dumper classes, which were deprecated and broken in 0.8.0. Please
+  use the new `load_function`,   `dump_function` and `dumps_function` functions
+  instead.
+
+
 0.8.0
 *****
 
