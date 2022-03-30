@@ -134,11 +134,10 @@ be run locally to test:
 
   tox -e docs
 
-It may give some warnings about missing references; they should disappear if
-you run the command a second time. Next, point your web browser to
-``docs/_build/html/index.html`` and verify that the documentation built
-correctly. In particular, the new version number should be in the browser's
-title bar as well as in the blue box on the top left of the page.
+Next, point your web browser to ``docs/_build/index.html`` and verify that the
+documentation built correctly. In particular, the new version number should be
+in the browser's title bar as well as in the blue box on the top left of the
+page.
 
 Run tests
 .........
@@ -209,11 +208,14 @@ Then, we can upload to the test instance of PyPI:
 
   twine upload --repository-url https://test.pypi.org/legacy/ dist/yatiml-x.y.z*
 
-To test that we can install it, run this in a fresh virtualenv:
+To test that we can install it, run this in a fresh virtualenv. Note that the
+PyPI test server doesn't have the dependencies, so we need to install those from
+the production server first.
 
 .. code-block:: bash
 
-  python3 -m pip install --index-url https://test.pypi.org/simple/ yatiml
+  pip install 'ruamel.yaml<0.17' typing_extensions
+  pip install --index-url https://test.pypi.org/simple/ yatiml
 
 And if all seems well, we can upload to the real PyPI:
 
@@ -304,11 +306,14 @@ To continue developing, merge the release branch back into develop
 
   git checkout develop
   git merge --no-commit release-x.y.z
-  git push
 
 Make sure that the badges are set to develop, and that the version number is
 set to the next expected version x.y.{z+1}.dev (it's fine if x.{y+1}.0 is what
-ends up being released eventually). Then you can commit and continue developing.
+ends up being released eventually). Then you can commit and continue developing:
+
+.. code-block:: bash
+  git commit
+  git push
 
 Update issues
 .............
