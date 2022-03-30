@@ -295,7 +295,39 @@ Make a GitHub Release
 .....................
 
 Go to Releases on the GitHub page and make a new release from the tag. For the
-release notes, copy-paste from the CHANGELOG and convert from RST to Markdown.
+release notes, use this template and copy-paste the content from the CHANGELOG:
+
+.. code-block:: rst
+
+  # YAtiML
+  YAML-based file formats can be very handy, as YAML is easy to write by humans, and parsing support for it is widely available. Just read your YAML file into a document structure (a tree of nested dicts and lists), and manipulate that in your code.
+
+  As long as that YAML file contains exactly what you expect, that works fine. But if it contains a mistake, then you're likely to crash the program with a cryptic error message, or worse (especially if the YAML file was loaded from the Internet) it may do something unexpected.
+
+  To avoid that, you can validate your YAML using various schema checkers. You write a description of what your YAML file must look like, then feed that to a library which checks the incoming file against the description. That gives you a better error message, but it's a lot of work.
+
+  YAtiML takes a different approach. Instead of a schema, you write a Python class. You probably already know how to do that, so no need to learn anything. YAtiML then generates loading and dumping functions for you, which convert between YAML and Python objects. If needed, you can add some extra code to make the YAML look nicer or implement special features.
+
+  # <x.y.z>
+
+  ## Incompatible changes
+  * <change>
+
+  ## New functionality
+  * <new>
+
+  ## Fixes
+  * <fixed>
+
+  ## Removed
+  * <removed>
+
+The preamble is there because this text ends up on the Zenodo page, and people
+who end up there will probably want to know what it is before learning about the
+latest changes.
+
+There's no need to upload binaries, GitHub will create tar files with snapshots
+for Zenodo automatically, and we've already put things on PyPI and Conda.
 
 Merge release branch back into develop
 ......................................
