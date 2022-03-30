@@ -234,6 +234,7 @@ First, we need a fork of https://github.com/conda-forge/yatiml-feedstock, so
 create one if you don't have one yet, and clone it locally. Then
 
 .. code-block:: bash
+
   git checkout main
   git pull
   git checkout -b release-x.y.z
@@ -242,6 +243,7 @@ This creates a branch to work on. Next, we need to get a checksum for the
 package we uploaded to PyPI. In the main yatiml directory, run:
 
 .. code-block:: bash
+
   sha256sum dist/yatiml-x.y.z.tar.gz
 
 Next, in ``yatiml-feedstock``, edit ``recipe/meta.yaml``:
@@ -256,6 +258,7 @@ installed and have a couple GB of free disk space.
 If it all works, then we can commit the changes to the local branch:
 
 .. code-block:: bash
+
   git add recipe/meta.yaml
   git commit -m 'Update to version x.y.z'
   git push --set-upstream origin release-x.y.z
@@ -270,6 +273,7 @@ template. To check whether the license file is included, in the yatiml
 directory do:
 
 .. code-block:: bash
+
   tar tf dist/yatiml-x.y.z.tar.gz
 
 and check that LICENSE and NOTICE are both there.
@@ -286,6 +290,7 @@ take a couple of hours, so don't worry if it doesn't appear immediately.
 As a final test, you can do:
 
 .. code-block:: bash
+
   docker run -ti conda/miniconda3
   # conda install -c conda-forge yatiml
 
@@ -297,7 +302,7 @@ Make a GitHub Release
 Go to Releases on the GitHub page and make a new release from the tag. For the
 release notes, use this template and copy-paste the content from the CHANGELOG:
 
-.. code-block:: rst
+.. code-block:: markdown
 
   # YAtiML
   YAML-based file formats can be very handy, as YAML is easy to write by humans, and parsing support for it is widely available. Just read your YAML file into a document structure (a tree of nested dicts and lists), and manipulate that in your code.
@@ -344,6 +349,7 @@ set to the next expected version x.y.{z+1}.dev (it's fine if x.{y+1}.0 is what
 ends up being released eventually). Then you can commit and continue developing:
 
 .. code-block:: bash
+
   git commit
   git push
 
