@@ -10,10 +10,10 @@ class Color(enum.Enum):
     BLUE = 2
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         if node.is_scalar(str):
             node.set_value(node.get_value().upper())
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         node.set_value(node.get_value().lower())

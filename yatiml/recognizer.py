@@ -216,30 +216,34 @@ class Recognizer(IRecognizer):
                 if len(e.args) > 0:
                     message = ('Error recognizing a {}\n{}because of the'
                                ' following error(s): {}').format(
-                                   expected_type.__class__, loc_str,
+                                   expected_type.__name__, loc_str,
                                    indent(e.args[0], '    '))
                 else:
                     message = 'Error recognizing a {}\n{}'.format(
-                        expected_type.__class__, loc_str)
+                        expected_type.__name__, loc_str)
                 return set(), message
         else:
             if issubclass(expected_type, enum.Enum):
                 if (not isinstance(node, yaml.ScalarNode)
                         or node.tag != 'tag:yaml.org,2002:str'):
                     message = 'Expected an enum value from {}\n{}'.format(
-                        expected_type.__class__, loc_str)
+                        expected_type.__name__, loc_str)
                     return set(), message
             elif is_string_like(expected_type):
                 if (not isinstance(node, yaml.ScalarNode)
                         or node.tag != 'tag:yaml.org,2002:str'):
                     message = 'Expected a string matching {}\n{}'.format(
-                        expected_type.__class__, loc_str)
+                        expected_type.__name__, loc_str)
                     return set(), message
             else:
                 # auto-recognize based on constructor signature
                 if not isinstance(node, yaml.MappingNode):
-                    message = 'Expected a dict/mapping here\n{}'.format(
-                        loc_str)
+                    req_attrs = [
+                            a for a, t, r in class_subobjects(expected_type)
+                            if r]
+                    message = (
+                            'Expected a dict/mapping here with keys {}\n{}'
+                            ).format(req_attrs, loc_str)
                     return set(), message
 
                 for attr_name, type_, required in class_subobjects(
@@ -253,7 +257,7 @@ class Recognizer(IRecognizer):
                                 subnode.yaml_node, type_)
                             if len(recognized_types) == 0:
                                 message = ('Failed when checking attribute'
-                                           ' {}:\n{}').format(
+                                           ' "{}":\n{}').format(
                                                name, indent(message, '    '))
                                 return set(), message
                             break
@@ -261,10 +265,10 @@ class Recognizer(IRecognizer):
                         if required:
                             message = (
                                 'Error recognizing a {}\n{}because it'
-                                ' is missing an attribute named {}').format(
+                                ' is missing an attribute named "{}"').format(
                                     expected_type.__name__, loc_str, attr_name)
                             if '_' in attr_name:
-                                message += ' or maybe {}.\n'.format(
+                                message += ' or maybe "{}".\n'.format(
                                     attr_name.replace('_', '-'))
                             else:
                                 message += '.\n'
@@ -291,7 +295,8 @@ class Recognizer(IRecognizer):
         Returns:
             A list containing matched user-defined classes.
         """
-        logger.debug('Recognizing user class {}'.format(expected_type))
+        logger.debug('Recognizing user class {}'.format(
+            expected_type.__name__))
         recognized_subclasses = set()
         message = ''
         for other_class in self.__registered_classes.values():
@@ -303,7 +308,7 @@ class Recognizer(IRecognizer):
                     message += msg
 
         logger.debug('Recognized subclasses of {}: {}'.format(
-                expected_type, recognized_subclasses))
+                expected_type.__name__, recognized_subclasses))
 
         if len(recognized_subclasses) == 0:
             recognized_subclasses, msg = self.__recognize_user_class(
@@ -342,7 +347,8 @@ class Recognizer(IRecognizer):
                                ' a tag here claiming this is a(n) {}. That'
                                ' makes no sense.').format(
                                        node.start_mark, os.linesep,
-                                       expected_type, tagged_class)
+                                       expected_type.__name__,
+                                       tagged_class.__name__)
                     logger.debug(message)
                     return set(), message
             else:
@@ -350,7 +356,7 @@ class Recognizer(IRecognizer):
                            ' a tag here claiming this is a(n) {}, which type'
                            ' I don\'t know.').format(
                                    node.start_mark, os.linesep,
-                                   expected_type, node.tag[1:])
+                                   expected_type.__name__, node.tag[1:])
                 logger.debug(message)
                 return set(), message
 
@@ -403,7 +409,7 @@ class Recognizer(IRecognizer):
         if recognized_types is None:
             raise RecognitionError(
                 ('Could not recognize for type {},'
-                 ' is it registered?').format(expected_type))
+                 ' is it registered?').format(expected_type.__name__))
         logger.debug('Recognized types {} matching {}'.format(
             recognized_types, expected_type))
         return recognized_types, message

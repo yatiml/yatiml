@@ -231,13 +231,13 @@ class Constructor:
         logger.debug('Checking presence of required attributes')
         for name, type_, required in class_subobjects(self.class_):
             if required and name not in mapping:
-                raise RecognitionError(('{}{}Missing attribute {} needed for'
+                raise RecognitionError(('{}{}Missing attribute "{}" needed for'
                                         ' constructing a {}').format(
                                             node.start_mark, os.linesep, name,
                                             self.class_.__name__))
             if name in mapping and not self.__type_matches(
                     mapping[name], type_):
-                raise RecognitionError(('{}{}Attribute {} has incorrect type'
+                raise RecognitionError(('{}{}Attribute "{}" has incorrect type'
                                         ' {}, expecting a {}').format(
                                             node.start_mark, os.linesep, name,
                                             type(mapping[name]), type_))
@@ -268,7 +268,7 @@ class Constructor:
                                             node.start_mark, os.linesep))
             if key not in argspec.args and '_yatiml_extra' not in argspec.args:
                 raise RecognitionError(
-                    ('{}{}Found additional attributes ({})'
+                    ('{}{}Found additional attributes ("{}")'
                      ' and {} does not support those').format(
                          node.start_mark, os.linesep, key,
                          self.class_.__name__))
@@ -276,8 +276,8 @@ class Constructor:
             if key in argspec.args and key in argspec.annotations:
                 if not self.__type_matches(value, argspec.annotations[key]):
                     raise RecognitionError(
-                            ('{}{}Expected attribute {} to be of type {} but'
-                             ' it is a(n) {}').format(
+                            ('{}{}Expected attribute "{}" to be of type {}'
+                             ' but it is a(n) {}').format(
                                     node.start_mark, os.linesep, key,
                                     argspec.annotations[key], type(value)))
 
