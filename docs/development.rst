@@ -75,7 +75,7 @@ here to help make the process more reliable; this information is really only
 useful for the maintainers.
 
 Check metadata
---------------
+..............
 
 - Check the metadata in ``setup.py``, and update as necessary.
 
