@@ -14,7 +14,8 @@ __email__ = 'l.veen@esciencecenter.nl'
 from yatiml.exceptions import RecognitionError, SeasoningError
 from yatiml.loader import load_function
 from yatiml.dumper import (
-        dump_json_function, dumps_json_function, dump_function, dumps_function)
+        DumpJsonFunctionType, dump_json_function, DumpsJsonFunctionType,
+        dumps_json_function, dump_function, dumps_function)
 from yatiml.helpers import Node, UnknownNode
 from yatiml.util import bool_union_fix, String
 
@@ -37,5 +38,6 @@ or for even more::
 
 __all__ = [
     'logger', 'RecognitionError', 'SeasoningError', 'Node', 'UnknownNode',
-    'String', 'load_function', 'dump_json_function', 'dumps_json_function',
-    'dump_function', 'dumps_function', 'bool_union_fix']
+    'String', 'load_function', 'DumpJsonFunctionType', 'dump_json_function',
+    'DumpsJsonFunctionType', 'dumps_json_function', 'dump_function',
+    'dumps_function', 'bool_union_fix']
