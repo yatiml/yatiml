@@ -175,7 +175,7 @@ class Recognizer(IRecognizer):
         for possible_type in union_types:
             recognized_type, msg = self.recognize(node, possible_type)
             if len(recognized_type) == 0:
-                message += msg
+                message = '\n'.join((message, msg))
             recognized_types |= recognized_type
         if bool in recognized_types and bool_union_fix in recognized_types:
             recognized_types.remove(bool_union_fix)
@@ -215,7 +215,7 @@ class Recognizer(IRecognizer):
             except RecognitionError as e:
                 if len(e.args) > 0:
                     message = ('Error recognizing a {}\n{}because of the'
-                               ' following error(s): {}').format(
+                               ' following error(s):\n{}').format(
                                    expected_type.__name__, loc_str,
                                    indent(e.args[0], '    '))
                 else:
@@ -305,7 +305,7 @@ class Recognizer(IRecognizer):
                     node, other_class)
                 recognized_subclasses |= sub_subclasses
                 if len(sub_subclasses) == 0:
-                    message += msg
+                    message = '\n'.join((message, msg))
 
         logger.debug('Recognized subclasses of {}: {}'.format(
                 expected_type.__name__, recognized_subclasses))
@@ -314,7 +314,7 @@ class Recognizer(IRecognizer):
             recognized_subclasses, msg = self.__recognize_user_class(
                 node, expected_type)
             if len(recognized_subclasses) == 0:
-                message += msg
+                message = '\n'.join((message, msg))
 
         if len(recognized_subclasses) == 0:
             message = ('Failed to recognize a {}\n{}\nbecause of the following'
