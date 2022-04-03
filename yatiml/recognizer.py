@@ -172,15 +172,20 @@ class Recognizer(IRecognizer):
         message = ''
         union_types = generic_type_args(expected_type)
         logger.debug('Union types {}'.format(union_types))
-        for possible_type in union_types:
+        for i, possible_type in enumerate(union_types):
             recognized_type, msg = self.recognize(node, possible_type)
             if len(recognized_type) == 0:
-                message = '\n'.join((message, msg))
+                goal = '\n{}: {}'.format(i + 1, possible_type)
+                message = '\n'.join((message, goal, msg))
             recognized_types |= recognized_type
         if bool in recognized_types and bool_union_fix in recognized_types:
             recognized_types.remove(bool_union_fix)
 
         if len(recognized_types) == 0:
+            message = (
+                    'Expected one of the following types,'
+                    ' but failed to match all of them:{}').format(
+                        message)
             return recognized_types, message
         elif len(recognized_types) > 1:
             message = ('{}{}Could not determine which of the following types'
