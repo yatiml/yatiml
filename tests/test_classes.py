@@ -180,7 +180,11 @@ def test_any_object_tag_strip() -> None:
 
 
 def test_any_document() -> None:
-    load = yatiml.load_function(Any)
+    # mypy flags this because Any doesn't match Type[T]. The solution
+    # is in https://github.com/python/mypy/issues/9773, but that's
+    # waiting for a sufficiently round tuit. Meanwhile, we'll have to
+    # ignore the type check.
+    load = yatiml.load_function(Any)    # type: ignore
     text = '42'
     data = load(text)
     assert data == 42
@@ -331,11 +335,14 @@ def test_user_class_unknown_override() -> None:
 
 
 def test_disambiguated_union() -> None:
-    load = yatiml.load_function(
+    # mypy flags this because Union doesn't match Type[T]. The solution
+    # is in https://github.com/python/mypy/issues/9773, but that's
+    # waiting for a sufficiently round tuit. Meanwhile, we'll have to
+    # ignore the type check.
+    load = yatiml.load_function(    # type: ignore
             Union[Super3, Super3Clone], Super3, Super3Clone)
     with pytest.raises(yatiml.RecognitionError):
-        load(
-                'attr: X\n')
+        load('attr: X\n')
 
     data = load(
             '!Super3\n'
@@ -345,7 +352,12 @@ def test_disambiguated_union() -> None:
 
 
 def test_different_recognitions_of_the_same_type() -> None:
-    load = yatiml.load_function(Union[Super4, Super5], Super4, Super5, Sub45)
+    # mypy flags this because Union doesn't match Type[T]. The solution
+    # is in https://github.com/python/mypy/issues/9773, but that's
+    # waiting for a sufficiently round tuit. Meanwhile, we'll have to
+    # ignore the type check.
+    load = yatiml.load_function(    # type: ignore
+            Union[Super4, Super5], Super4, Super5, Sub45)
     data = load('attr: 42')
     assert isinstance(data, Sub45)
 

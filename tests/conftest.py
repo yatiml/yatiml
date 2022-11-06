@@ -143,7 +143,8 @@ class Document5:
 
 
 class Document6:
-    def __init__(self, attr1, attr2):
+    # type annotations are intentionally missing here
+    def __init__(self, attr1, attr2):   # type: ignore
         self.attr1 = attr1
         self.attr2 = attr2
 
