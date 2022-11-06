@@ -76,7 +76,7 @@ def is_generic_sequence(type_: Type) -> bool:
         # GenericMeta cannot be imported from typing, because it doesn't
         # exist in all versions, and it will fail the type check in those
         # versions as well, so we ignore it.
-        return (isinstance(type_, typing.GenericMeta) and
+        return (isinstance(type_, cast(Any, typing).GenericMeta) and
                 (
                     cast(Any, type_).__origin__ is List or
                     cast(Any, type_).__origin__ is Sequence or
@@ -106,7 +106,7 @@ def is_generic_mapping(type_: Type) -> bool:
                     type_.__origin__ is abc.MutableMapping))
     else:
         # 3.6 and earlier
-        return (isinstance(type_, typing.GenericMeta) and
+        return (isinstance(type_, cast(Any, typing).GenericMeta) and
                 (
                     cast(Any, type_).__origin__ is Dict or
                     cast(Any, type_).__origin__ is Mapping or

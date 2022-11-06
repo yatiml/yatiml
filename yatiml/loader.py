@@ -372,7 +372,9 @@ def load_function(result=_AnyYAML, *args):     # type: ignore
             """Create a LoadFunction."""
             self.loader = loader
 
-        def __call__(self, source: Union[str, Path, IO[AnyStr]]) -> T:
+        def __call__(
+                self, source: Union[str, Path, IO[AnyStr]]
+                ) -> T:  # type: ignore
             """Load a YAML document from a source.
 
             The source can be a string containing YAML, a pathlib.Path
