@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import enum
 import math
 from collections import OrderedDict, UserString
@@ -242,6 +243,24 @@ class Super5:
 class Sub45(Super4, Super5):
     def __init__(self, attr: int) -> None:
         self.attr = attr
+
+
+class Abstract(ABC):
+    def __init__(self, attr: int) -> None:
+        self.attr = attr
+
+    @abstractmethod
+    def abs_meth(self) -> None:
+        raise NotImplementedError()
+
+
+class Concrete(Abstract):
+    def __init__(self, attr: int, attr2: str) -> None:
+        super().__init__(attr)
+        self.attr2 = attr2
+
+    def abs_meth(self) -> None:
+        pass
 
 
 class Universal:

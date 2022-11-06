@@ -1,5 +1,5 @@
 import enum
-from inspect import isclass
+from inspect import isabstract, isclass
 import logging
 import os
 import pathlib
@@ -323,10 +323,14 @@ class Recognizer(IRecognizer):
                 expected_type.__name__, recognized_subclasses))
 
         if len(recognized_subclasses) == 0:
-            recognized_subclasses, msg = self.__recognize_user_class(
-                node, expected_type)
-            if len(recognized_subclasses) == 0:
-                message = '\n'.join((message, msg))
+            if not isabstract(expected_type):
+                recognized_subclasses, msg = self.__recognize_user_class(
+                    node, expected_type)
+                if len(recognized_subclasses) == 0:
+                    message = '\n'.join((message, msg))
+            else:
+                logger.debug('Not considering {} as it is abstract'.format(
+                    expected_type.__name__))
 
         if len(recognized_subclasses) == 0:
             message = ('Failed to recognize a {}\n{}\nbecause of the following'

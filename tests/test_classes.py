@@ -7,8 +7,8 @@ import pytest  # type: ignore
 import yatiml
 
 from .conftest import (
-        BrokenPrivateAttributes, Circle, Color, Color2,
-        ComplexPrivateAttributes, ConstrainedString, DashedAttribute,
+        Abstract, BrokenPrivateAttributes, Circle, Color, Color2,
+        ComplexPrivateAttributes, Concrete, ConstrainedString, DashedAttribute,
         DictAttribute, Document1, Document2, Document3, Document4, Document5,
         Document6, Ellipse, Extensible, Postcode, PrivateAttributes, Raises,
         Rectangle, Shape, StringLike, SubA, SubA2, SubA3, SubB, SubB2, SubB3,
@@ -130,6 +130,18 @@ def test_parent_fallback() -> None:
     load = yatiml.load_function(Super, SubA, SubB)
     data = load('subclass: x')
     assert isinstance(data, Super)
+
+
+def test_abstract_base_class() -> None:
+    # mypy does not accept ABCs for Type[T], see
+    # https://github.com/python/mypy/issues/4717
+    load = yatiml.load_function(Abstract, Concrete)     # type: ignore
+    with pytest.raises(yatiml.RecognitionError):
+        load('attr: 13')
+
+    load(
+            'attr: 13\n'
+            'attr2: a\n')
 
 
 def test_missing_discriminator() -> None:
