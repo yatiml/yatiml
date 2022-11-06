@@ -217,6 +217,13 @@ class Recognizer(IRecognizer):
                 unode = UnknownNode(self, node)
                 expected_type._yatiml_recognize(unode)
                 return {expected_type}, ''
+            except TypeError as e:
+                raise RuntimeError(
+                        '{}._yatiml_recognize() is of the wrong type.'
+                        ' The correct type is _yatiml_recognize('
+                        'cls, node: yatiml.UnknownNode) -> None.'
+                        ' Or did you forget to make it a @classmethod?'.format(
+                                expected_type.__name__)) from e
             except RecognitionError as e:
                 if len(e.args) > 0:
                     message = ('Error recognizing a {}\n{}because of the'
