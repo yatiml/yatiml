@@ -328,7 +328,7 @@ class Node:
                     my_list = list()
                 self.my_list = my_list
 
-            _yatiml_defaults = {'my_list', []}  # type: Dict[str, Any]
+            _yatiml_defaults = {'my_list': []}  # type: Dict[str, Any]
 
             @classmethod
             def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
