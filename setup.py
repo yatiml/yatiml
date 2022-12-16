@@ -33,7 +33,7 @@ setup(
         'Programming Language :: Python :: 3.10'
     ],
     install_requires=[
-        'ruamel.yaml>=0.15.71,<0.17',
+        'ruamel.yaml>=0.15.71',
         'typing_extensions'
     ]
 )
