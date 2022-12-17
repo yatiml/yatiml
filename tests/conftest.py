@@ -94,10 +94,10 @@ class Color2(enum.Enum):
 
 
 class Document2:
-    def __init__(self, cursor_at: Vector2D, shapes: List[Shape] = None,
-                 color: Color2 = Color2.RED,
-                 extra_shape: Optional[Shape] = None
-                 ) -> None:
+    def __init__(
+            self, cursor_at: Vector2D, shapes: Optional[List[Shape]] = None,
+            color: Color2 = Color2.RED, extra_shape: Optional[Shape] = None
+            ) -> None:
         self.cursor_at = cursor_at
         self.shapes = shapes if shapes is not None else list()
         self.color = color
@@ -127,7 +127,7 @@ class Document3:
 
 
 class Document4:
-    def __init__(self, shapes: List[Shape] = None) -> None:
+    def __init__(self, shapes: Optional[List[Shape]] = None) -> None:
         self.shapes = shapes if shapes is not None else list()
 
     _yatiml_defaults = {'shapes': []}   # type: Dict[str, Any]
