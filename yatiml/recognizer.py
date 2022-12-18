@@ -1,6 +1,6 @@
 from abc import ABCMeta
 import enum
-from inspect import isabstract, isclass
+from inspect import isclass
 import logging
 import os
 import pathlib
@@ -17,7 +17,7 @@ from yatiml.introspection import class_subobjects
 from yatiml.irecognizer import IRecognizer, RecError, RecResult, REC_OK
 from yatiml.util import (
         bool_union_fix, cjoin, diagnose_missing_key, generic_type_args,
-        is_generic_mapping, is_generic_sequence, is_generic_union,
+        is_abstract, is_generic_mapping, is_generic_sequence, is_generic_union,
         is_string_like, scalar_type_to_tag, type_to_desc)
 
 
@@ -329,7 +329,7 @@ class Recognizer(IRecognizer):
                 expected_type.__name__, recognized_subclasses))
 
         if len(recognized_subclasses) == 0:
-            if not isabstract(expected_type):
+            if not is_abstract(expected_type):
                 recognized_subclasses, result = self.__recognize_user_class(
                     node, expected_type)
                 if len(recognized_subclasses) == 0:

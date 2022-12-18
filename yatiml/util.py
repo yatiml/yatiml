@@ -1,6 +1,8 @@
+from abc import ABC
 from collections import abc, UserString
 from difflib import get_close_matches
 from datetime import date
+from inspect import isabstract, isclass
 import typing
 from typing import (
         Any, cast, Dict, Iterable, Mapping, MutableMapping, MutableSequence,
@@ -48,6 +50,25 @@ class String:
     ``__hash__()`` and ``__eq__()`` to make that work on the Python side.
     """
     pass
+
+
+def is_abstract(type_: Type) -> bool:
+    """Determines whether a type is an abstract base class.
+
+    This is the case if it derives directly from abc.ABC, and/or if
+    it has @abstractmethods.
+
+    Args:
+        type_: The type to check.
+
+    Returns:
+        True iff it's an abstract base class.
+    """
+    if not isclass(type_):
+        return False
+    if isabstract(type_):
+        return True
+    return ABC in type_.__bases__
 
 
 def is_generic_sequence(type_: Type) -> bool:

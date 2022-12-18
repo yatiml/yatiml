@@ -27,9 +27,9 @@ YAtiML will automatically recognize which subclass matches the object actually
 specified in the list from the attributes that it has. If more than one subclass
 matches, it will give an error message stating that the file being read is
 ambiguous. If both a parent class and its child class match, YAtiML will prefer
-the child class, and not consider it ambiguous. Abstract base classes (ones with
-functions marked ``@abc.abstractmethod``) never match, as they cannot be
-instantiated.
+the child class, and not consider it ambiguous. Abstract base classes (ones
+inheriting from ``abc.ABC``, and/or with functions marked
+``@abc.abstractmethod``) never match, as they cannot be instantiated.
 
 Note that the child classes include the parent's class's ``center`` attribute in
 their ``__init__``, and pass it on using ``super()``. This is required, as
