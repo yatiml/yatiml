@@ -14,15 +14,14 @@
     :target: https://www.codacy.com/gh/yatiml/yatiml/dashboard
     :alt: Code Coverage
 
-.. image:: https://requires.io/github/yatiml/yatiml/requirements.svg?branch=develop
-    :target: https://requires.io/github/yatiml/yatiml/requirements/?branch=develop
-    :alt: Requirements Status
-
 .. image:: https://zenodo.org/badge/147202299.svg
    :target: https://zenodo.org/badge/latestdoi/147202299
 
 .. image:: https://img.shields.io/badge/rsd-yatiml-00a3e3.svg
    :target: https://www.research-software.nl/software/yatiml
+
+.. image:: https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow
+   :target: https://fair-software.eu
 
 ################################################################################
 YAtiML
