@@ -390,6 +390,23 @@ class Raises:
             raise RuntimeError('x must be less than 10')
 
 
+class ManyAttrs:
+    def __init__(
+            self, attr1: int, attr2: int, attr3: int, attr4: int, attr5: int,
+            attr6: int, attr7: int, test: str, testing: str, tested: str
+            ) -> None:
+        self.attr1 = attr1
+        self.attr2 = attr2
+        self.attr3 = attr3
+        self.attr4 = attr4
+        self.attr5 = attr5
+        self.attr6 = attr6
+        self.attr7 = attr7
+        self.test = test
+        self.testing = testing
+        self.tested = tested
+
+
 if sys.version_info >= (3, 7):
     from dataclasses import dataclass
 

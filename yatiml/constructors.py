@@ -13,8 +13,8 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from yatiml.exceptions import RecognitionError
 from yatiml.introspection import class_subobjects
 from yatiml.util import (
-        bool_union_fix, generic_type_args, is_generic_sequence,
-        is_generic_mapping, is_generic_union, strip_tags)
+        bool_union_fix, diagnose_missing_key, generic_type_args,
+        is_generic_sequence, is_generic_mapping, is_generic_union, strip_tags)
 
 if TYPE_CHECKING:
     from yatiml.loader import Loader  # noqa: F401
@@ -215,13 +215,14 @@ class Constructor:
         else:
             return isinstance(obj, type_)
 
-    def __check_no_missing_attributes(self, node: yaml.Node,
+    def __check_no_missing_attributes(self, node: yaml.MappingNode,
                                       mapping: CommentedMap) -> None:
         """Checks that all required attributes are present.
 
         Also checks that they're of the correct type.
 
         Args:
+            node: The node we're constructing an object from.
             mapping: The mapping with subobjects of this object.
 
         Raises:
@@ -231,10 +232,9 @@ class Constructor:
         logger.debug('Checking presence of required attributes')
         for name, type_, required in class_subobjects(self.class_):
             if required and name not in mapping:
-                raise RecognitionError(('{}{}Missing attribute "{}" needed for'
-                                        ' constructing a {}').format(
-                                            node.start_mark, os.linesep, name,
-                                            self.class_.__name__))
+                got = [kn.value for kn, _ in node.value]
+                msg = diagnose_missing_key(name, got, self.class_)
+                raise RecognitionError('{}\n{}'.format(node.start_mark, msg))
             if name in mapping and not self.__type_matches(
                     mapping[name], type_):
                 raise RecognitionError(('{}{}Attribute "{}" has incorrect type'

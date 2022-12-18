@@ -1,4 +1,5 @@
 from collections import abc, UserString
+from difflib import get_close_matches
 from datetime import date
 import typing
 from typing import (
@@ -7,6 +8,8 @@ from typing import (
 from typing_extensions import Type
 
 import ruamel.yaml as yaml
+
+from yatiml.introspection import class_subobjects
 
 
 class bool_union_fix:
@@ -242,3 +245,51 @@ def strip_tags(resolver: yaml.VersionedResolver, node: yaml.Node) -> None:
         for key_node, value_node in node.value:
             strip_tags(resolver, key_node)
             strip_tags(resolver, value_node)
+
+
+def diagnose_missing_key(
+        name: str, got: List[str], expected_type: Type) -> str:
+    """Helper that gives a good error when a key is missing.
+
+    Args:
+        name: Name of the missing required attribute
+        got: List of keys that were given by the user
+        expected_type: A user-defined class we expected to get
+    """
+    a = '"{}"'.format(name)
+    if '_' in name:
+        a += ' or maybe "{}"'.format(
+                name.replace('_', '-'))
+    expected_msg = 'Expected a key {} but it was not found.'.format(a)
+
+    expected_keys = [name for name, _, _ in class_subobjects(expected_type)]
+
+    similar = get_close_matches(name, got)
+    similar = [s for s in similar if s not in expected_keys]
+
+    if similar:
+        suggestions = ' or '.join(['"{}"'.format(s) for s in similar])
+        sug_msg = 'Maybe {} was intended to be {}? '.format(suggestions, a)
+    else:
+        all_keys = list(class_subobjects(expected_type))
+        if len(all_keys) < 8:
+            req_keys = [
+                    '"{}"'.format(name) for name, _, req in all_keys if req]
+            opt_keys = [
+                    '"{}"'.format(name) for name, _, req in all_keys
+                    if not req]
+            sug_msg = 'Keys {} are required here'.format(', '.join(req_keys))
+            if opt_keys:
+                sug_msg += ' and {} are optional'.format(', '.join(opt_keys))
+            g = ['"{}"'.format(g) for g in got]
+            sug_msg += ', but {}'.format(', '.join(g))
+            if len(got) > 1:
+                sug_msg += ' were given.'
+            else:
+                sug_msg += ' was given.'
+        else:
+            sug_msg = (
+                    'No similar keys were found either. Maybe it was forgotten'
+                    ' or the indentation is wrong here?')
+
+    return ' '.join((expected_msg, sug_msg))

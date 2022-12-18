@@ -10,9 +10,9 @@ from .conftest import (
         Abstract, BrokenPrivateAttributes, Circle, Color, Color2,
         ComplexPrivateAttributes, Concrete, ConstrainedString, DashedAttribute,
         DictAttribute, Document1, Document2, Document3, Document4, Document5,
-        Document6, Ellipse, Extensible, Postcode, PrivateAttributes, Raises,
-        Rectangle, Shape, StringLike, SubA, SubA2, SubA3, SubB, SubB2, SubB3,
-        Super, Super2, Super3, Super3Clone, Super4, Super5, Sub45,
+        Document6, Ellipse, Extensible, ManyAttrs, Postcode, PrivateAttributes,
+        Raises, Rectangle, Shape, StringLike, SubA, SubA2, SubA3, SubB, SubB2,
+        SubB3, Super, Super2, Super3, Super3Clone, Super4, Super5, Sub45,
         UnionAttribute, Universal, Vector2D)
 
 
@@ -64,6 +64,31 @@ def test_missing_attribute() -> None:
     load = yatiml.load_function(Universal)
     with pytest.raises(yatiml.RecognitionError):
         load('a: 2')
+
+
+def test_ambiguous_missing_attribute() -> None:
+    load = yatiml.load_function(Document5)
+    with pytest.raises(yatiml.RecognitionError):
+        data = load(
+                'attr1: 10\n'
+                'attrx: x\n'
+                'attry: y\n')
+
+
+def test_many_attributes() -> None:
+    load = yatiml.load_function(ManyAttrs)
+    with pytest.raises(yatiml.RecognitionError):
+        data = load(
+                'attr1: 1\n'
+                'attr2: 2\n'
+                'attr3: 3\n'
+                'attr4: 4\n'
+                'attr5: 5\n'
+                'attr6: 6\n'
+                'attr7: 7\n'
+                'test: test\n'
+                'testing: testing\n'
+                'python: tested\n')
 
 
 def test_extra_attribute() -> None:

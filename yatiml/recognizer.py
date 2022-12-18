@@ -16,9 +16,9 @@ from yatiml.helpers import Node, UnknownNode
 from yatiml.introspection import class_subobjects
 from yatiml.irecognizer import IRecognizer, RecError, RecResult, REC_OK
 from yatiml.util import (
-        bool_union_fix, generic_type_args, is_generic_mapping,
-        is_generic_sequence, is_generic_union, is_string_like,
-        scalar_type_to_tag, type_to_desc)
+        bool_union_fix, diagnose_missing_key, generic_type_args,
+        is_generic_mapping, is_generic_sequence, is_generic_union,
+        is_string_like, scalar_type_to_tag, type_to_desc)
 
 
 logger = logging.getLogger(__name__)
@@ -283,14 +283,9 @@ class Recognizer(IRecognizer):
                             break
                     else:
                         if required:
-                            a = '"{}"'.format(attr_name)
-                            if '_' in attr_name:
-                                a += ' or maybe "{}"'.format(
-                                        attr_name.replace('_', '-'))
-                            message = (
-                                    'Required attribute {} not found\n{}'
-                                    ).format(a, loc_str)
-                            # TODO: list required attributes
+                            keys = [kn.value for kn, _ in node.value]
+                            message = diagnose_missing_key(
+                                    attr_name, keys, expected_type)
                             return set(), (message, [])
 
             return {expected_type}, REC_OK
