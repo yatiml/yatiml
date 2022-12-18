@@ -267,18 +267,21 @@ class Constructor:
                                         ' for mapping keys').format(
                                             node.start_mark, os.linesep))
             if key not in argspec.args and '_yatiml_extra' not in argspec.args:
+                key_node = [kn for kn, _ in node.value if kn.value == key][0]
                 raise RecognitionError(
                     ('{}{}Found additional attributes ("{}")'
                      ' and {} does not support those').format(
-                         node.start_mark, os.linesep, key,
+                         key_node.start_mark, os.linesep, key,
                          self.class_.__name__))
 
             if key in argspec.args and key in argspec.annotations:
                 if not self.__type_matches(value, argspec.annotations[key]):
+                    value_node = [
+                            vn for kn, vn in node.value if kn.value == key][0]
                     raise RecognitionError(
                             ('{}{}Expected attribute "{}" to be of type {}'
                              ' but it is a(n) {}').format(
-                                    node.start_mark, os.linesep, key,
+                                    value_node.start_mark, os.linesep, key,
                                     argspec.annotations[key], type(value)))
 
     def __strip_extra_attributes(self, node: yaml.Node,
@@ -413,6 +416,7 @@ class UserStringConstructor:
 
         # ruamel.yaml expects us to yield an incomplete object, but strings are
         # immutable, so we'll have to make the whole thing right away.
+        # TODO: need to catch any exceptions here and add context!
         new_obj = self.class_(node.value)
         yield new_obj
 

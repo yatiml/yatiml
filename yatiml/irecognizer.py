@@ -1,14 +1,52 @@
 import abc
-from typing import Set, Tuple
+from textwrap import indent
+from typing import Any, List, Set, Tuple
 from typing_extensions import Type
 
 import ruamel.yaml as yaml
 
-RecResult = Tuple[Set[Type], str]
+
+RecError = Tuple[str, List[Any]]
+"""A recognition error.
+
+The string is an error message, the list contains possible causes, which
+are RecErrors themselves. We're not allowed recursive types in Python,
+so we have to make do with Any.
+"""
+
+
+def format_rec_error(rec_error: RecError) -> str:
+    """Formats a recognition error.
+
+    This turns the error into a human-readable string.
+    """
+    error, causes = rec_error
+
+    message = error
+    if causes:
+        message += ':\n'
+        for i, cause in enumerate(causes):
+            message += indent(format_rec_error(cause), '  ')
+            if i + 1 < len(causes):
+                message += '\n'
+
+    return message
+
+
+REC_OK = ('', [])       # type: RecError
+"""No error empty object.
+
+This can be passed wherever a RecError is returned and no error
+occurred. Having this constant keeps us from making a zillion
+objects, and it makes the code a bit more readable.
+"""
+
+
+RecResult = Tuple[Set[Type], RecError]
 """A recognition result.
 
-The set is a set of recognised types, the string an error message to
-display if no type was recognised or more than one type was recognised.
+The set is a set of recognised types, the RecError an error to display
+if no type was recognised or more than one type was recognised.
 """
 
 

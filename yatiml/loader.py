@@ -14,6 +14,7 @@ from yatiml.constructors import (
 from yatiml.exceptions import RecognitionError
 from yatiml.helpers import Node
 from yatiml.introspection import class_subobjects
+from yatiml.irecognizer import format_rec_error
 from yatiml.recognizer import Recognizer
 from yatiml.util import (
         generic_type_args, is_generic_sequence, is_generic_mapping,
@@ -148,11 +149,11 @@ class Loader(yaml.RoundTripLoader):
             node, expected_type))
 
         # figure out how to interpret this node
-        recognized_types, message = self.__recognizer.recognize(
+        recognized_types, result = self.__recognizer.recognize(
             node, expected_type)
 
         if len(recognized_types) != 1:
-            raise RecognitionError(message)
+            raise RecognitionError(format_rec_error(result))
 
         recognized_type = next(iter(recognized_types))
 

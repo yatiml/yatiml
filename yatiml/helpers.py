@@ -15,7 +15,7 @@ from ruamel.yaml.error import StreamMark
 
 from yatiml.exceptions import RecognitionError, SeasoningError
 from yatiml.introspection import defaulted_attributes
-from yatiml.irecognizer import IRecognizer
+from yatiml.irecognizer import IRecognizer, format_rec_error
 from yatiml.util import ScalarType, scalar_type_to_tag
 
 _Any = NewType('_Any', int)
@@ -967,27 +967,23 @@ class UnknownNode:
         node = Node(self.yaml_node)
         if len(args) == 0:
             if not node.is_scalar():
-                raise RecognitionError(('{}{}A scalar is required').format(
-                    self.yaml_node.start_mark, os.linesep))
+                raise RecognitionError('A scalar is required')
         else:
             for typ in args:
                 if node.is_scalar(typ):
                     return
-            raise RecognitionError(
-                ('{}{}A scalar of type {} is required').format(
-                    self.yaml_node.start_mark, os.linesep, args))
+            raise RecognitionError('A scalar of type {} is required'.format(
+                    args))
 
     def require_mapping(self) -> None:
         """Require the node to be a mapping."""
         if not isinstance(self.yaml_node, yaml.MappingNode):
-            raise RecognitionError(('{}{}A mapping is required here').format(
-                self.yaml_node.start_mark, os.linesep))
+            raise RecognitionError('A mapping is required here')
 
     def require_sequence(self) -> None:
         """Require the node to be a sequence."""
         if not isinstance(self.yaml_node, yaml.SequenceNode):
-            raise RecognitionError(('{}{}A sequence is required here').format(
-                self.yaml_node.start_mark, os.linesep))
+            raise RecognitionError('A sequence is required here')
 
     def require_attribute(
             self, attribute: str, typ: Union[None, Type] = _Any) -> None:
@@ -1008,15 +1004,14 @@ class UnknownNode:
         ]
         if len(attr_nodes) == 0:
             raise RecognitionError(
-                ('{}{}Missing required attribute "{}"').format(
-                    self.yaml_node.start_mark, os.linesep, attribute))
+                    'Missing required attribute "{}"'.format(attribute))
         attr_node = attr_nodes[0]
 
         if typ != _Any:
-            recognized_types, message = self.__recognizer.recognize(
+            recognized_types, result = self.__recognizer.recognize(
                 attr_node, cast(Type, typ))
             if len(recognized_types) == 0:
-                raise RecognitionError(message)
+                raise RecognitionError(format_rec_error(result))
 
     def require_attribute_value(
             self, attribute: str,
@@ -1043,21 +1038,17 @@ class UnknownNode:
                 node = Node(value_node)
                 if not node.is_scalar(type(value)):
                     raise RecognitionError(
-                            ('{}{}Incorrect attribute type where value {}'
+                            ('Incorrect attribute type where value {}'
                              ' of type {} was required').format(
-                                self.yaml_node.start_mark, os.linesep,
                                 value, type(value)))
                 if node.get_value() != value:
-                    raise RecognitionError(
-                        ('{}{}Incorrect attribute value'
-                         ' {} where {} was required').format(
-                             self.yaml_node.start_mark, os.linesep,
-                             value_node.value, value))
+                    raise RecognitionError((
+                        'Incorrect attribute value {} where {} was required'
+                            ).format(value_node.value, value))
 
         if not found:
             raise RecognitionError(
-                ('{}{}Required attribute "{}" not found').format(
-                    self.yaml_node.start_mark, os.linesep, attribute))
+                    'Required attribute "{}" not found'.format(attribute))
 
     def require_attribute_value_not(
             self, attribute: str,
@@ -1086,12 +1077,10 @@ class UnknownNode:
                     return
                 if node.get_value() == value:
                     raise RecognitionError(
-                        ('{}{}Incorrect attribute value'
-                         ' {} where {} was not allowed').format(
-                             self.yaml_node.start_mark, os.linesep,
-                             value_node.value, value))
+                            (
+                                'Incorrect attribute value {} where {} was not'
+                                ' allowed').format(value_node.value, value))
 
         if not found:
             raise RecognitionError(
-                ('{}{}Required attribute "{}" not found').format(
-                    self.yaml_node.start_mark, os.linesep, attribute))
+                    'Required attribute "{}" not found'.format(attribute))

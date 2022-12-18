@@ -1,3 +1,4 @@
+from abc import ABCMeta
 import enum
 from inspect import isabstract, isclass
 import logging
@@ -13,7 +14,7 @@ import ruamel.yaml as yaml
 from yatiml.exceptions import RecognitionError
 from yatiml.helpers import Node, UnknownNode
 from yatiml.introspection import class_subobjects
-from yatiml.irecognizer import IRecognizer, RecResult
+from yatiml.irecognizer import IRecognizer, RecError, RecResult, REC_OK
 from yatiml.util import (
         bool_union_fix, generic_type_args, is_generic_mapping,
         is_generic_sequence, is_generic_union, is_string_like,
@@ -52,10 +53,10 @@ class Recognizer(IRecognizer):
         logger.debug('Recognizing as a scalar')
         if (isinstance(node, yaml.ScalarNode)
                 and node.tag == scalar_type_to_tag[expected_type]):
-            return {expected_type}, ''
-        message = 'Failed to recognize a {}\n{}\n'.format(
+            return {expected_type}, REC_OK
+        message = 'Expected a {}\n{}\n'.format(
             type_to_desc(expected_type), node.start_mark)
-        return set(), message
+        return set(), (message, [])
 
     def __recognize_additional(
             self, node: yaml.Node, expected_type: Type) -> RecResult:
@@ -73,11 +74,11 @@ class Recognizer(IRecognizer):
         if expected_type == pathlib.Path:
             if (isinstance(node, yaml.ScalarNode)
                     and node.tag == 'tag:yaml.org,2002:str'):
-                return {expected_type}, ''
+                return {expected_type}, REC_OK
 
-        message = 'Failed to recognize a {}\n{}\n'.format(
+        message = 'Expected a {}\n{}\n'.format(
             type_to_desc(expected_type), node.start_mark)
-        return set(), message
+        return set(), (message, [])
 
     def __recognize_list(self, node: yaml.Node,
                          expected_type: Type) -> RecResult:
@@ -88,27 +89,27 @@ class Recognizer(IRecognizer):
             expected_type: List[...something...]
 
         Returns
-            expected_type and the empty string if it was recognized,
-                    [] and an error message otherwise.
+            expected_type and an error message
         """
         logger.debug('Recognizing as a list')
         if not isinstance(node, yaml.SequenceNode):
-            message = '{}{}Expected a list here.'.format(
-                node.start_mark, os.linesep)
-            return set(), message
+            message = 'Expected a list\n{}'.format(node.start_mark)
+            return set(), (message, [])
         item_type = generic_type_args(expected_type)[0]
         for item in node.value:
-            recognized_types, message = self.recognize(item, item_type)
+            recognized_types, result = self.recognize(item, item_type)
             if len(recognized_types) == 0:
-                return set(), message
+                message = 'Expected a {}'.format(
+                        type_to_desc(expected_type))
+                return set(), (message, [result])
             if len(recognized_types) > 1:
                 recognized_types = {
                     List[t]  # type: ignore
                     for t in recognized_types
                 }
-                return recognized_types, message
+                return recognized_types, result
 
-        return {expected_type}, ''
+        return {expected_type}, REC_OK
 
     def __recognize_dict(self, node: yaml.Node,
                          expected_type: Type) -> RecResult:
@@ -131,30 +132,30 @@ class Recognizer(IRecognizer):
         if not isinstance(node, yaml.MappingNode):
             message = '{}{}Expected a dict/mapping here'.format(
                 node.start_mark, os.linesep)
-            return set(), message
+            return set(), (message, [])
 
         value_type = generic_type_args(expected_type)[1]
         for key, value in node.value:
-            recognized_key_types, kmessage = self.recognize(key, key_type)
+            recognized_key_types, kresult = self.recognize(key, key_type)
             if len(recognized_key_types) == 0:
-                return set(), kmessage
+                return set(), kresult
             if len(recognized_key_types) > 1:
                 return {
                     Dict[t, value_type]  # type: ignore
                     for t in recognized_key_types
-                }, kmessage  # type: ignore
+                }, kresult  # type: ignore
 
-            recognized_value_types, vmessage = self.recognize(
+            recognized_value_types, vresult = self.recognize(
                     value, value_type)
             if len(recognized_value_types) == 0:
-                return set(), vmessage
+                return set(), vresult
             if len(recognized_value_types) > 1:
                 return {
                     Dict[key_type, t]  # type: ignore
                     for t in recognized_value_types
-                }, vmessage  # type: ignore
+                }, vresult  # type: ignore
 
-        return {expected_type}, ''
+        return {expected_type}, REC_OK
 
     def __recognize_union(self, node: yaml.Node,
                           expected_type: Type) -> RecResult:
@@ -169,31 +170,32 @@ class Recognizer(IRecognizer):
         """
         logger.debug('Recognizing as a union')
         recognized_types = set()
-        message = ''
+        causes = []
         union_types = generic_type_args(expected_type)
         logger.debug('Union types {}'.format(union_types))
         for i, possible_type in enumerate(union_types):
-            recognized_type, msg = self.recognize(node, possible_type)
+            recognized_type, result = self.recognize(node, possible_type)
             if len(recognized_type) == 0:
-                goal = '\n{}: {}'.format(i + 1, possible_type)
-                message = '\n'.join((message, goal, msg))
+                causes.append(result)
             recognized_types |= recognized_type
         if bool in recognized_types and bool_union_fix in recognized_types:
             recognized_types.remove(bool_union_fix)
 
         if len(recognized_types) == 0:
             message = (
-                    'Expected one of the following types,'
-                    ' but failed to match all of them:{}').format(
-                        message)
-            return recognized_types, message
+                    '{}{}Expected one of the following types,'
+                    ' but failed to match all of them:').format(
+                            node.start_mark, os.linesep)
+            return recognized_types, (message, causes)
         elif len(recognized_types) > 1:
             message = ('{}{}Could not determine which of the following types'
-                       ' this is: {}').format(node.start_mark, os.linesep,
-                                              recognized_types)
-            return recognized_types, message
+                       ' this is: {}').format(
+                               node.start_mark, os.linesep,
+                               ' or '.join(
+                                   map(type_to_desc, recognized_types)))
+            return recognized_types, (message, causes)
 
-        return recognized_types, ''
+        return recognized_types, REC_OK
 
     def __recognize_user_class(self, node: yaml.Node,
                                expected_type: Type) -> RecResult:
@@ -216,7 +218,8 @@ class Recognizer(IRecognizer):
             try:
                 unode = UnknownNode(self, node)
                 expected_type._yatiml_recognize(unode)
-                return {expected_type}, ''
+                return {expected_type}, REC_OK
+
             except TypeError as e:
                 raise RuntimeError(
                         '{}._yatiml_recognize() is of the wrong type.'
@@ -224,29 +227,29 @@ class Recognizer(IRecognizer):
                         'cls, node: yatiml.UnknownNode) -> None.'
                         ' Or did you forget to make it a @classmethod?'.format(
                                 expected_type.__name__)) from e
+
             except RecognitionError as e:
                 if len(e.args) > 0:
-                    message = ('Error recognizing a {}\n{}because of the'
-                               ' following error(s):\n{}').format(
-                                   expected_type.__name__, loc_str,
-                                   indent(e.args[0], '    '))
+                    message = 'Error recognizing a {}: {}\n{}'.format(
+                                   expected_type.__name__, e.args[0], loc_str)
                 else:
                     message = 'Error recognizing a {}\n{}'.format(
                         expected_type.__name__, loc_str)
-                return set(), message
+                return set(), (message, [])
+
         else:
             if issubclass(expected_type, enum.Enum):
                 if (not isinstance(node, yaml.ScalarNode)
                         or node.tag != 'tag:yaml.org,2002:str'):
                     message = 'Expected an enum value from {}\n{}'.format(
                         expected_type.__name__, loc_str)
-                    return set(), message
+                    return set(), (message, [])
             elif is_string_like(expected_type):
                 if (not isinstance(node, yaml.ScalarNode)
                         or node.tag != 'tag:yaml.org,2002:str'):
                     message = 'Expected a string matching {}\n{}'.format(
                         expected_type.__name__, loc_str)
-                    return set(), message
+                    return set(), (message, [])
             else:
                 # auto-recognize based on constructor signature
                 if not isinstance(node, yaml.MappingNode):
@@ -256,7 +259,7 @@ class Recognizer(IRecognizer):
                     message = (
                             'Expected a dict/mapping here with keys {}\n{}'
                             ).format(req_attrs, loc_str)
-                    return set(), message
+                    return set(), (message, [])
 
                 for attr_name, type_, required in class_subobjects(
                         expected_type):
@@ -265,31 +268,36 @@ class Recognizer(IRecognizer):
                     for name in [attr_name, attr_name.replace('_', '-')]:
                         if cnode.has_attribute(name):
                             subnode = cnode.get_attribute(name)
-                            recognized_types, message = self.recognize(
+                            recognized_types, result = self.recognize(
                                 subnode.yaml_node, type_)
                             if len(recognized_types) == 0:
-                                message = ('Failed when checking attribute'
-                                           ' "{}":\n{}').format(
-                                               name, indent(message, '    '))
-                                return set(), message
+                                attr_key_node = [
+                                    kn for kn, _ in node.value
+                                    if kn.value == name][0]
+                                loc_str = indent(
+                                        str(attr_key_node.start_mark),
+                                        '  ')
+                                message = 'Error in attribute "{}"\n{}'.format(
+                                                name, loc_str)
+                                return set(), (message, [result])
                             break
                     else:
                         if required:
-                            message = (
-                                'Error recognizing a {}\n{}because it'
-                                ' is missing an attribute named "{}"').format(
-                                    expected_type.__name__, loc_str, attr_name)
+                            a = '"{}"'.format(attr_name)
                             if '_' in attr_name:
-                                message += ' or maybe "{}".\n'.format(
-                                    attr_name.replace('_', '-'))
-                            else:
-                                message += '.\n'
-                            return set(), message
+                                a += ' or maybe "{}"'.format(
+                                        attr_name.replace('_', '-'))
+                            message = (
+                                    'Required attribute {} not found\n{}'
+                                    ).format(a, loc_str)
+                            # TODO: list required attributes
+                            return set(), (message, [])
 
-            return {expected_type}, ''
+            return {expected_type}, REC_OK
 
-    def __recognize_user_classes(self, node: yaml.Node,
-                                 expected_type: Type) -> RecResult:
+    def __recognize_user_classes(
+            self, node: yaml.Node, expected_type: Type, top: bool = True
+            ) -> RecResult:
         """Recognize a user-defined class in the node.
 
         This returns a list of classes from the inheritance hierarchy
@@ -303,6 +311,7 @@ class Recognizer(IRecognizer):
         Args:
             node: The node to recognize.
             expected_type: A user-defined class.
+            top: Whether this is the topmost recursive call.
 
         Returns:
             A list containing matched user-defined classes.
@@ -311,47 +320,46 @@ class Recognizer(IRecognizer):
             expected_type.__name__))
         recognized_subclasses = set()
         message = ''
+        causes = []
         for other_class in self.__registered_classes.values():
             if expected_type in other_class.__bases__:
-                sub_subclasses, msg = self.__recognize_user_classes(
-                    node, other_class)
+                sub_subclasses, result = self.__recognize_user_classes(
+                    node, other_class, False)
                 recognized_subclasses |= sub_subclasses
                 if len(sub_subclasses) == 0:
-                    message = '\n'.join((message, msg))
+                    causes.append(result)
 
         logger.debug('Recognized subclasses of {}: {}'.format(
                 expected_type.__name__, recognized_subclasses))
 
         if len(recognized_subclasses) == 0:
             if not isabstract(expected_type):
-                recognized_subclasses, msg = self.__recognize_user_class(
+                recognized_subclasses, result = self.__recognize_user_class(
                     node, expected_type)
                 if len(recognized_subclasses) == 0:
-                    message = '\n'.join((message, msg))
+                    causes.append(result)
             else:
                 logger.debug('Not considering {} as it is abstract'.format(
-                    expected_type.__name__))
+                        expected_type.__name__))
 
         if len(recognized_subclasses) == 0:
-            message = ('Failed to recognize a {}\n{}\nbecause of the following'
-                       ' error(s):\n{}').format(expected_type.__name__,
-                                                node.start_mark,
-                                                indent(msg, '    '))
-            logger.debug(message)
-            return set(), message
+            message = 'Failed to recognize a {}'.format(expected_type.__name__)
+            if top:
+                message += '\n{}'.format(indent(str(node.start_mark), '  '))
+            return set(), (message, causes)
 
         if len(recognized_subclasses) > 1:
             # Let the user disambiguate with an explicit tag
             if node.tag in self.__registered_classes:
                 typ = self.__registered_classes[node.tag]
                 if typ in recognized_subclasses:
-                    return {typ}, ''
+                    return {typ}, REC_OK
 
-            message = ('{}{} Could not determine which of the following types'
-                       ' this is: {}').format(node.start_mark, os.linesep,
-                                              recognized_subclasses)
-            logger.debug(message)
-            return recognized_subclasses, message
+            message = ('Could not determine which of the following types'
+                       ' this is: {}').format(
+                               ' or '.join(
+                                   map(type_to_desc, recognized_subclasses)))
+            return recognized_subclasses, (message, causes)
 
         # Tags that don't match with what we recognized are an error,
         # because silently ignoring the conflict would get confusing.
@@ -366,7 +374,7 @@ class Recognizer(IRecognizer):
                                        expected_type.__name__,
                                        tagged_class.__name__)
                     logger.debug(message)
-                    return set(), message
+                    return set(), (message, [])
             else:
                 message = ('{}{} Expected a {} and found it, but there\'s'
                            ' a tag here claiming this is a(n) {}, which type'
@@ -374,9 +382,9 @@ class Recognizer(IRecognizer):
                                    node.start_mark, os.linesep,
                                    expected_type.__name__, node.tag[1:])
                 logger.debug(message)
-                return set(), message
+                return set(), (message, [])
 
-        return recognized_subclasses, ''
+        return recognized_subclasses, REC_OK
 
     def recognize(self, node: yaml.Node, expected_type: Type) -> RecResult:
         """Figure out how to interpret this node.
@@ -402,25 +410,25 @@ class Recognizer(IRecognizer):
         if expected_type in (
                 str, int, float, bool, bool_union_fix, date, None,
                 type(None)):
-            recognized_types, message = self.__recognize_scalar(
+            recognized_types, result = self.__recognize_scalar(
                     node, expected_type)
         elif expected_type in self.__additional_classes:
-            recognized_types, message = self.__recognize_additional(
+            recognized_types, result = self.__recognize_additional(
                     node, expected_type)
         elif is_generic_union(expected_type):
-            recognized_types, message = self.__recognize_union(
+            recognized_types, result = self.__recognize_union(
                      node, expected_type)
         elif is_generic_sequence(expected_type):
-            recognized_types, message = self.__recognize_list(
+            recognized_types, result = self.__recognize_list(
                     node, expected_type)
         elif is_generic_mapping(expected_type):
-            recognized_types, message = self.__recognize_dict(
+            recognized_types, result = self.__recognize_dict(
                     node, expected_type)
         elif expected_type in self.__registered_classes.values():
-            recognized_types, message = self.__recognize_user_classes(
+            recognized_types, result = self.__recognize_user_classes(
                     node, expected_type)
         elif expected_type in (Any,):
-            recognized_types, message = [Any], ''
+            recognized_types, result = [Any], REC_OK
 
         if recognized_types is None:
             raise RecognitionError(
@@ -428,4 +436,4 @@ class Recognizer(IRecognizer):
                  ' is it registered?').format(expected_type.__name__))
         logger.debug('Recognized types {} matching {}'.format(
             recognized_types, expected_type))
-        return recognized_types, message
+        return recognized_types, result
