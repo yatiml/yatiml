@@ -1030,6 +1030,7 @@ class UnknownNode:
             yatiml.RecognitionError: If the attribute does not exist,
                     or does not have the required value.
         """
+        self.require_mapping()
         found = False
         for key_node, value_node in self.yaml_node.value:
             if (key_node.tag == 'tag:yaml.org,2002:str'
@@ -1067,6 +1068,7 @@ class UnknownNode:
             yatiml.RecognitionError: If the attribute does not exist,
                     or has the required value.
         """
+        self.require_mapping()
         found = False
         for key_node, value_node in self.yaml_node.value:
             if (key_node.tag == 'tag:yaml.org,2002:str'
