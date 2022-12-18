@@ -14,7 +14,8 @@ from yatiml.exceptions import RecognitionError
 from yatiml.introspection import class_subobjects
 from yatiml.util import (
         bool_union_fix, diagnose_missing_key, generic_type_args,
-        is_generic_sequence, is_generic_mapping, is_generic_union, strip_tags)
+        is_generic_sequence, is_generic_mapping, is_generic_union, strip_tags,
+        type_to_desc)
 
 if TYPE_CHECKING:
     from yatiml.loader import Loader  # noqa: F401
@@ -240,7 +241,8 @@ class Constructor:
                 raise RecognitionError(('{}{}Attribute "{}" has incorrect type'
                                         ' {}, expecting a {}').format(
                                             node.start_mark, os.linesep, name,
-                                            type(mapping[name]), type_))
+                                            type(mapping[name]),
+                                            type_to_desc(type_)))
 
     def __type_check_attributes(self, node: yaml.Node, mapping: CommentedMap,
                                 argspec: inspect.FullArgSpec) -> None:

@@ -183,32 +183,33 @@ def type_to_desc(type_: Type) -> str:
         A human-readable description.
     """
     scalar_type_to_str = {
-        str: 'string',
-        int: 'int',
-        float: 'float',
-        bool: 'boolean',
-        None: 'null value',
-        type(None): 'null value'
+        str: 'a string',
+        int: 'an int',
+        float: 'a float',
+        bool: 'a boolean',
+        None: 'a null value',
+        type(None): 'a null value'
     }
 
     if type_ in scalar_type_to_str:
         return scalar_type_to_str[type_]
 
     if is_generic_union(type_):
-        return 'union of {}'.format([type_to_desc(t)
-                                     for t in generic_type_args(type_)])
+        return 'any one of {}'.format(
+                [type_to_desc(t) for t in generic_type_args(type_)])
 
     if is_generic_sequence(type_):
-        return 'list of ({})'.format(type_to_desc(generic_type_args(type_)[0]))
+        return 'a list of ({})'.format(
+                type_to_desc(generic_type_args(type_)[0]))
 
     if is_generic_mapping(type_):
-        return 'dict of string to ({})'.format(
+        return 'a dict of string to ({})'.format(
                 type_to_desc(generic_type_args(type_)[1]))
 
     if type_ is Any:
-        return 'string, int, float, boolean, null value, list or dict'
+        return 'a string, int, float, boolean, null value, list or dict'
 
-    return type_.__name__
+    return 'a(n) {}'.format(type_.__name__)
 
 
 def is_string_like(type_: Type) -> bool:
@@ -290,6 +291,6 @@ def diagnose_missing_key(
         else:
             sug_msg = (
                     'No similar keys were found either. Maybe it was forgotten'
-                    ' or the indentation is wrong here?')
+                    ' or the indentation is wrong?')
 
     return ' '.join((expected_msg, sug_msg))

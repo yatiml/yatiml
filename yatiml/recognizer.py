@@ -54,7 +54,7 @@ class Recognizer(IRecognizer):
         if (isinstance(node, yaml.ScalarNode)
                 and node.tag == scalar_type_to_tag[expected_type]):
             return {expected_type}, REC_OK
-        message = 'Expected a {}\n{}\n'.format(
+        message = 'Expected {}\n{}\n'.format(
             type_to_desc(expected_type), node.start_mark)
         return set(), (message, [])
 
@@ -76,7 +76,7 @@ class Recognizer(IRecognizer):
                     and node.tag == 'tag:yaml.org,2002:str'):
                 return {expected_type}, REC_OK
 
-        message = 'Expected a {}\n{}\n'.format(
+        message = 'Expected {}\n{}\n'.format(
             type_to_desc(expected_type), node.start_mark)
         return set(), (message, [])
 
@@ -99,7 +99,7 @@ class Recognizer(IRecognizer):
         for item in node.value:
             recognized_types, result = self.recognize(item, item_type)
             if len(recognized_types) == 0:
-                message = 'Expected a {}'.format(
+                message = 'Expected {}'.format(
                         type_to_desc(expected_type))
                 return set(), (message, [result])
             if len(recognized_types) > 1:
@@ -338,7 +338,8 @@ class Recognizer(IRecognizer):
                         expected_type.__name__))
 
         if len(recognized_subclasses) == 0:
-            message = 'Failed to recognize a {}'.format(expected_type.__name__)
+            message = 'Failed to recognize {}'.format(
+                    type_to_desc(expected_type))
             if top:
                 message += '\n{}'.format(indent(str(node.start_mark), '  '))
             return set(), (message, causes)
