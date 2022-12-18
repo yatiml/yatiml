@@ -1,10 +1,14 @@
 from abc import ABC, abstractmethod
+from contextlib import AbstractContextManager
 import enum
 import math
 from collections import OrderedDict, UserString
+import os
 from pathlib import Path
 import sys
-from typing import Any, Dict, List, Optional, Tuple, Union
+from types import TracebackType
+from typing import (
+        Any, cast, ContextManager, Dict, List, Optional, Tuple, Union)
 from typing_extensions import Type
 
 from ruamel import yaml
@@ -20,6 +24,31 @@ def tmpdir_path(tmp_path: Any) -> Path:
     # pathlib2.Path, which YAtiML does not support. This smooths over
     # the difference and makes sure our tests work everywhere.
     return Path(str(tmp_path))
+
+
+class DummyRaises(AbstractContextManager):
+    def __enter__(self) -> None:
+        pass
+
+    def __exit__(
+            self, exc_type: Optional[Type[BaseException]],
+            exc_value: Optional[BaseException],
+            traceback: Optional[TracebackType]) -> Optional[bool]:
+        pass
+
+
+def raises(expected_exception: Any) -> ContextManager:
+    """Shows error messages if so configured.
+
+    This function works like pytest.raises(), but can be disabled by an
+    environment variable. Setting that environment variable will thus
+    cause a whole bunch of tests to fail and print error messages,
+    which a developer can then look at and judge for quality.
+    """
+    if 'YATIML_TEST_ERROR_MESSAGES' in os.environ:
+        return DummyRaises()
+    else:
+        return cast(ContextManager, pytest.raises(expected_exception))
 
 
 class Document1:
