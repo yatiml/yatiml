@@ -167,8 +167,8 @@ class Loader(yaml.RoundTripLoader):
         logger.debug('Recursing into subnodes')
         if is_generic_sequence(recognized_type):
             if node.tag != 'tag:yaml.org,2002:seq':
-                raise RecognitionError('{}{}Expected {} here'.format(
-                    node.start_mark, os.linesep,
+                raise RecognitionError('{}\nExpected {} here'.format(
+                    node.start_mark,
                     type_to_desc(expected_type)))
             node.value = [
                     self.__process_node(
@@ -177,9 +177,8 @@ class Loader(yaml.RoundTripLoader):
 
         elif is_generic_mapping(recognized_type):
             if node.tag != 'tag:yaml.org,2002:map':
-                raise RecognitionError('{}{}Expected {} here'.format(
-                    node.start_mark, os.linesep,
-                    type_to_desc(expected_type)))
+                raise RecognitionError('{}\nExpected {} here'.format(
+                    node.start_mark, type_to_desc(expected_type)))
             node.value = [(
                     self.__process_node(
                         key_node, generic_type_args(recognized_type)[0]),

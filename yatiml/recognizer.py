@@ -130,8 +130,8 @@ class Recognizer(IRecognizer):
             raise RuntimeError(
                 'YAtiML only supports dicts with strings as keys')
         if not isinstance(node, yaml.MappingNode):
-            message = '{}{}Expected a dict/mapping here'.format(
-                node.start_mark, os.linesep)
+            message = '{}\nExpected a dict/mapping here'.format(
+                node.start_mark)
             return set(), (message, [])
 
         value_type = generic_type_args(expected_type)[1]
@@ -183,14 +183,14 @@ class Recognizer(IRecognizer):
 
         if len(recognized_types) == 0:
             message = (
-                    '{}{}Expected one of the following types,'
+                    '{}\nExpected one of the following types,'
                     ' but failed to match all of them:').format(
-                            node.start_mark, os.linesep)
+                            node.start_mark)
             return recognized_types, (message, causes)
         elif len(recognized_types) > 1:
-            message = ('{}{}Could not determine which of the following types'
+            message = ('{}\nCould not determine which of the following types'
                        ' this is: {}').format(
-                               node.start_mark, os.linesep,
+                               node.start_mark,
                                cjoin('or', map(type_to_desc, recognized_types))
                                )
             return recognized_types, (message, causes)
@@ -213,7 +213,7 @@ class Recognizer(IRecognizer):
             A list containing the user-defined class, or an empty list.
         """
         logger.debug('Recognizing as a user-defined class')
-        loc_str = '{}{}'.format(node.start_mark, os.linesep)
+        loc_str = '{}\n'.format(node.start_mark)
         if '_yatiml_recognize' in expected_type.__dict__:
             try:
                 unode = UnknownNode(self, node)
@@ -363,19 +363,18 @@ class Recognizer(IRecognizer):
             if node.tag in self.__registered_classes:
                 tagged_class = self.__registered_classes[node.tag]
                 if tagged_class not in recognized_subclasses:
-                    message = ('{}{} Expected a {} and found it, but there\'s'
+                    message = ('{}\nExpected a {} and found it, but there\'s'
                                ' a tag here claiming this is a(n) {}. That'
                                ' makes no sense.').format(
-                                       node.start_mark, os.linesep,
-                                       expected_type.__name__,
+                                       node.start_mark, expected_type.__name__,
                                        tagged_class.__name__)
                     logger.debug(message)
                     return set(), (message, [])
             else:
-                message = ('{}{} Expected a {} and found it, but there\'s'
+                message = ('{}\nExpected a {} and found it, but there\'s'
                            ' a tag here claiming this is a(n) {}, which type'
                            ' I don\'t know.').format(
-                                   node.start_mark, os.linesep,
+                                   node.start_mark,
                                    expected_type.__name__, node.tag[1:])
                 logger.debug(message)
                 return set(), (message, [])

@@ -66,9 +66,9 @@ class Constructor:
             self.class_.__name__))
         if not isinstance(node, yaml.MappingNode):
             raise RecognitionError((
-                    'An error occurred:\n{}{}Expected a MappingNode. There'
+                    'An error occurred:\n{}\nExpected a MappingNode. There'
                     ' is probably something wrong with your _yatiml_savorize()'
-                    ' function.').format(node.start_mark, os.linesep))
+                    ' function.').format(node.start_mark))
 
         self.__loader = loader
 
@@ -238,8 +238,8 @@ class Constructor:
             if name in mapping and not self.__type_matches(
                     mapping[name], type_):
                 raise RecognitionError(
-                        '{}{}Attribute "{}" is {}, expected {}'.format(
-                            node.start_mark, os.linesep, name,
+                        '{}\nAttribute "{}" is {}, expected {}'.format(
+                            node.start_mark, name,
                             type_to_desc(type(mapping[name])),
                             type_to_desc(type_)))
 
@@ -447,8 +447,8 @@ class PathConstructor:
         if not isinstance(node, yaml.ScalarNode) or not isinstance(
                 node.value, str):
             raise RecognitionError(
-                    ('{}{}Expected a string containing a Path.').format(
-                        node.start_mark, os.linesep))
+                    ('{}\nExpected a string containing a Path.').format(
+                        node.start_mark))
 
         # ruamel.yaml expects us to yield an incomplete object, but Paths are
         # special, so we'll have to make the whole thing right away.
