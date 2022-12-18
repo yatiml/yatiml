@@ -730,8 +730,14 @@ def test_load_user_string() -> None:
     assert isinstance(data, ConstrainedString)
     assert data == 'abcd'
 
-    with raises(ValueError):
+    with raises(yatiml.RecognitionError):
         load('efgh\n')
+
+
+def test_load_user_string_from_incorrect_type() -> None:
+    load = yatiml.load_function(ConstrainedString)
+    with raises(yatiml.RecognitionError):
+        load('10\n')
 
 
 def test_dump_user_string() -> None:
@@ -775,7 +781,7 @@ def test_load_user_string_key() -> None:
     assert ConstrainedString('abcd') in data
     assert data[ConstrainedString('abcd')] == 10
 
-    with raises(ValueError):
+    with raises(yatiml.RecognitionError):
         load('efgh: 4\n')
 
 

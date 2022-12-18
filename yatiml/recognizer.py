@@ -16,7 +16,7 @@ from yatiml.helpers import Node, UnknownNode
 from yatiml.introspection import class_subobjects
 from yatiml.irecognizer import IRecognizer, RecError, RecResult, REC_OK
 from yatiml.util import (
-        bool_union_fix, diagnose_missing_key, generic_type_args,
+        bool_union_fix, cjoin, diagnose_missing_key, generic_type_args,
         is_generic_mapping, is_generic_sequence, is_generic_union,
         is_string_like, scalar_type_to_tag, type_to_desc)
 
@@ -54,8 +54,8 @@ class Recognizer(IRecognizer):
         if (isinstance(node, yaml.ScalarNode)
                 and node.tag == scalar_type_to_tag[expected_type]):
             return {expected_type}, REC_OK
-        message = 'Expected {}\n{}\n'.format(
-            type_to_desc(expected_type), node.start_mark)
+        message = '{}\nExpected {}'.format(
+            node.start_mark, type_to_desc(expected_type))
         return set(), (message, [])
 
     def __recognize_additional(
@@ -76,8 +76,8 @@ class Recognizer(IRecognizer):
                     and node.tag == 'tag:yaml.org,2002:str'):
                 return {expected_type}, REC_OK
 
-        message = 'Expected {}\n{}\n'.format(
-            type_to_desc(expected_type), node.start_mark)
+        message = '{}\nExpected {}'.format(
+            node.start_mark, type_to_desc(expected_type))
         return set(), (message, [])
 
     def __recognize_list(self, node: yaml.Node,
@@ -93,14 +93,14 @@ class Recognizer(IRecognizer):
         """
         logger.debug('Recognizing as a list')
         if not isinstance(node, yaml.SequenceNode):
-            message = 'Expected a list\n{}'.format(node.start_mark)
+            message = '{}\nExpected a list'.format(node.start_mark)
             return set(), (message, [])
         item_type = generic_type_args(expected_type)[0]
         for item in node.value:
             recognized_types, result = self.recognize(item, item_type)
             if len(recognized_types) == 0:
-                message = 'Expected {}'.format(
-                        type_to_desc(expected_type))
+                message = '{}\nExpected {}'.format(
+                        item.start_mark, type_to_desc(expected_type))
                 return set(), (message, [result])
             if len(recognized_types) > 1:
                 recognized_types = {
@@ -191,8 +191,8 @@ class Recognizer(IRecognizer):
             message = ('{}{}Could not determine which of the following types'
                        ' this is: {}').format(
                                node.start_mark, os.linesep,
-                               ' or '.join(
-                                   map(type_to_desc, recognized_types)))
+                               cjoin('or', map(type_to_desc, recognized_types))
+                               )
             return recognized_types, (message, causes)
 
         return recognized_types, REC_OK
@@ -229,36 +229,36 @@ class Recognizer(IRecognizer):
                                 expected_type.__name__)) from e
 
             except RecognitionError as e:
-                if len(e.args) > 0:
-                    message = 'Error recognizing a {}: {}\n{}'.format(
-                                   expected_type.__name__, e.args[0], loc_str)
+                if e.args:
+                    message = '{}{}'.format(loc_str, e.args[0])
                 else:
-                    message = 'Error recognizing a {}\n{}'.format(
-                        expected_type.__name__, loc_str)
+                    message = '{}Error recognizing {}'.format(
+                        loc_str, type_to_desc(expected_type))
                 return set(), (message, [])
 
         else:
             if issubclass(expected_type, enum.Enum):
                 if (not isinstance(node, yaml.ScalarNode)
                         or node.tag != 'tag:yaml.org,2002:str'):
-                    message = 'Expected an enum value from {}\n{}'.format(
-                        expected_type.__name__, loc_str)
+                    message = '{}Expected a string matching {}'.format(
+                        loc_str, type_to_desc(expected_type))
                     return set(), (message, [])
             elif is_string_like(expected_type):
                 if (not isinstance(node, yaml.ScalarNode)
                         or node.tag != 'tag:yaml.org,2002:str'):
-                    message = 'Expected a string matching {}\n{}'.format(
-                        expected_type.__name__, loc_str)
+                    message = '{}Expected a string matching {}'.format(
+                        loc_str, type_to_desc(expected_type))
                     return set(), (message, [])
             else:
                 # auto-recognize based on constructor signature
                 if not isinstance(node, yaml.MappingNode):
                     req_attrs = [
-                            a for a, t, r in class_subobjects(expected_type)
+                            '"{}"'.format(a)
+                            for a, _, r in class_subobjects(expected_type)
                             if r]
                     message = (
-                            'Expected a dict/mapping here with keys {}\n{}'
-                            ).format(req_attrs, loc_str)
+                            '{}Expected a dict/mapping here with keys {}'
+                            ).format(loc_str, cjoin('and', req_attrs))
                     return set(), (message, [])
 
                 for attr_name, type_, required in class_subobjects(
@@ -286,6 +286,7 @@ class Recognizer(IRecognizer):
                             keys = [kn.value for kn, _ in node.value]
                             message = diagnose_missing_key(
                                     attr_name, keys, expected_type)
+                            message = '{}{}'.format(loc_str, message)
                             return set(), (message, [])
 
             return {expected_type}, REC_OK
@@ -352,9 +353,8 @@ class Recognizer(IRecognizer):
                     return {typ}, REC_OK
 
             message = ('Could not determine which of the following types'
-                       ' this is: {}').format(
-                               ' or '.join(
-                                   map(type_to_desc, recognized_subclasses)))
+                       ' this is: {}').format(cjoin(
+                           'or', map(type_to_desc, recognized_subclasses)))
             return recognized_subclasses, (message, causes)
 
         # Tags that don't match with what we recognized are an error,

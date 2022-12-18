@@ -1048,7 +1048,7 @@ class UnknownNode:
 
         if not found:
             raise RecognitionError(
-                    'Required attribute "{}" not found'.format(attribute))
+                    'Required key "{}" not found'.format(attribute))
 
     def require_attribute_value_not(
             self, attribute: str,
@@ -1083,4 +1083,4 @@ class UnknownNode:
 
         if not found:
             raise RecognitionError(
-                    'Required attribute "{}" not found'.format(attribute))
+                    'Required key "{}" not found'.format(attribute))

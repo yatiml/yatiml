@@ -65,10 +65,10 @@ class Constructor:
         logger.debug('Constructing an object of type {}'.format(
             self.class_.__name__))
         if not isinstance(node, yaml.MappingNode):
-            raise RecognitionError(
-                ('{}{}Expected a MappingNode. There'
-                 ' is probably something wrong with your _yatiml_savorize()'
-                 ' function.').format(node.start_mark, os.linesep))
+            raise RecognitionError((
+                    'An error occurred:\n{}{}Expected a MappingNode. There'
+                    ' is probably something wrong with your _yatiml_savorize()'
+                    ' function.').format(node.start_mark, os.linesep))
 
         self.__loader = loader
 
@@ -92,8 +92,11 @@ class Constructor:
                 mapping[key] = self.__to_plain_containers(value)
 
         # do type check
-        self.__check_no_missing_attributes(node, mapping)
-        self.__type_check_attributes(node, mapping, argspec)
+        try:
+            self.__check_no_missing_attributes(node, mapping)
+            self.__type_check_attributes(node, mapping, argspec)
+        except RecognitionError as e:
+            raise RecognitionError('An error occurred:\n{}'.format(e))
 
         # construct object, this should work now
         try:
@@ -107,12 +110,8 @@ class Constructor:
                 new_obj.__init__(**mapping)
 
         except Exception as e:
-            tb = traceback.format_exc()
-            raise RecognitionError((
-                     '{}{}Could not construct object of class {}: {}\n{}'
-                     ).format(
-                            node.start_mark, os.linesep, self.class_.__name__,
-                            e, tb))
+            raise RecognitionError(
+                    'An error occurred:\n{}\n{}'.format(node.start_mark, e))
         logger.debug('Done constructing {}'.format(self.class_.__name__))
 
     def __to_plain_containers(self,
@@ -238,11 +237,11 @@ class Constructor:
                 raise RecognitionError('{}\n{}'.format(node.start_mark, msg))
             if name in mapping and not self.__type_matches(
                     mapping[name], type_):
-                raise RecognitionError(('{}{}Attribute "{}" has incorrect type'
-                                        ' {}, expecting a {}').format(
-                                            node.start_mark, os.linesep, name,
-                                            type(mapping[name]),
-                                            type_to_desc(type_)))
+                raise RecognitionError(
+                        '{}{}Attribute "{}" is {}, expected {}'.format(
+                            node.start_mark, os.linesep, name,
+                            type_to_desc(type(mapping[name])),
+                            type_to_desc(type_)))
 
     def __type_check_attributes(self, node: yaml.Node, mapping: CommentedMap,
                                 argspec: inspect.FullArgSpec) -> None:
@@ -265,26 +264,24 @@ class Constructor:
             argspec.args, list(mapping.keys())))
         for key, value in mapping.items():
             if not isinstance(key, str):
-                raise RecognitionError(('{}{}YAtiML only supports strings'
-                                        ' for mapping keys').format(
-                                            node.start_mark, os.linesep))
+                raise RecognitionError(
+                        '{}\nExpected a string'.format(node.start_mark))
             if key not in argspec.args and '_yatiml_extra' not in argspec.args:
                 key_node = [kn for kn, _ in node.value if kn.value == key][0]
-                raise RecognitionError(
-                    ('{}{}Found additional attributes ("{}")'
-                     ' and {} does not support those').format(
-                         key_node.start_mark, os.linesep, key,
-                         self.class_.__name__))
+                raise RecognitionError((
+                        '{}\nFound key "{}" which is not allowed here'
+                        ).format(key_node.start_mark, key))
 
             if key in argspec.args and key in argspec.annotations:
                 if not self.__type_matches(value, argspec.annotations[key]):
                     value_node = [
                             vn for kn, vn in node.value if kn.value == key][0]
-                    raise RecognitionError(
-                            ('{}{}Expected attribute "{}" to be of type {}'
-                             ' but it is a(n) {}').format(
-                                    value_node.start_mark, os.linesep, key,
-                                    argspec.annotations[key], type(value)))
+                    raise RecognitionError((
+                            '{}\nExpected attribute "{}" to be {} but it is {}'
+                            ).format(
+                                    value_node.start_mark, key,
+                                    type_to_desc(argspec.annotations[key]),
+                                    type_to_desc(type(value))))
 
     def __strip_extra_attributes(self, node: yaml.Node,
                                  known_attrs: List[str]) -> None:
@@ -313,9 +310,7 @@ class Constructor:
             if (not isinstance(key_node, yaml.ScalarNode)
                     or key_node.tag != 'tag:yaml.org,2002:str'):
                 raise RecognitionError(
-                    ('{}{}Mapping keys that are not of type'
-                     ' string are not supported by YAtiML.').format(
-                         node.start_mark, os.linesep))
+                    '{}\nExpected a string here.'.format(node.start_mark))
             if key_node.value not in known_keys:
                 strip_tags(self.__loader, value_node)
 
@@ -356,20 +351,21 @@ class EnumConstructor:
         logger.debug('Constructing an object of type {}'.format(
             self.class_.__name__))
 
-        if not isinstance(node, yaml.ScalarNode) or not isinstance(
-                node.value, str):
-            raise RecognitionError(
-                ('{}{}Expected a string matching a {}.').format(
-                    node.start_mark, os.linesep, self.class_.__name__))
+        msg = (
+                'An error occurred:\n{}\nExpected a string matching {}.'
+                ).format(node.start_mark, type_to_desc(self.class_))
+
+        if (
+                not isinstance(node, yaml.ScalarNode) or
+                not isinstance(node.value, str)):
+            raise RecognitionError(msg)
 
         # ruamel.yaml expects us to yield an incomplete object, but enums are
         # immutable, so we'll have to make the whole thing right away.
         try:
             new_obj = self.class_[node.value]
         except KeyError:
-            raise RecognitionError(
-                ('Expected a string matching a {}\n{}').format(
-                    self.class_.__name__, node.start_mark))
+            raise RecognitionError(msg)
         yield new_obj
 
 
@@ -413,13 +409,16 @@ class UserStringConstructor:
         if not isinstance(node, yaml.ScalarNode) or not isinstance(
                 node.value, str):
             raise RecognitionError(
-                ('{}{}Expected a string matching a {}.').format(
-                    node.start_mark, os.linesep, self.class_.__name__))
+                ('{}\nExpected a string matching {}.').format(
+                    node.start_mark, type_to_desc(self.class_)))
 
         # ruamel.yaml expects us to yield an incomplete object, but strings are
         # immutable, so we'll have to make the whole thing right away.
-        # TODO: need to catch any exceptions here and add context!
-        new_obj = self.class_(node.value)
+        try:
+            new_obj = self.class_(node.value)
+        except Exception as e:
+            raise RecognitionError(
+                    'An error occurred:\n{}\n{}'.format(node.start_mark, e))
         yield new_obj
 
 

@@ -20,17 +20,29 @@ def format_rec_error(rec_error: RecError) -> str:
 
     This turns the error into a human-readable string.
     """
-    error, causes = rec_error
+    def find_leaves(rec_error: RecError) -> List[str]:
+        """Find errors with no causes by walking the tree."""
+        message, causes = rec_error
+        if not causes:
+            return [message]
 
-    message = error
-    if causes:
-        message += ':\n'
-        for i, cause in enumerate(causes):
-            message += indent(format_rec_error(cause), '  ')
-            if i + 1 < len(causes):
-                message += '\n'
+        return [m for c in causes for m in find_leaves(c)]
 
-    return message
+    leaves = find_leaves(rec_error)
+
+    unique_leaves = list()
+    for leaf in leaves:
+        if leaf not in unique_leaves:
+            unique_leaves.append(leaf)
+
+    if len(unique_leaves) == 1:
+        return 'An error occurred:\n{}'.format(unique_leaves[0])
+    else:
+        return (
+                'An error occurred that was caused by one of the following'
+                ' issues. Please solve whichever of the below errors makes'
+                ' the most sense to you.\n{}').format(
+                        '\n\n'.join(unique_leaves))
 
 
 REC_OK = ('', [])       # type: RecError

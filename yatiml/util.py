@@ -3,8 +3,8 @@ from difflib import get_close_matches
 from datetime import date
 import typing
 from typing import (
-        Any, cast, Dict, Mapping, MutableMapping, MutableSequence, List,
-        Sequence, Union)
+        Any, cast, Dict, Iterable, Mapping, MutableMapping, MutableSequence,
+        List, Sequence, Union)
 from typing_extensions import Type
 
 import ruamel.yaml as yaml
@@ -248,6 +248,24 @@ def strip_tags(resolver: yaml.VersionedResolver, node: yaml.Node) -> None:
             strip_tags(resolver, value_node)
 
 
+def cjoin(conjuction: str, words: Iterable[str]) -> str:
+    """Joins words together into a conjuctive clause.
+
+    This makes a nice enumeration out of the list of words. For
+    example, mjoin('and', ['x', 'y', 'z']) produces the string
+    'x, y and z'.
+    """
+    result = ''
+    last_idx = len(list(words)) - 1
+    for i, w in enumerate(words):
+        if i > 0 and i < last_idx:
+            result += ', '
+        if i == last_idx:
+            result += ' ' + conjuction + ' '
+        result += w
+    return result
+
+
 def diagnose_missing_key(
         name: str, got: List[str], expected_type: Type) -> str:
     """Helper that gives a good error when a key is missing.
@@ -291,6 +309,6 @@ def diagnose_missing_key(
         else:
             sug_msg = (
                     'No similar keys were found either. Maybe it was forgotten'
-                    ' or the indentation is wrong?')
+                    ' or indented incorrectly?')
 
     return ' '.join((expected_msg, sug_msg))
