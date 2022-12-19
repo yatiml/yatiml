@@ -301,10 +301,8 @@ def _describe_allowed_present_keys(
     """
     extraneous = not missing
 
-    req_keys = [
-            '"{}"'.format(name) for name, _, req in all_keys if req]
-    opt_keys = [
-            '"{}"'.format(name) for name, _, req in all_keys if not req]
+    req_keys = ['"{}"'.format(name) for name, _, req in all_keys if req]
+    opt_keys = ['"{}"'.format(name) for name, _, req in all_keys if not req]
 
     class_desc = list()
 
@@ -315,21 +313,22 @@ def _describe_allowed_present_keys(
     class_desc.append(req_msg)
 
     if opt_keys:
-        opt_msg = ' {} '.format(cjoin('and', opt_keys))
+        opt_msg = '{}'.format(cjoin('and', opt_keys))
         opt_msg += ' are' if len(opt_keys) > 1 else ' is'
         opt_msg += ' optional'
         class_desc.append(opt_msg)
 
     if extraneous:
         # if we had _yatiml_extra then we wouldn't be here
-        class_desc.append('and no other keys are allowed')
+        class_desc.append('no other keys are allowed')
 
     sug_msg = cjoin('and', class_desc)
 
     g = ['"{}"'.format(g) for g in got]
     sug_msg += ', but'
     if missing:
-        sug_msg += ' only'
+        if set(got).issubset({n for n, _, _ in all_keys}):
+            sug_msg += ' only'
     sug_msg += ' {}'.format(cjoin('and', g))
     sug_msg += ' were given.' if len(got) > 1 else ' was given.'
     return sug_msg

@@ -11,7 +11,7 @@ import ruamel.yaml as yaml
 
 from yatiml.constructors import (
         Constructor, EnumConstructor, PathConstructor, UserStringConstructor)
-from yatiml.exceptions import RecognitionError
+from yatiml.exceptions import RecognitionError, SeasoningError
 from yatiml.helpers import Node
 from yatiml.introspection import class_subobjects
 from yatiml.irecognizer import format_rec_error
@@ -160,7 +160,11 @@ class Loader(yaml.RoundTripLoader):
         # remove syntactic sugar
         logger.debug('Savorizing node {}'.format(node))
         if recognized_type in self._registered_classes.values():
-            node = self.__savorize(node, recognized_type)
+            try:
+                node = self.__savorize(node, recognized_type)
+            except SeasoningError as e:
+                raise RecognitionError(
+                        '{}\n{}'.format(node.start_mark, e.args[0]))
         logger.debug('Savorized, now {}'.format(node))
 
         # process subnodes

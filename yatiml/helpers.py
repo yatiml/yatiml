@@ -221,8 +221,8 @@ class Node:
         ]
         if len(matches) != 1:
             raise SeasoningError(
-                'Attribute not found, or found multiple times: {}'.format(
-                    matches))
+                'Key not found, or found multiple times: {}'.format(
+                    attribute))
         return Node(matches[0])
 
     def set_attribute(self, attribute: str,
@@ -494,9 +494,7 @@ class Node:
         for item in attr_node.seq_items():
             key_attr_node = item.get_attribute(key_attribute)
             if not key_attr_node.is_scalar(str):
-                raise SeasoningError(
-                    ('Attribute names must be strings in'
-                     'YAtiML, {} is not a string.').format(key_attr_node))
+                raise SeasoningError('Expected a string here')
             if key_attr_node.get_value() in seen_keys:
                 if strict:
                     raise SeasoningError(
@@ -741,8 +739,7 @@ class Node:
         for key_node, value_node in attr_node.yaml_node.value:
             if not isinstance(value_node, yaml.MappingNode):
                 raise SeasoningError(
-                    ('Values must be mappings for attribute "{}", but {} is'
-                     ' not a mapping.').format(attribute, value_node))
+                    'Values must be mappings for key "{}"'.format(attribute))
 
             # filter out key atttribute
             value_node.value = [
