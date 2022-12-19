@@ -290,27 +290,48 @@ def cjoin(conjuction: str, words: Iterable[str]) -> str:
 
 
 def _describe_allowed_present_keys(
-        got: List[str], all_keys: List[Tuple[str, Type, bool]]) -> str:
+        got: List[str], all_keys: List[Tuple[str, Type, bool]],
+        missing: bool) -> str:
     """Describe allowed keys and what we got.
 
     Args:
         got: List of keys that were given by the user
         expected_type: A user-defined class
+        missing: Whether a key was missing or extraneous
     """
+    extraneous = not missing
+
     req_keys = [
             '"{}"'.format(name) for name, _, req in all_keys if req]
     opt_keys = [
-            '"{}"'.format(name) for name, _, req in all_keys
-            if not req]
-    sug_msg = 'Keys {} are required here'.format(cjoin('and', req_keys))
+            '"{}"'.format(name) for name, _, req in all_keys if not req]
+
+    class_desc = list()
+
+    req_msg = 'Keys' if len(req_keys) > 1 else 'Key'
+    req_msg += ' ' + cjoin('and', req_keys)
+    req_msg += ' are' if len(req_keys) > 1 else ' is'
+    req_msg += ' required here'
+    class_desc.append(req_msg)
+
     if opt_keys:
-        sug_msg += ' and {} are optional'.format(cjoin('and', opt_keys))
+        opt_msg = ' {} '.format(cjoin('and', opt_keys))
+        opt_msg += ' are' if len(opt_keys) > 1 else ' is'
+        opt_msg += ' optional'
+        class_desc.append(opt_msg)
+
+    if extraneous:
+        # if we had _yatiml_extra then we wouldn't be here
+        class_desc.append('and no other keys are allowed')
+
+    sug_msg = cjoin('and', class_desc)
+
     g = ['"{}"'.format(g) for g in got]
-    sug_msg += ', but {}'.format(cjoin('and', g))
-    if len(got) > 1:
-        sug_msg += ' were given.'
-    else:
-        sug_msg += ' was given.'
+    sug_msg += ', but'
+    if missing:
+        sug_msg += ' only'
+    sug_msg += ' {}'.format(cjoin('and', g))
+    sug_msg += ' were given.' if len(got) > 1 else ' was given.'
     return sug_msg
 
 
@@ -340,7 +361,7 @@ def diagnose_missing_key(
     else:
         all_keys = list(class_subobjects(expected_type))
         if len(all_keys) < 8:
-            sug_msg = _describe_allowed_present_keys(got, all_keys)
+            sug_msg = _describe_allowed_present_keys(got, all_keys, True)
         else:
             sug_msg = 'Maybe it was forgotten or indented incorrectly?'
 
@@ -371,7 +392,7 @@ def diagnose_extraneous_key(
     else:
         all_keys = list(class_subobjects(expected_type))
         if len(all_keys) < 8:
-            sug_msg = _describe_allowed_present_keys(got, all_keys)
+            sug_msg = _describe_allowed_present_keys(got, all_keys, False)
         else:
             sug_msg = (
                     'No similar allowed keys were found either. Maybe it was'
