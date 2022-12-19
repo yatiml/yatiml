@@ -39,10 +39,10 @@ def format_rec_error(rec_error: RecError) -> str:
         return 'An error occurred:\n{}'.format(unique_leaves[0])
     else:
         return (
-                'An error occurred that was caused by one of the following'
-                ' issues. Please solve whichever of the below errors makes'
-                ' the most sense to you.\n{}').format(
-                        '\n\n'.join(unique_leaves))
+                'Multiple things are allowed here, but none of them were'
+                ' recognised correctly. At least one of these errors should'
+                ' apply to what you want to do; please solve that one and'
+                ' ignore the others.\n{}').format('\n\n'.join(unique_leaves))
 
 
 REC_OK = ('', [])       # type: RecError
