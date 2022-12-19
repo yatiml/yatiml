@@ -361,6 +361,8 @@ def diagnose_missing_key(
         all_keys = list(class_subobjects(expected_type))
         if len(all_keys) < 8:
             sug_msg = _describe_allowed_present_keys(got, all_keys, True)
+            # This makes the expected message redundant, so return it only
+            return sug_msg
         else:
             sug_msg = 'Maybe it was forgotten or indented incorrectly?'
 
@@ -392,6 +394,8 @@ def diagnose_extraneous_key(
         all_keys = list(class_subobjects(expected_type))
         if len(all_keys) < 8:
             sug_msg = _describe_allowed_present_keys(got, all_keys, False)
+            # This makes the expected message redundant, so return it only
+            return sug_msg
         else:
             sug_msg = (
                     'No similar allowed keys were found either. Maybe it was'
