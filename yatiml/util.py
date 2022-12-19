@@ -6,7 +6,7 @@ from inspect import isabstract, isclass
 import typing
 from typing import (
         Any, cast, Dict, Iterable, Mapping, MutableMapping, MutableSequence,
-        List, Sequence, Union)
+        List, Sequence, Tuple, Union)
 from typing_extensions import Type
 
 import ruamel.yaml as yaml
@@ -277,14 +277,41 @@ def cjoin(conjuction: str, words: Iterable[str]) -> str:
     'x, y and z'.
     """
     result = ''
-    last_idx = len(list(words)) - 1
-    for i, w in enumerate(words):
-        if i > 0 and i < last_idx:
-            result += ', '
-        if i == last_idx:
-            result += ' ' + conjuction + ' '
+    words_list = list(words)
+    last_idx = len(words_list) - 1
+    for i, w in enumerate(words_list):
+        if i > 0:
+            if i < last_idx:
+                result += ', '
+            else:
+                result += ' ' + conjuction + ' '
         result += w
     return result
+
+
+def _describe_allowed_present_keys(
+        got: List[str], all_keys: List[Tuple[str, Type, bool]]) -> str:
+    """Describe allowed keys and what we got.
+
+    Args:
+        got: List of keys that were given by the user
+        expected_type: A user-defined class
+    """
+    req_keys = [
+            '"{}"'.format(name) for name, _, req in all_keys if req]
+    opt_keys = [
+            '"{}"'.format(name) for name, _, req in all_keys
+            if not req]
+    sug_msg = 'Keys {} are required here'.format(cjoin('and', req_keys))
+    if opt_keys:
+        sug_msg += ' and {} are optional'.format(cjoin('and', opt_keys))
+    g = ['"{}"'.format(g) for g in got]
+    sug_msg += ', but {}'.format(cjoin('and', g))
+    if len(got) > 1:
+        sug_msg += ' were given.'
+    else:
+        sug_msg += ' was given.'
+    return sug_msg
 
 
 def diagnose_missing_key(
@@ -308,28 +335,45 @@ def diagnose_missing_key(
     similar = [s for s in similar if s not in expected_keys]
 
     if similar:
-        suggestions = ' or '.join(['"{}"'.format(s) for s in similar])
+        suggestions = cjoin('or', ['"{}"'.format(s) for s in similar])
         sug_msg = 'Maybe {} was intended to be {}? '.format(suggestions, a)
     else:
         all_keys = list(class_subobjects(expected_type))
         if len(all_keys) < 8:
-            req_keys = [
-                    '"{}"'.format(name) for name, _, req in all_keys if req]
-            opt_keys = [
-                    '"{}"'.format(name) for name, _, req in all_keys
-                    if not req]
-            sug_msg = 'Keys {} are required here'.format(', '.join(req_keys))
-            if opt_keys:
-                sug_msg += ' and {} are optional'.format(', '.join(opt_keys))
-            g = ['"{}"'.format(g) for g in got]
-            sug_msg += ', but {}'.format(', '.join(g))
-            if len(got) > 1:
-                sug_msg += ' were given.'
-            else:
-                sug_msg += ' was given.'
+            sug_msg = _describe_allowed_present_keys(got, all_keys)
+        else:
+            sug_msg = 'Maybe it was forgotten or indented incorrectly?'
+
+    return ' '.join((expected_msg, sug_msg))
+
+
+def diagnose_extraneous_key(
+        name: str, got: List[str], expected_type: Type) -> str:
+    """Helper that gives a good error when an extra key is present.
+
+    Args:
+        name: Name of the missing required attribute
+        got: List of keys that were given by the user
+        expected_type: A user-defined class we expected to get
+    """
+    expected_msg = 'Found a key "{}", which is not allowed here.'.format(name)
+
+    opt_keys = [
+            name for name, _, req in class_subobjects(expected_type)
+            if not req]
+    similar = get_close_matches(name, opt_keys)
+    similar = [s for s in similar if s not in got]
+
+    if similar:
+        suggestions = cjoin('or', ['"{}"'.format(s) for s in similar])
+        sug_msg = 'Maybe "{}" was intended to be {}? '.format(
+                name, suggestions)
+    else:
+        all_keys = list(class_subobjects(expected_type))
+        if len(all_keys) < 8:
+            sug_msg = _describe_allowed_present_keys(got, all_keys)
         else:
             sug_msg = (
-                    'No similar keys were found either. Maybe it was forgotten'
-                    ' or indented incorrectly?')
-
+                    'No similar allowed keys were found either. Maybe it was'
+                    ' indented incorrectly?')
     return ' '.join((expected_msg, sug_msg))

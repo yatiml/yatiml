@@ -13,9 +13,9 @@ from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from yatiml.exceptions import RecognitionError
 from yatiml.introspection import class_subobjects
 from yatiml.util import (
-        bool_union_fix, diagnose_missing_key, generic_type_args,
-        is_generic_sequence, is_generic_mapping, is_generic_union, strip_tags,
-        type_to_desc)
+        bool_union_fix, diagnose_extraneous_key, diagnose_missing_key,
+        generic_type_args, is_generic_sequence, is_generic_mapping,
+        is_generic_union, strip_tags, type_to_desc)
 
 if TYPE_CHECKING:
     from yatiml.loader import Loader  # noqa: F401
@@ -268,9 +268,10 @@ class Constructor:
                         '{}\nExpected a string'.format(node.start_mark))
             if key not in argspec.args and '_yatiml_extra' not in argspec.args:
                 key_node = [kn for kn, _ in node.value if kn.value == key][0]
-                raise RecognitionError((
-                        '{}\nFound key "{}" which is not allowed here'
-                        ).format(key_node.start_mark, key))
+                msg = diagnose_extraneous_key(
+                        key, list(mapping.keys()), self.class_)
+                raise RecognitionError(
+                        '{}\n{}'.format(key_node.start_mark, msg))
 
             if key in argspec.args and key in argspec.annotations:
                 if not self.__type_matches(value, argspec.annotations[key]):
