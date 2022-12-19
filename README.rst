@@ -1,5 +1,5 @@
-.. image:: https://readthedocs.org/projects/yatiml/badge/?version=develop
-    :target: https://yatiml.readthedocs.io/en/latest/?badge=develop
+.. image:: https://readthedocs.org/projects/yatiml/badge/?version=latest
+    :target: https://yatiml.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Build Status
 
 .. image:: https://github.com/yatiml/yatiml/workflows/continuous_integration/badge.svg
