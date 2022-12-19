@@ -5,6 +5,34 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.10.0
+******
+
+Incompatible changes
+--------------------
+
+* Ignore abstract base classes (abc.ABC and/or @abstractmethod)
+
+New functionality
+-----------------
+
+* Easier-to-understand error messages
+* Installation via Conda (already worked, now documented)
+* Small documentation improvements
+* Python 3.11 support
+* Compatibility with ruamel.yaml 0.17
+
+Fixes
+-----
+
+* Bug in map_attribute_to_index
+
+Removed
+-------
+
+* Support for Python 3.6
+
+
 0.9.0
 *****
 
