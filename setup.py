@@ -5,7 +5,7 @@ with open('README.rst') as readme_file:
 
 setup(
     name='yatiml',
-    version='0.9.0',
+    version='0.10.0',
     description="Reading, checking and writing YAML from Python",
     long_description=readme + '\n\n',
     author="Lourens Veen",
@@ -26,14 +26,14 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10'
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11'
     ],
     install_requires=[
-        'ruamel.yaml>=0.15.71,<0.17',
+        'ruamel.yaml>=0.15.71,<=0.17.21,!=0.17.5',
         'typing_extensions'
     ]
 )

@@ -7,13 +7,13 @@ import pytest  # type: ignore
 import yatiml
 
 from .conftest import (
-        BrokenPrivateAttributes, Circle, Color, Color2,
-        ComplexPrivateAttributes, ConstrainedString, DashedAttribute,
+        Abstract, BrokenPrivateAttributes, Circle, Color, Color2,
+        ComplexPrivateAttributes, Concrete, ConstrainedString, DashedAttribute,
         DictAttribute, Document1, Document2, Document3, Document4, Document5,
-        Document6, Ellipse, Extensible, Postcode, PrivateAttributes, Raises,
-        Rectangle, Shape, StringLike, SubA, SubA2, SubA3, SubB, SubB2, SubB3,
-        Super, Super2, Super3, Super3Clone, Super4, Super5, Sub45,
-        UnionAttribute, Universal, Vector2D)
+        Document6, Ellipse, Extensible, ManyAttrs, Postcode, PrivateAttributes,
+        Raises, Rectangle, Shape, StringLike, SubA, SubA2, SubA3, SubB, SubB2,
+        SubB3, Super, Super2, Super3, Super3Clone, Super4, Super5, Sub45,
+        raises, UnionAttribute, Universal, Vector2D)
 
 
 def test_load_class() -> None:
@@ -34,7 +34,7 @@ def test_load_class_return_type() -> None:
 
 def test_init_raises() -> None:
     load = yatiml.load_function(Raises)
-    with pytest.raises(yatiml.RecognitionError):
+    with raises(yatiml.RecognitionError):
         load('x: 20')
 
 
@@ -53,7 +53,7 @@ def test_missing_attribute_class() -> None:
     # omitting Vector2D from the list here
     load = yatiml.load_function(
             Document2, Color2, Shape, Rectangle, Circle)
-    with pytest.raises(yatiml.RecognitionError):
+    with raises(yatiml.RecognitionError):
         load(
                 'cursor_at:\n'
                 '  x: 42.0\n'
@@ -62,13 +62,38 @@ def test_missing_attribute_class() -> None:
 
 def test_missing_attribute() -> None:
     load = yatiml.load_function(Universal)
-    with pytest.raises(yatiml.RecognitionError):
+    with raises(yatiml.RecognitionError):
         load('a: 2')
+
+
+def test_ambiguous_missing_attribute() -> None:
+    load = yatiml.load_function(Document5)
+    with raises(yatiml.RecognitionError):
+        data = load(
+                'attr1: 10\n'
+                'attrx: x\n'
+                'attry: y\n')
+
+
+def test_many_attributes() -> None:
+    load = yatiml.load_function(ManyAttrs)
+    with raises(yatiml.RecognitionError):
+        data = load(
+                'attr1: 1\n'
+                'attr2: 2\n'
+                'attr3: 3\n'
+                'attr4: 4\n'
+                'attr5: 5\n'
+                'attr6: 6\n'
+                'attr7: 7\n'
+                'test: test\n'
+                'testing: testing\n'
+                'python: tested\n')
 
 
 def test_extra_attribute() -> None:
     load = yatiml.load_function(Vector2D)
-    with pytest.raises(yatiml.RecognitionError):
+    with raises(yatiml.RecognitionError):
         load(
                 'x: 12.3\n'
                 'y: 45.6\n'
@@ -77,7 +102,7 @@ def test_extra_attribute() -> None:
 
 def test_incorrect_attribute_type() -> None:
     load = yatiml.load_function(Universal)
-    with pytest.raises(yatiml.RecognitionError):
+    with raises(yatiml.RecognitionError):
         load(
                 'a: 2\n'
                 'b: [test1, test2]\n')
@@ -122,7 +147,7 @@ def test_custom_recognize() -> None:
 
 def test_built_in_instead_of_class() -> None:
     load = yatiml.load_function(Shape, Rectangle, Circle, Ellipse, Vector2D)
-    with pytest.raises(yatiml.RecognitionError):
+    with raises(yatiml.RecognitionError):
         load('center: 10')
 
 
@@ -132,9 +157,21 @@ def test_parent_fallback() -> None:
     assert isinstance(data, Super)
 
 
+def test_abstract_base_class() -> None:
+    # mypy does not accept ABCs for Type[T], see
+    # https://github.com/python/mypy/issues/4717
+    load = yatiml.load_function(Abstract, Concrete)     # type: ignore
+    with raises(yatiml.RecognitionError):
+        load('attr: 13')
+
+    load(
+            'attr: 13\n'
+            'attr2: a\n')
+
+
 def test_missing_discriminator() -> None:
     load = yatiml.load_function(Super, SubA, SubB)
-    with pytest.raises(yatiml.RecognitionError):
+    with raises(yatiml.RecognitionError):
         load('subclas: A')
 
 
@@ -180,7 +217,11 @@ def test_any_object_tag_strip() -> None:
 
 
 def test_any_document() -> None:
-    load = yatiml.load_function(Any)
+    # mypy flags this because Any doesn't match Type[T]. The solution
+    # is in https://github.com/python/mypy/issues/9773, but that's
+    # waiting for a sufficiently round tuit. Meanwhile, we'll have to
+    # ignore the type check.
+    load = yatiml.load_function(Any)    # type: ignore
     text = '42'
     data = load(text)
     assert data == 42
@@ -211,7 +252,7 @@ def test_untyped_attributes() -> None:
 def test_missing_untyped_attributes() -> None:
     load = yatiml.load_function(Document6)
     text = 'attr2: x'
-    with pytest.raises(yatiml.RecognitionError):
+    with raises(yatiml.RecognitionError):
         load(text)
 
 
@@ -290,7 +331,7 @@ def test_yatiml_extra_strip() -> None:
 
 def test_missing_class() -> None:
     load = yatiml.load_function(Shape, Rectangle, Ellipse, Vector2D)
-    with pytest.raises(yatiml.RecognitionError):
+    with raises(yatiml.RecognitionError):
         load(
                 'center:\n'
                 '  x: 1.0\n'
@@ -316,7 +357,7 @@ def test_user_class_override2() -> None:
 
 def test_user_class_conflicting_override() -> None:
     load = yatiml.load_function(Super2, SubA2, SubB2, Ellipse)
-    with pytest.raises(yatiml.RecognitionError):
+    with raises(yatiml.RecognitionError):
         load(
                 '!Ellipse\n'
                 'subclass: A2\n')
@@ -324,18 +365,21 @@ def test_user_class_conflicting_override() -> None:
 
 def test_user_class_unknown_override() -> None:
     load = yatiml.load_function(Super2, SubA2, SubB2)
-    with pytest.raises(yatiml.RecognitionError):
+    with raises(yatiml.RecognitionError):
         load(
                 '!Ellipse\n'
                 'subclass: A2\n')
 
 
 def test_disambiguated_union() -> None:
-    load = yatiml.load_function(
+    # mypy flags this because Union doesn't match Type[T]. The solution
+    # is in https://github.com/python/mypy/issues/9773, but that's
+    # waiting for a sufficiently round tuit. Meanwhile, we'll have to
+    # ignore the type check.
+    load = yatiml.load_function(    # type: ignore
             Union[Super3, Super3Clone], Super3, Super3Clone)
-    with pytest.raises(yatiml.RecognitionError):
-        load(
-                'attr: X\n')
+    with raises(yatiml.RecognitionError):
+        load('attr: X\n')
 
     data = load(
             '!Super3\n'
@@ -345,7 +389,12 @@ def test_disambiguated_union() -> None:
 
 
 def test_different_recognitions_of_the_same_type() -> None:
-    load = yatiml.load_function(Union[Super4, Super5], Super4, Super5, Sub45)
+    # mypy flags this because Union doesn't match Type[T]. The solution
+    # is in https://github.com/python/mypy/issues/9773, but that's
+    # waiting for a sufficiently round tuit. Meanwhile, we'll have to
+    # ignore the type check.
+    load = yatiml.load_function(    # type: ignore
+            Union[Super4, Super5], Super4, Super5, Sub45)
     data = load('attr: 42')
     assert isinstance(data, Sub45)
 
@@ -554,14 +603,14 @@ def test_dump_complex_document_json() -> None:
 def test_broken_custom_attributes() -> None:
     dumps = yatiml.dumps_function(Universal)
     data = Universal(3, [4])
-    with pytest.raises(RuntimeError):
+    with raises(RuntimeError):
         dumps(data)
 
 
 def test_broken_custom_attributes_json() -> None:
     dumps = yatiml.dumps_json_function(Universal)
     data = Universal(3, [4])
-    with pytest.raises(RuntimeError):
+    with raises(RuntimeError):
         dumps(data)
 
 
@@ -579,13 +628,13 @@ def test_yatiml_attributes_json() -> None:
 
 def test_private_attributes() -> None:
     dumps = yatiml.dumps_function(BrokenPrivateAttributes)
-    with pytest.raises(AttributeError):
+    with raises(AttributeError):
         dumps(BrokenPrivateAttributes(10, 42.0))
 
 
 def test_private_attributes_json() -> None:
     dumps = yatiml.dumps_json_function(BrokenPrivateAttributes)
-    with pytest.raises(AttributeError):
+    with raises(AttributeError):
         dumps(BrokenPrivateAttributes(10, 42.0))
 
 
@@ -603,10 +652,13 @@ def test_enum_class() -> None:
     assert isinstance(data, Color)
     assert data == Color.blue
 
-    with pytest.raises(yatiml.RecognitionError):
+    with raises(yatiml.RecognitionError):
         load('yelow\n')
 
-    with pytest.raises(yatiml.RecognitionError):
+
+def test_enum_class2() -> None:
+    load = yatiml.load_function(Color)
+    with raises(yatiml.RecognitionError):
         load('1\n')
 
 
@@ -678,8 +730,14 @@ def test_load_user_string() -> None:
     assert isinstance(data, ConstrainedString)
     assert data == 'abcd'
 
-    with pytest.raises(ValueError):
+    with raises(yatiml.RecognitionError):
         load('efgh\n')
+
+
+def test_load_user_string_from_incorrect_type() -> None:
+    load = yatiml.load_function(ConstrainedString)
+    with raises(yatiml.RecognitionError):
+        load('10\n')
 
 
 def test_dump_user_string() -> None:
@@ -723,7 +781,7 @@ def test_load_user_string_key() -> None:
     assert ConstrainedString('abcd') in data
     assert data[ConstrainedString('abcd')] == 10
 
-    with pytest.raises(ValueError):
+    with raises(yatiml.RecognitionError):
         load('efgh: 4\n')
 
 

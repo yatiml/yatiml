@@ -11,9 +11,10 @@ import ruamel.yaml as yaml
 
 from yatiml.constructors import (
         Constructor, EnumConstructor, PathConstructor, UserStringConstructor)
-from yatiml.exceptions import RecognitionError
+from yatiml.exceptions import RecognitionError, SeasoningError
 from yatiml.helpers import Node
 from yatiml.introspection import class_subobjects
+from yatiml.irecognizer import format_rec_error
 from yatiml.recognizer import Recognizer
 from yatiml.util import (
         generic_type_args, is_generic_sequence, is_generic_mapping,
@@ -148,26 +149,30 @@ class Loader(yaml.RoundTripLoader):
             node, expected_type))
 
         # figure out how to interpret this node
-        recognized_types, message = self.__recognizer.recognize(
+        recognized_types, result = self.__recognizer.recognize(
             node, expected_type)
 
         if len(recognized_types) != 1:
-            raise RecognitionError(message)
+            raise RecognitionError(format_rec_error(result))
 
         recognized_type = next(iter(recognized_types))
 
         # remove syntactic sugar
         logger.debug('Savorizing node {}'.format(node))
         if recognized_type in self._registered_classes.values():
-            node = self.__savorize(node, recognized_type)
+            try:
+                node = self.__savorize(node, recognized_type)
+            except SeasoningError as e:
+                raise RecognitionError(
+                        '{}\n{}'.format(node.start_mark, e.args[0]))
         logger.debug('Savorized, now {}'.format(node))
 
         # process subnodes
         logger.debug('Recursing into subnodes')
         if is_generic_sequence(recognized_type):
             if node.tag != 'tag:yaml.org,2002:seq':
-                raise RecognitionError('{}{}Expected a {} here'.format(
-                    node.start_mark, os.linesep,
+                raise RecognitionError('{}\nExpected {} here'.format(
+                    node.start_mark,
                     type_to_desc(expected_type)))
             node.value = [
                     self.__process_node(
@@ -176,9 +181,8 @@ class Loader(yaml.RoundTripLoader):
 
         elif is_generic_mapping(recognized_type):
             if node.tag != 'tag:yaml.org,2002:map':
-                raise RecognitionError('{}{}Expected a {} here'.format(
-                    node.start_mark, os.linesep,
-                    type_to_desc(expected_type)))
+                raise RecognitionError('{}\nExpected {} here'.format(
+                    node.start_mark, type_to_desc(expected_type)))
             node.value = [(
                     self.__process_node(
                         key_node, generic_type_args(recognized_type)[0]),
@@ -372,7 +376,9 @@ def load_function(result=_AnyYAML, *args):     # type: ignore
             """Create a LoadFunction."""
             self.loader = loader
 
-        def __call__(self, source: Union[str, Path, IO[AnyStr]]) -> T:
+        def __call__(
+                self, source: Union[str, Path, IO[AnyStr]]
+                ) -> T:  # type: ignore
             """Load a YAML document from a source.
 
             The source can be a string containing YAML, a pathlib.Path

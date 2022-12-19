@@ -15,7 +15,7 @@ from ruamel.yaml.error import StreamMark
 
 from yatiml.exceptions import RecognitionError, SeasoningError
 from yatiml.introspection import defaulted_attributes
-from yatiml.irecognizer import IRecognizer
+from yatiml.irecognizer import IRecognizer, format_rec_error
 from yatiml.util import ScalarType, scalar_type_to_tag
 
 _Any = NewType('_Any', int)
@@ -221,8 +221,8 @@ class Node:
         ]
         if len(matches) != 1:
             raise SeasoningError(
-                'Attribute not found, or found multiple times: {}'.format(
-                    matches))
+                'Key not found, or found multiple times: {}'.format(
+                    attribute))
         return Node(matches[0])
 
     def set_attribute(self, attribute: str,
@@ -328,7 +328,7 @@ class Node:
                     my_list = list()
                 self.my_list = my_list
 
-            _yatiml_defaults = {'my_list', []}  # type: Dict[str, Any]
+            _yatiml_defaults = {'my_list': []}  # type: Dict[str, Any]
 
             @classmethod
             def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
@@ -494,9 +494,7 @@ class Node:
         for item in attr_node.seq_items():
             key_attr_node = item.get_attribute(key_attribute)
             if not key_attr_node.is_scalar(str):
-                raise SeasoningError(
-                    ('Attribute names must be strings in'
-                     'YAtiML, {} is not a string.').format(key_attr_node))
+                raise SeasoningError('Expected a string here')
             if key_attr_node.get_value() in seen_keys:
                 if strict:
                     raise SeasoningError(
@@ -741,8 +739,7 @@ class Node:
         for key_node, value_node in attr_node.yaml_node.value:
             if not isinstance(value_node, yaml.MappingNode):
                 raise SeasoningError(
-                    ('Values must be mappings for attribute "{}", but {} is'
-                     ' not a mapping.').format(attribute, value_node))
+                    'Values must be mappings for key "{}"'.format(attribute))
 
             # filter out key atttribute
             value_node.value = [
@@ -872,14 +869,15 @@ class Node:
 
         new_value = list()
         for key_node, value_node in attr_node.yaml_node.value:
-            if not isinstance(value_node, yaml.MappingNode):
-                if value_attribute is not None:
-                    new_key = yaml.ScalarNode(
-                            'tag:yaml.org,2002:str', value_attribute,
-                            value_node.start_mark, value_node.end_mark)
-                    new_mapping = yaml.MappingNode(
-                            'tag:yaml.org,2002:map', [(new_key, value_node)],
-                            value_node.start_mark, value_node.end_mark)
+            if (
+                    not isinstance(value_node, yaml.MappingNode) and
+                    value_attribute is not None):
+                new_key = yaml.ScalarNode(
+                        'tag:yaml.org,2002:str', value_attribute,
+                        value_node.start_mark, value_node.end_mark)
+                new_mapping = yaml.MappingNode(
+                        'tag:yaml.org,2002:map', [(new_key, value_node)],
+                        value_node.start_mark, value_node.end_mark)
             else:
                 new_mapping = value_node
 
@@ -966,27 +964,23 @@ class UnknownNode:
         node = Node(self.yaml_node)
         if len(args) == 0:
             if not node.is_scalar():
-                raise RecognitionError(('{}{}A scalar is required').format(
-                    self.yaml_node.start_mark, os.linesep))
+                raise RecognitionError('A scalar is required')
         else:
             for typ in args:
                 if node.is_scalar(typ):
                     return
-            raise RecognitionError(
-                ('{}{}A scalar of type {} is required').format(
-                    self.yaml_node.start_mark, os.linesep, args))
+            raise RecognitionError('A scalar of type {} is required'.format(
+                    args))
 
     def require_mapping(self) -> None:
         """Require the node to be a mapping."""
         if not isinstance(self.yaml_node, yaml.MappingNode):
-            raise RecognitionError(('{}{}A mapping is required here').format(
-                self.yaml_node.start_mark, os.linesep))
+            raise RecognitionError('A mapping is required here')
 
     def require_sequence(self) -> None:
         """Require the node to be a sequence."""
         if not isinstance(self.yaml_node, yaml.SequenceNode):
-            raise RecognitionError(('{}{}A sequence is required here').format(
-                self.yaml_node.start_mark, os.linesep))
+            raise RecognitionError('A sequence is required here')
 
     def require_attribute(
             self, attribute: str, typ: Union[None, Type] = _Any) -> None:
@@ -1007,15 +1001,14 @@ class UnknownNode:
         ]
         if len(attr_nodes) == 0:
             raise RecognitionError(
-                ('{}{}Missing required attribute "{}"').format(
-                    self.yaml_node.start_mark, os.linesep, attribute))
+                    'Missing required attribute "{}"'.format(attribute))
         attr_node = attr_nodes[0]
 
         if typ != _Any:
-            recognized_types, message = self.__recognizer.recognize(
+            recognized_types, result = self.__recognizer.recognize(
                 attr_node, cast(Type, typ))
             if len(recognized_types) == 0:
-                raise RecognitionError(message)
+                raise RecognitionError(format_rec_error(result))
 
     def require_attribute_value(
             self, attribute: str,
@@ -1034,6 +1027,7 @@ class UnknownNode:
             yatiml.RecognitionError: If the attribute does not exist,
                     or does not have the required value.
         """
+        self.require_mapping()
         found = False
         for key_node, value_node in self.yaml_node.value:
             if (key_node.tag == 'tag:yaml.org,2002:str'
@@ -1042,21 +1036,17 @@ class UnknownNode:
                 node = Node(value_node)
                 if not node.is_scalar(type(value)):
                     raise RecognitionError(
-                            ('{}{}Incorrect attribute type where value {}'
+                            ('Incorrect attribute type where value {}'
                              ' of type {} was required').format(
-                                self.yaml_node.start_mark, os.linesep,
                                 value, type(value)))
                 if node.get_value() != value:
-                    raise RecognitionError(
-                        ('{}{}Incorrect attribute value'
-                         ' {} where {} was required').format(
-                             self.yaml_node.start_mark, os.linesep,
-                             value_node.value, value))
+                    raise RecognitionError((
+                        'Incorrect attribute value {} where {} was required'
+                            ).format(value_node.value, value))
 
         if not found:
             raise RecognitionError(
-                ('{}{}Required attribute "{}" not found').format(
-                    self.yaml_node.start_mark, os.linesep, attribute))
+                    'Required key "{}" not found'.format(attribute))
 
     def require_attribute_value_not(
             self, attribute: str,
@@ -1075,6 +1065,7 @@ class UnknownNode:
             yatiml.RecognitionError: If the attribute does not exist,
                     or has the required value.
         """
+        self.require_mapping()
         found = False
         for key_node, value_node in self.yaml_node.value:
             if (key_node.tag == 'tag:yaml.org,2002:str'
@@ -1085,12 +1076,10 @@ class UnknownNode:
                     return
                 if node.get_value() == value:
                     raise RecognitionError(
-                        ('{}{}Incorrect attribute value'
-                         ' {} where {} was not allowed').format(
-                             self.yaml_node.start_mark, os.linesep,
-                             value_node.value, value))
+                            (
+                                'Incorrect attribute value {} where {} was not'
+                                ' allowed').format(value_node.value, value))
 
         if not found:
             raise RecognitionError(
-                ('{}{}Required attribute "{}" not found').format(
-                    self.yaml_node.start_mark, os.linesep, attribute))
+                    'Required key "{}" not found'.format(attribute))

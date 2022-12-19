@@ -22,18 +22,18 @@
 
 outfile=$(mktemp)
 
-for i in $(seq 71 1 100) ; do
+for i in $(seq 100 1 100) ; do
     sed -i "s/'ruamel.yaml[^']*'/'ruamel.yaml==0.15.$i'/" setup.py
     tox -r
     if (( $? != 0 )); then
         echo "Version 0.15.$i: broken" >>"${outfile}"
-        break
+        # break
     else
         echo "Version 0.15.$i: works" >>"${outfile}"
     fi
 done
 
-for i in $(seq 10 1 13) ; do
+for i in $(seq 0 1 13) ; do
     sed -i "s/'ruamel.yaml[^']*'/'ruamel.yaml==0.16.$i'/" setup.py
     tox -r
     if (( $? != 0 )); then
@@ -44,7 +44,7 @@ for i in $(seq 10 1 13) ; do
     fi
 done
 
-for i in $(seq 0 1 10) ; do
+for i in $(seq 0 1 21) ; do
     sed -i "s/'ruamel.yaml[^']*'/'ruamel.yaml==0.17.$i'/" setup.py
     tox -r
     if (( $? != 0 )); then

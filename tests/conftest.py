@@ -1,9 +1,14 @@
+from abc import ABC
+from contextlib import AbstractContextManager
 import enum
 import math
 from collections import OrderedDict, UserString
+import os
 from pathlib import Path
 import sys
-from typing import Any, Dict, List, Optional, Tuple, Union
+from types import TracebackType
+from typing import (
+        Any, cast, ContextManager, Dict, List, Optional, Tuple, Union)
 from typing_extensions import Type
 
 from ruamel import yaml
@@ -19,6 +24,31 @@ def tmpdir_path(tmp_path: Any) -> Path:
     # pathlib2.Path, which YAtiML does not support. This smooths over
     # the difference and makes sure our tests work everywhere.
     return Path(str(tmp_path))
+
+
+class DummyRaises(AbstractContextManager):
+    def __enter__(self) -> None:
+        pass
+
+    def __exit__(
+            self, exc_type: Optional[Type[BaseException]],
+            exc_value: Optional[BaseException],
+            traceback: Optional[TracebackType]) -> Optional[bool]:
+        pass
+
+
+def raises(expected_exception: Any) -> ContextManager:
+    """Shows error messages if so configured.
+
+    This function works like pytest.raises(), but can be disabled by an
+    environment variable. Setting that environment variable will thus
+    cause a whole bunch of tests to fail and print error messages,
+    which a developer can then look at and judge for quality.
+    """
+    if 'YATIML_TEST_ERROR_MESSAGES' in os.environ:
+        return DummyRaises()
+    else:
+        return cast(ContextManager, pytest.raises(expected_exception))
 
 
 class Document1:
@@ -93,10 +123,10 @@ class Color2(enum.Enum):
 
 
 class Document2:
-    def __init__(self, cursor_at: Vector2D, shapes: List[Shape] = None,
-                 color: Color2 = Color2.RED,
-                 extra_shape: Optional[Shape] = None
-                 ) -> None:
+    def __init__(
+            self, cursor_at: Vector2D, shapes: Optional[List[Shape]] = None,
+            color: Color2 = Color2.RED, extra_shape: Optional[Shape] = None
+            ) -> None:
         self.cursor_at = cursor_at
         self.shapes = shapes if shapes is not None else list()
         self.color = color
@@ -126,7 +156,7 @@ class Document3:
 
 
 class Document4:
-    def __init__(self, shapes: List[Shape] = None) -> None:
+    def __init__(self, shapes: Optional[List[Shape]] = None) -> None:
         self.shapes = shapes if shapes is not None else list()
 
     _yatiml_defaults = {'shapes': []}   # type: Dict[str, Any]
@@ -143,7 +173,8 @@ class Document5:
 
 
 class Document6:
-    def __init__(self, attr1, attr2):
+    # type annotations are intentionally missing here
+    def __init__(self, attr1, attr2):   # type: ignore
         self.attr1 = attr1
         self.attr2 = attr2
 
@@ -241,6 +272,17 @@ class Super5:
 class Sub45(Super4, Super5):
     def __init__(self, attr: int) -> None:
         self.attr = attr
+
+
+class Abstract(ABC):
+    def __init__(self, attr: int) -> None:
+        self.attr = attr
+
+
+class Concrete(Abstract):
+    def __init__(self, attr: int, attr2: str) -> None:
+        super().__init__(attr)
+        self.attr2 = attr2
 
 
 class Universal:
@@ -368,6 +410,23 @@ class Raises:
     def __init__(self, x: int) -> None:
         if x >= 10:
             raise RuntimeError('x must be less than 10')
+
+
+class ManyAttrs:
+    def __init__(
+            self, attr1: int, attr2: int, attr3: int, attr4: int, attr5: int,
+            attr6: int, attr7: int, test: str, testing: str, tested: str
+            ) -> None:
+        self.attr1 = attr1
+        self.attr2 = attr2
+        self.attr3 = attr3
+        self.attr4 = attr4
+        self.attr5 = attr5
+        self.attr6 = attr6
+        self.attr7 = attr7
+        self.test = test
+        self.testing = testing
+        self.tested = tested
 
 
 if sys.version_info >= (3, 7):

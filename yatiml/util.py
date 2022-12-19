@@ -1,12 +1,17 @@
+from abc import ABC
 from collections import abc, UserString
+from difflib import get_close_matches
 from datetime import date
+from inspect import isabstract, isclass
 import typing
 from typing import (
-        Any, cast, Dict, Mapping, MutableMapping, MutableSequence, List,
-        Sequence, Union)
+        Any, cast, Dict, Iterable, Mapping, MutableMapping, MutableSequence,
+        List, Sequence, Tuple, Union)
 from typing_extensions import Type
 
 import ruamel.yaml as yaml
+
+from yatiml.introspection import class_subobjects
 
 
 class bool_union_fix:
@@ -47,6 +52,25 @@ class String:
     pass
 
 
+def is_abstract(type_: Type) -> bool:
+    """Determines whether a type is an abstract base class.
+
+    This is the case if it derives directly from abc.ABC, and/or if
+    it has @abstractmethods.
+
+    Args:
+        type_: The type to check.
+
+    Returns:
+        True iff it's an abstract base class.
+    """
+    if not isclass(type_):
+        return False
+    if isabstract(type_):
+        return True
+    return ABC in type_.__bases__
+
+
 def is_generic_sequence(type_: Type) -> bool:
     """Determines whether a type is a sequence tag.
 
@@ -76,7 +100,7 @@ def is_generic_sequence(type_: Type) -> bool:
         # GenericMeta cannot be imported from typing, because it doesn't
         # exist in all versions, and it will fail the type check in those
         # versions as well, so we ignore it.
-        return (isinstance(type_, typing.GenericMeta) and
+        return (isinstance(type_, cast(Any, typing).GenericMeta) and
                 (
                     cast(Any, type_).__origin__ is List or
                     cast(Any, type_).__origin__ is Sequence or
@@ -106,7 +130,7 @@ def is_generic_mapping(type_: Type) -> bool:
                     type_.__origin__ is abc.MutableMapping))
     else:
         # 3.6 and earlier
-        return (isinstance(type_, typing.GenericMeta) and
+        return (isinstance(type_, cast(Any, typing).GenericMeta) and
                 (
                     cast(Any, type_).__origin__ is Dict or
                     cast(Any, type_).__origin__ is Mapping or
@@ -180,32 +204,33 @@ def type_to_desc(type_: Type) -> str:
         A human-readable description.
     """
     scalar_type_to_str = {
-        str: 'string',
-        int: 'int',
-        float: 'float',
-        bool: 'boolean',
-        None: 'null value',
-        type(None): 'null value'
+        str: 'a string',
+        int: 'an int',
+        float: 'a float',
+        bool: 'a boolean',
+        None: 'a null value',
+        type(None): 'a null value'
     }
 
     if type_ in scalar_type_to_str:
         return scalar_type_to_str[type_]
 
     if is_generic_union(type_):
-        return 'union of {}'.format([type_to_desc(t)
-                                     for t in generic_type_args(type_)])
+        return 'any one of {}'.format(
+                [type_to_desc(t) for t in generic_type_args(type_)])
 
     if is_generic_sequence(type_):
-        return 'list of ({})'.format(type_to_desc(generic_type_args(type_)[0]))
+        return 'a list of ({})'.format(
+                type_to_desc(generic_type_args(type_)[0]))
 
     if is_generic_mapping(type_):
-        return 'dict of string to ({})'.format(
+        return 'a dict of string to ({})'.format(
                 type_to_desc(generic_type_args(type_)[1]))
 
     if type_ is Any:
-        return 'string, int, float, boolean, null value, list or dict'
+        return 'a string, int, float, boolean, null value, list or dict'
 
-    return type_.__name__
+    return 'a(n) {}'.format(type_.__name__)
 
 
 def is_string_like(type_: Type) -> bool:
@@ -242,3 +267,137 @@ def strip_tags(resolver: yaml.VersionedResolver, node: yaml.Node) -> None:
         for key_node, value_node in node.value:
             strip_tags(resolver, key_node)
             strip_tags(resolver, value_node)
+
+
+def cjoin(conjuction: str, words: Iterable[str]) -> str:
+    """Joins words together into a conjuctive clause.
+
+    This makes a nice enumeration out of the list of words. For
+    example, mjoin('and', ['x', 'y', 'z']) produces the string
+    'x, y and z'.
+    """
+    result = ''
+    words_list = list(words)
+    last_idx = len(words_list) - 1
+    for i, w in enumerate(words_list):
+        if i > 0:
+            if i < last_idx:
+                result += ', '
+            else:
+                result += ' ' + conjuction + ' '
+        result += w
+    return result
+
+
+def _describe_allowed_present_keys(
+        got: List[str], all_keys: List[Tuple[str, Type, bool]],
+        missing: bool) -> str:
+    """Describe allowed keys and what we got.
+
+    Args:
+        got: List of keys that were given by the user
+        expected_type: A user-defined class
+        missing: Whether a key was missing or extraneous
+    """
+    extraneous = not missing
+
+    req_keys = ['"{}"'.format(name) for name, _, req in all_keys if req]
+    opt_keys = ['"{}"'.format(name) for name, _, req in all_keys if not req]
+
+    class_desc = list()
+
+    req_msg = 'Keys' if len(req_keys) > 1 else 'Key'
+    req_msg += ' ' + cjoin('and', req_keys)
+    req_msg += ' are' if len(req_keys) > 1 else ' is'
+    req_msg += ' required here'
+    class_desc.append(req_msg)
+
+    if opt_keys:
+        opt_msg = '{}'.format(cjoin('and', opt_keys))
+        opt_msg += ' are' if len(opt_keys) > 1 else ' is'
+        opt_msg += ' optional'
+        class_desc.append(opt_msg)
+
+    if extraneous:
+        # if we had _yatiml_extra then we wouldn't be here
+        class_desc.append('no other keys are allowed')
+
+    sug_msg = cjoin('and', class_desc)
+
+    g = ['"{}"'.format(g) for g in got]
+    sug_msg += ', but'
+    if missing:
+        if set(got).issubset({n for n, _, _ in all_keys}):
+            sug_msg += ' only'
+    sug_msg += ' {}'.format(cjoin('and', g))
+    sug_msg += ' were given.' if len(got) > 1 else ' was given.'
+    return sug_msg
+
+
+def diagnose_missing_key(
+        name: str, got: List[str], expected_type: Type) -> str:
+    """Helper that gives a good error when a key is missing.
+
+    Args:
+        name: Name of the missing required attribute
+        got: List of keys that were given by the user
+        expected_type: A user-defined class we expected to get
+    """
+    a = '"{}"'.format(name)
+    if '_' in name:
+        a += ' or maybe "{}"'.format(
+                name.replace('_', '-'))
+    expected_msg = 'Expected a key {} but it was not found.'.format(a)
+
+    expected_keys = [name for name, _, _ in class_subobjects(expected_type)]
+
+    similar = get_close_matches(name, got)
+    similar = [s for s in similar if s not in expected_keys]
+
+    if similar:
+        suggestions = cjoin('or', ['"{}"'.format(s) for s in similar])
+        sug_msg = 'Maybe {} was intended to be {}? '.format(suggestions, a)
+    else:
+        all_keys = list(class_subobjects(expected_type))
+        if len(all_keys) < 8:
+            sug_msg = _describe_allowed_present_keys(got, all_keys, True)
+            # This makes the expected message redundant, so return it only
+            return sug_msg
+        else:
+            sug_msg = 'Maybe it was forgotten or indented incorrectly?'
+
+    return ' '.join((expected_msg, sug_msg))
+
+
+def diagnose_extraneous_key(
+        name: str, got: List[str], expected_type: Type) -> str:
+    """Helper that gives a good error when an extra key is present.
+
+    Args:
+        name: Name of the missing required attribute
+        got: List of keys that were given by the user
+        expected_type: A user-defined class we expected to get
+    """
+    expected_msg = 'Found a key "{}", which is not allowed here.'.format(name)
+
+    opt_keys = [
+            name for name, _, req in class_subobjects(expected_type)
+            if not req]
+    similar = get_close_matches(name, opt_keys)
+    similar = [s for s in similar if s not in got]
+
+    if similar:
+        suggestions = cjoin('or', ['"{}"'.format(s) for s in similar])
+        sug_msg = 'Maybe "{}" was intended to be {}? '.format(
+                name, suggestions)
+    else:
+        all_keys = list(class_subobjects(expected_type))
+        if len(all_keys) < 8:
+            sug_msg = _describe_allowed_present_keys(got, all_keys, False)
+            # This makes the expected message redundant, so return it only
+            return sug_msg
+        else:
+            sug_msg = (
+                    'No similar allowed keys were found either. Maybe it was'
+                    ' indented incorrectly?')
+    return ' '.join((expected_msg, sug_msg))

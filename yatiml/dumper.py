@@ -4,7 +4,7 @@ import json
 import logging
 from pathlib import Path, PosixPath, WindowsPath
 from typing import Any, AnyStr, Callable, IO, List, Optional, Union, cast
-from typing_extensions import Type
+from typing_extensions import Protocol, Type
 
 import ruamel.yaml as yaml
 from ruamel.yaml.events import (
@@ -337,7 +337,14 @@ def dump_function(
     return DumpFunction(UserDumper)
 
 
-def dumps_json_function(*args: Type) -> Callable[..., str]:
+class DumpsJsonFunctionType(Protocol):
+    def __call__(
+            self, obj: Any, *, indent: Optional[int] = None,
+            ensure_ascii: bool = True) -> str:
+        ...
+
+
+def dumps_json_function(*args: Type) -> DumpsJsonFunctionType:
     """Create a dumps function for the given types that writes JSON.
 
     This function returns a callable object which takes an object
@@ -423,8 +430,15 @@ def dumps_json_function(*args: Type) -> Callable[..., str]:
     return DumpsJsonFunction(UserDumper)
 
 
+class DumpJsonFunctionType(Protocol):
+    def __call__(
+            self, obj: Any, sink: Union[str, Path, IO[AnyStr]],
+            indent: Optional[int] = None, ensure_ascii: bool = True) -> None:
+        ...
+
+
 def dump_json_function(
-        *args: Type) -> Callable[..., None]:
+        *args: Type) -> DumpJsonFunctionType:
     """Create a dump function for the given types that writes JSON.
 
     This function returns a callable object which takes an object
