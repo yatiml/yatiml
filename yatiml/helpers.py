@@ -619,9 +619,11 @@ class Node:
             item_value_node = Node(item_value)
             if not item_value_node.is_mapping():
                 if value_attribute is None:
-                    return
+                    return      # invalid format
                 ynode = item_value_node.yaml_node
                 item_value_node.make_mapping()
+                item_value_node.yaml_node.start_mark = item_key.start_mark
+                item_value_node.yaml_node.end_mark = item_value.end_mark
                 item_value_node.set_attribute(value_attribute, ynode)
 
             item_value_node.set_attribute(key_attribute, item_key.value)
