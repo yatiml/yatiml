@@ -306,7 +306,8 @@ def _describe_allowed_present_keys(
 
     class_desc = list()
 
-    req_msg = 'Keys' if len(req_keys) > 1 else 'Key'
+    req_msg = 'For reference, '
+    req_msg += 'keys' if len(req_keys) > 1 else 'key'
     req_msg += ' ' + cjoin('and', req_keys)
     req_msg += ' are' if len(req_keys) > 1 else ' is'
     req_msg += ' required here'
@@ -360,8 +361,10 @@ def diagnose_missing_key(
     else:
         all_keys = list(class_subobjects(expected_type))
         if len(all_keys) < 8:
-            sug_msg = _describe_allowed_present_keys(got, all_keys, True)
-            # This makes the expected message redundant, so return it only
+            sug_msg = expected_msg
+            sug_msg += ' Maybe it was indented incorrectly?'
+            sug_msg += ' ' + _describe_allowed_present_keys(
+                    got, all_keys, True)
             return sug_msg
         else:
             sug_msg = 'Maybe it was forgotten or indented incorrectly?'
@@ -374,7 +377,7 @@ def diagnose_extraneous_key(
     """Helper that gives a good error when an extra key is present.
 
     Args:
-        name: Name of the missing required attribute
+        name: Name of the extraneous required attribute
         got: List of keys that were given by the user
         expected_type: A user-defined class we expected to get
     """
@@ -393,8 +396,9 @@ def diagnose_extraneous_key(
     else:
         all_keys = list(class_subobjects(expected_type))
         if len(all_keys) < 8:
-            sug_msg = _describe_allowed_present_keys(got, all_keys, False)
-            # This makes the expected message redundant, so return it only
+            sug_msg = expected_msg
+            sug_msg += ' Maybe it was indented incorrectly? '
+            sug_msg += _describe_allowed_present_keys(got, all_keys, False)
             return sug_msg
         else:
             sug_msg = (
