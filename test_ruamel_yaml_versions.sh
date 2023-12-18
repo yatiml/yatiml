@@ -14,11 +14,17 @@
 
 # Currently supported:
 # 0.15.71 -> 0.15.100
-# 0.16.0 -> 0.16.10
+# 0.16.0 -> 0.16.13
+# 0.17.0 -> 0.17.28
+
+# Broken
+# 0.17.28 -> 0.17.40
+# 0.18.0 -> 0.18.5
 
 # Issues:
 # 0.16.6 has a broken type definition
 # 0.16.8 does not exist
+# 0.17.5 had an incompatible change that got reverted again
 
 outfile=$(mktemp)
 
