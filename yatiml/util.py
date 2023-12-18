@@ -9,7 +9,8 @@ from typing import (
         List, Sequence, Tuple, Union)
 from typing_extensions import Type
 
-import ruamel.yaml as yaml
+import yaml
+from yaml.resolver import Resolver
 
 from yatiml.introspection import class_subobjects
 
@@ -245,7 +246,7 @@ def is_string_like(type_: Type) -> bool:
     return issubclass(type_, (str, UserString, String))
 
 
-def strip_tags(resolver: yaml.VersionedResolver, node: yaml.Node) -> None:
+def strip_tags(resolver: Resolver, node: yaml.Node) -> None:
     """Strips tags from mappings in the tree headed by node.
 
     This keeps yaml from constructing any objects in this tree.

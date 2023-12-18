@@ -136,7 +136,7 @@ This method will be called by YAtiML after the YAML text has been parsed, but
 before our Submission object has been generated. This method is passed the
 `node` representing the mapping that will become the object. The node is of
 type :class:`yatiml.Node`, which in turn is a wrapper for an internal
-ruamel.yaml object. Note that this method needs to be a classmethod, since
+PyYAML object. Note that this method needs to be a classmethod, since
 there is no object yet to call it with.
 
 The :class:`yatiml.Node` class has a number of methods that you can use to

@@ -227,7 +227,7 @@ the production server first.
 
 .. code-block:: bash
 
-  pip install 'ruamel.yaml<0.17' typing_extensions
+  pip install PyYAML typing_extensions
   pip install --index-url https://test.pypi.org/simple/ yatiml
 
 And if all seems well, we can upload to the real PyPI:

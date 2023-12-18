@@ -134,7 +134,7 @@ def test_dict_attribute() -> None:
             '  b: 10\n'
             '  c: 20\n')
     assert isinstance(data, DictAttribute)
-    assert isinstance(data.a, OrderedDict)
+    assert isinstance(data.a, dict)
     assert data.a['b'] == 10
     assert data.a['c'] == 20
 
@@ -324,7 +324,7 @@ def test_yatiml_extra_strip() -> None:
     assert data.a == 10
     assert data._yatiml_extra['b'] == 'test1'
     assert not isinstance(data._yatiml_extra['c'], Extensible)
-    assert isinstance(data._yatiml_extra['c'], OrderedDict)
+    assert isinstance(data._yatiml_extra['c'], dict)
     assert data._yatiml_extra['c']['a'] == 12
     assert data._yatiml_extra['c']['b'] == 'test2'
 
@@ -560,7 +560,7 @@ def test_dump_complex_document() -> None:
             '  width: 3.0\n'
             '  height: 7.0\n'
             'color: red\n'
-            'extra_shape:\n'
+            'extra_shape: null\n'
             )
 
 

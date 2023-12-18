@@ -10,8 +10,8 @@ from typing import (  # noqa: F401
     cast)
 from typing_extensions import Type
 
-import ruamel.yaml as yaml
-from ruamel.yaml.error import StreamMark
+import yaml
+from yaml.error import Mark
 
 from yatiml.exceptions import RecognitionError, SeasoningError
 from yatiml.introspection import defaulted_attributes
@@ -27,7 +27,7 @@ class Node:
     This class defines a number of helper function for you to use
     when writing ``_yatiml_sweeten()`` and ``_yatiml_savorize()``
     functions. It also gives access to the underlying `yaml.Node`, so
-    you can do anything ruamel.yaml can do if you're willing to dive
+    you can do anything PyYAML can do if you're willing to dive
     into its internals.
 
     Attributes:
@@ -134,8 +134,8 @@ class Node:
         attribute to a complex value, build a ``yaml.Node``
         representing it and use :meth:`set_attribute` with that.
         """
-        start_mark = StreamMark('generated node', 0, 0, 0)
-        end_mark = StreamMark('generated node', 0, 0, 0)
+        start_mark = Mark('generated node', 0, 0, 0, None, 0)
+        end_mark = Mark('generated node', 0, 0, 0, None, 0)
         self.yaml_node = yaml.MappingNode('tag:yaml.org,2002:map', list(),
                                           start_mark, end_mark)
 
@@ -243,8 +243,8 @@ class Node:
             attribute: Name of the attribute whose value to change.
             value: The value to set.
         """
-        start_mark = StreamMark('generated node', 0, 0, 0)
-        end_mark = StreamMark('generated node', 0, 0, 0)
+        start_mark = Mark('generated node', 0, 0, 0, None, 0)
+        end_mark = Mark('generated node', 0, 0, 0, None, 0)
         if isinstance(value, str):
             value_node = yaml.ScalarNode(
                     'tag:yaml.org,2002:str', value,

@@ -1,10 +1,11 @@
+from collections import OrderedDict
 import inspect
 import logging
 import pathlib
 from typing import Any, cast
 from typing_extensions import TYPE_CHECKING, Type
 
-import ruamel.yaml as yaml
+import yaml
 
 from yatiml.helpers import Node
 
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 class Representer:
     """A yaml Representer class for user-defined types.
 
-    For ruamel.yaml to dump a class correctly, it needs a representer
+    For PyYAML to dump a class correctly, it needs a representer
     function for that class. YAtiML provides this generic representer
     which represents classes based on their public attributes by
     default, with an optional user override using a member function.
@@ -66,7 +67,7 @@ class Representer:
                          ' _yatiml_attributes().').format(
                              self.class_.__name__))
                 attrs.extend(data._yatiml_extra.items())
-            attributes = yaml.comments.CommentedMap(attrs)
+            attributes = OrderedDict(attrs)
 
         # convert to a yaml.MappingNode
         represented = dumper.represent_mapping('tag:yaml.org,2002:map',
@@ -111,7 +112,7 @@ class Representer:
 class EnumRepresenter:
     """A yaml Representer class for user-defined enum types.
 
-    For ruamel.yaml to dump a class correctly, it needs a representer
+    For PyYAML to dump a class correctly, it needs a representer
     function for that class. YAtiML provides this generic representer
     which represents enum classes based on the names of their values by
     default, with an optional user override using a member function.
@@ -140,7 +141,7 @@ class EnumRepresenter:
             data, self.class_.__name__))
 
         # convert to a yaml.ScalarNode
-        start_mark = yaml.error.StreamMark('Generated node', 0, 0, 0)
+        start_mark = yaml.error.Mark('Generated node', 0, 0, 0, None, 0)
         end_mark = start_mark
         represented = yaml.ScalarNode(
                 'tag:yaml.org,2002:str',
@@ -159,7 +160,7 @@ class EnumRepresenter:
 class UserStringRepresenter:
     """A yaml Representer class for user-defined string types.
 
-    For ruamel.yaml to dump a class correctly, it needs a representer
+    For PyYAML to dump a class correctly, it needs a representer
     function for that class. YAtiML provides this generic representer
     which represents user-defined string classes as strings.
     """
@@ -208,7 +209,7 @@ class UserStringRepresenter:
 class PathRepresenter:
     """A yaml Representer class for pathlib.Path.
 
-    For ruamel.yaml to dump a class correctly, it needs a representer
+    For PyYAML to dump a class correctly, it needs a representer
     function for that class. YAtiML provides this representer for
     pathlib.Path objects.
     """

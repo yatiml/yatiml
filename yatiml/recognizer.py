@@ -9,7 +9,7 @@ from textwrap import indent
 from typing import Any, Dict, List
 from typing_extensions import Type
 
-import ruamel.yaml as yaml
+import yaml
 
 from yatiml.exceptions import RecognitionError
 from yatiml.helpers import Node, UnknownNode

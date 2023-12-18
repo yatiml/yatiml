@@ -1,4 +1,4 @@
-from ruamel import yaml
+import yaml
 
 import pytest
 import yatiml

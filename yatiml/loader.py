@@ -7,7 +7,7 @@ from typing import (
         )  # noqa
 from typing_extensions import ClassVar, Type    # noqa
 
-import ruamel.yaml as yaml
+import yaml
 
 from yatiml.constructors import (
         Constructor, EnumConstructor, PathConstructor, UserStringConstructor)
@@ -24,7 +24,7 @@ from yatiml.util import (
 logger = logging.getLogger(__name__)
 
 
-class Loader(yaml.RoundTripLoader):
+class Loader(yaml.SafeLoader):
     """The YAtiML Loader class.
 
     Derive your own Loader class from this one, then add classes to it
@@ -49,7 +49,7 @@ class Loader(yaml.RoundTripLoader):
     def get_single_node(self) -> yaml.Node:
         """Hook used when loading a single document.
 
-        This is the hook we use to hook yatiml into ruamel.yaml. It is
+        This is the hook we use to hook yatiml into PyYAML. It is
         called by the yaml libray when the user uses load() to load a
         YAML document.
 
@@ -64,7 +64,7 @@ class Loader(yaml.RoundTripLoader):
     def get_node(self) -> yaml.Node:
         """Hook used when reading a multi-document stream.
 
-        This is the hook we use to hook yatiml into ruamel.yaml. It is
+        This is the hook we use to hook yatiml into PyYAML. It is
         called by the yaml library when the user uses load_all() to
         load multiple documents from a stream.
 
