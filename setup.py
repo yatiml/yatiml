@@ -5,7 +5,7 @@ with open('README.rst') as readme_file:
 
 setup(
     name='yatiml',
-    version='0.10.1.dev0',
+    version='0.11.1.dev0',
     description="Reading, checking and writing YAML from Python",
     long_description=readme + '\n\n',
     author="Lourens Veen",
