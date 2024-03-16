@@ -5,6 +5,21 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.11.0
+******
+
+New functionality
+-----------------
+
+* Support for Python 3.12
+* Improved error messages
+
+Fixes
+-----
+
+* Now uses PyYAML rather than ruamel.yaml (fixes deprecation warnings)
+
+
 0.10.0
 ******
 
