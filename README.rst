@@ -2,7 +2,7 @@
     :target: https://yatiml.readthedocs.io/en/latest/?badge=develop
     :alt: Documentation Build Status
 
-.. image:: https://github.com/yatiml/yatiml/workflows/continuous_integration/badge.svg
+.. image:: https://github.com/yatiml/yatiml/actions/workflows/ci.yaml/badge.svg
     :target: https://github.com/yatiml/yatiml/actions
     :alt: Build Status
 
