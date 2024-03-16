@@ -2,7 +2,7 @@
     :target: https://yatiml.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Build Status
 
-.. image:: https://github.com/yatiml/yatiml/workflows/continuous_integration/badge.svg
+.. image:: https://github.com/yatiml/yatiml/actions/workflows/ci.yaml/badge.svg
     :target: https://github.com/yatiml/yatiml/actions
     :alt: Build Status
 
@@ -109,7 +109,7 @@ With that, we should be able to fix the problem.
 License
 *******
 
-YAtiML is Copyright 2018-2022, Netherlands eScience Center, University of
+YAtiML is Copyright 2018-2024, Netherlands eScience Center, University of
 Amsterdam, and VU University Amsterdam
 
 Distributed under the Apache Software License 2.0.

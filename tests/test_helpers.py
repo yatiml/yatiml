@@ -1,4 +1,4 @@
-from ruamel import yaml
+import yaml
 
 import pytest
 import yatiml
@@ -207,9 +207,6 @@ def test_map_attribute_to_seq(class_node: yatiml.Node) -> None:
     assert first_item_id == 'item1'
     assert second_item_id == 'item2'
     assert third_item_id == 'item3'
-
-    assert ((first_item_id == 'item1' and second_item_id == 'item2') or
-            (first_item_id == 'item2' and second_item_id == 'item1'))
 
 
 def test_index_attribute_to_map1(class_node: yatiml.Node) -> None:

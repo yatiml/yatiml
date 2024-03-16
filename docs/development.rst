@@ -227,7 +227,7 @@ the production server first.
 
 .. code-block:: bash
 
-  pip install 'ruamel.yaml<0.17' typing_extensions
+  pip install PyYAML typing_extensions
   pip install --index-url https://test.pypi.org/simple/ yatiml
 
 And if all seems well, we can upload to the real PyPI:
@@ -252,8 +252,32 @@ create one if you don't have one yet, and clone it locally. Then
   git pull
   git checkout -b release-x.y.z
 
-This creates a branch to work on. Next, we need to get a checksum for the
-package we uploaded to PyPI. In the main yatiml directory, run:
+This creates a branch to work on.
+
+If you are reusing an existing clone of an existing fork, then it may need some
+updates first. First, add the conda-forge remote if it's not there yet:
+
+.. code-block:: bash
+
+  git remote add conda-forge https://github.com/conda-forge/yatiml-feedstock.git
+
+
+Now that our clone is connected to both the fork (origin) and the original
+repository (conda-forge), we can synchronised them:
+
+.. code-block:: bash
+
+  git checkout release-w.x.y        # previous release
+  git pull                          # get changes made by conda in the fork
+  git checkout main
+  git pull conda-forge main         # get the previous merge
+  git push origin                   # update the fork
+
+This should make it so that conda-forge, the fork, and the clone all agree on
+which commits we have.
+
+Next, we need to get a checksum for the package we uploaded to PyPI. In the main
+yatiml directory, run:
 
 .. code-block:: bash
 
@@ -308,6 +332,19 @@ As a final test, you can do:
   # conda install -c conda-forge yatiml
 
 which should install the new version.
+
+Finally, we need to re-sync the fork and clone with the original repository,
+because changes have been made in the cloud. By doing this, we avoid having to
+do it next time (see above) if we reuse this fork and/or clone.
+
+.. code-block:: bash
+
+  git checkout release-x.y.z
+  git pull                      # get changes made by conda in the fork
+  git checkout main
+  git pull conda-forge main     # get the merge we just made
+  git push origin               # update the fork for next time
+
 
 Make a GitHub Release
 .....................

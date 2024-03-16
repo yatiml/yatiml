@@ -4,11 +4,10 @@ import os
 import pathlib
 import traceback
 from collections import OrderedDict
-from typing import Any, Generator, List, Union
+from typing import Dict, Any, Generator, List, Union
 from typing_extensions import TYPE_CHECKING, Type
 
-import ruamel.yaml as yaml
-from ruamel.yaml.comments import CommentedMap, CommentedSeq
+import yaml
 
 from yatiml.exceptions import RecognitionError
 from yatiml.introspection import class_subobjects
@@ -53,7 +52,7 @@ class Constructor:
         defined and expects.
 
         Note that this yields rather than returns, in a somewhat odd
-        way. That's directly from the PyYAML/ruamel.yaml documentation.
+        way. That's directly from the PyYAML documentation.
 
         Args:
             loader: The yatiml.loader that is creating this object.
@@ -80,16 +79,7 @@ class Constructor:
         # create object and let yaml lib construct subobjects
         new_obj = self.class_.__new__(self.class_)  # type: ignore
         yield new_obj
-        mapping = CommentedMap()
-        loader.construct_mapping(node, mapping, deep=True)
-
-        # Convert ruamel.yaml's round-trip types to list and OrderedDict,
-        # recursively for each attribute value in our mapping. Note that
-        # mapping itself is still a CommentedMap.
-        for key, value in mapping.copy().items():
-            if (isinstance(value, CommentedMap)
-                    or isinstance(value, CommentedSeq)):
-                mapping[key] = self.__to_plain_containers(value)
+        mapping = loader.construct_mapping(node, deep=True)
 
         # do type check
         try:
@@ -114,40 +104,8 @@ class Constructor:
                     'An error occurred:\n{}\n{}'.format(node.start_mark, e))
         logger.debug('Done constructing {}'.format(self.class_.__name__))
 
-    def __to_plain_containers(self,
-                              container: Union[CommentedSeq, CommentedMap]
-                              ) -> Union[OrderedDict, list]:
-        """Converts any sequence or mapping to list or OrderedDict
-
-        Stops at anything that isn't a sequence or a mapping.
-
-        One day, we'll extract the comments and formatting and store
-        them out-of-band.
-
-        Args:
-            mapping: The mapping of constructed subobjects to edit
-        """
-        if isinstance(container, CommentedMap):
-            new_container = OrderedDict()  # type: Union[OrderedDict, list]
-            for key, value_obj in container.items():
-                if (isinstance(value_obj, CommentedMap)
-                        or isinstance(value_obj, CommentedSeq)):
-                    new_container[key] = self.__to_plain_containers(value_obj)
-                else:
-                    new_container[key] = value_obj
-
-        elif isinstance(container, CommentedSeq):
-            new_container = list()
-            for value_obj in container:
-                if (isinstance(value_obj, CommentedMap)
-                        or isinstance(value_obj, CommentedSeq)):
-                    new_container.append(self.__to_plain_containers(value_obj))
-                else:
-                    new_container.append(value_obj)
-        return new_container
-
-    def __split_off_extra_attributes(self, mapping: CommentedMap,
-                                     known_attrs: List[str]) -> CommentedMap:
+    def __split_off_extra_attributes(self, mapping: Dict,
+                                     known_attrs: List[str]) -> Dict:
         """Separates the extra attributes in mapping into _yatiml_extra.
 
         This returns a mapping containing all key-value pairs from
@@ -164,7 +122,7 @@ class Constructor:
             A map with attributes reorganised as described above.
         """
         attr_names = list(mapping.keys())
-        main_attrs = mapping.copy()     # type: CommentedMap
+        main_attrs = mapping.copy()
         extra_attrs = OrderedDict(mapping.items())
         for name in attr_names:
             if name not in known_attrs or name == '_yatiml_extra':
@@ -200,7 +158,7 @@ class Constructor:
                     return False
             return True
         elif is_generic_mapping(type_):
-            if not isinstance(obj, OrderedDict):
+            if not isinstance(obj, dict):
                 return False
             for key, value in obj.items():
                 if not isinstance(key, generic_type_args(type_)[0]):
@@ -216,7 +174,7 @@ class Constructor:
             return isinstance(obj, type_)
 
     def __check_no_missing_attributes(self, node: yaml.MappingNode,
-                                      mapping: CommentedMap) -> None:
+                                      mapping: Dict) -> None:
         """Checks that all required attributes are present.
 
         Also checks that they're of the correct type.
@@ -243,7 +201,7 @@ class Constructor:
                             type_to_desc(type(mapping[name])),
                             type_to_desc(type_)))
 
-    def __type_check_attributes(self, node: yaml.Node, mapping: CommentedMap,
+    def __type_check_attributes(self, node: yaml.Node, mapping: Dict,
                                 argspec: inspect.FullArgSpec) -> None:
         """Ensure all attributes have a matching constructor argument.
 
@@ -340,7 +298,7 @@ class EnumConstructor:
         and called by it.
 
         Note that this yields rather than returns, in a somewhat odd
-        way. That's directly from the PyYAML/ruamel.yaml documentation.
+        way. That's directly from the PyYAML documentation.
 
         Args:
             loader: The yatiml.loader that is creating this object.
@@ -361,7 +319,7 @@ class EnumConstructor:
                 not isinstance(node.value, str)):
             raise RecognitionError(msg)
 
-        # ruamel.yaml expects us to yield an incomplete object, but enums are
+        # PyYAML expects us to yield an incomplete object, but enums are
         # immutable, so we'll have to make the whole thing right away.
         try:
             new_obj = self.class_[node.value]
@@ -395,7 +353,7 @@ class UserStringConstructor:
         library, and called by it.
 
         Note that this yields rather than returns, in a somewhat odd
-        way. That's directly from the PyYAML/ruamel.yaml documentation.
+        way. That's directly from the PyYAML documentation.
 
         Args:
             loader: The yatiml.loader that is creating this object.
@@ -413,7 +371,7 @@ class UserStringConstructor:
                 ('{}\nExpected a string matching {}.').format(
                     node.start_mark, type_to_desc(self.class_)))
 
-        # ruamel.yaml expects us to yield an incomplete object, but strings are
+        # PyYAML expects us to yield an incomplete object, but strings are
         # immutable, so we'll have to make the whole thing right away.
         try:
             new_obj = self.class_(node.value)
@@ -451,7 +409,7 @@ class PathConstructor:
                     ('{}\nExpected a string containing a Path.').format(
                         node.start_mark))
 
-        # ruamel.yaml expects us to yield an incomplete object, but Paths are
+        # PyYAML expects us to yield an incomplete object, but Paths are
         # special, so we'll have to make the whole thing right away.
         new_obj = pathlib.Path(node.value)
         yield new_obj

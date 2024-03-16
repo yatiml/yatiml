@@ -270,8 +270,8 @@ Saving to YAML
 --------------
 
 There is more to be said about loading YAML files with YAtiML, but let's first
-have a look at saving objects back to YAML, or dumping as PyYAML and ruamel.yaml
-call it. The code for this is a mirror image of the loading code:
+have a look at saving objects back to YAML, or dumping as PyYAML call it. The
+code for this is a mirror image of the loading code:
 
 .. literalinclude:: examples/saving.py
   :caption: ``docs/examples/saving.py``
@@ -292,9 +292,9 @@ overridden, see :ref:`hiding-attributes` below.
 Note that the attributes are in the order of the parameters of the ``__init__``
 method. YAtiML always outputs attributes in this order, even if the object was
 read in with YAtiML from a YAML file and originally had a different order. While
-it would be nice to do full round-trip formatting of the input YAML, support for
-this in the ruamel.yaml library used by YAtiML is still developing, so for now
-this is what YAtiML does.
+it would be nice to do full round-trip formatting of the input YAML, the PyYAML
+library used by YAtiML does not support this, so for now this is what YAtiML
+does.
 
 :meth:`yatiml.dumps_function` creates a function that converts objects to a
 string. If you want to write the output to a file directly, you can use
@@ -308,8 +308,8 @@ with PyYAML or ruamel.yaml gives this:
   !!python/object:__main__.Submission {age: 7, name: Youssou, tool: pencils}
 
 which is not nearly as nice to read or write. (To be fair, ruamel.yaml can do a
-bit nicer than this with its RoundTripDumper, which YAtiML uses, but the tag
-with the exclamation marks remains.)
+bit nicer than this with its RoundTripDumper, but the tag with the exclamation
+marks remains.)
 
 Saving to JSON
 --------------

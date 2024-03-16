@@ -3,7 +3,7 @@ from textwrap import indent
 from typing import Any, List, Set, Tuple
 from typing_extensions import Type
 
-import ruamel.yaml as yaml
+import yaml
 
 
 RecError = Tuple[str, List[Any]]

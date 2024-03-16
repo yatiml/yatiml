@@ -11,7 +11,7 @@ from typing import (
         Any, cast, ContextManager, Dict, List, Optional, Tuple, Union)
 from typing_extensions import Type
 
-from ruamel import yaml
+import yaml
 
 import pytest  # type: ignore
 import yatiml

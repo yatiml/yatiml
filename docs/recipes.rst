@@ -23,11 +23,11 @@ looks like this:
 
 The tricky part here is in the savorize and sweeten functions. Savorize needs to
 build a list of strings, which YAtiML doesn't help with, so it needs to
-construct ruamel.yaml objects directly. For each namespace item, it builds a
+construct PyYAML objects directly. For each namespace item, it builds a
 ``yaml.ScalarNode``, which represents a scalar and has a tag to describe the type,
 and a value, a string. It also requires a start and end mark, for which we use
 dummy values, as this node was generated and is therefore not in the file. The
-ruamel.yaml library will raise an Exception if you do not add those. The item
+PyYAML library will raise an Exception if you do not add those. The item
 nodes are then added to a ``yaml.SequenceNode``, and the whole thing set as the
 value of the ``namespaces`` attribute.
 
@@ -43,7 +43,7 @@ Timestamps and dates
 --------------------
 
 YAML has a `timestamp` type, which represents a point in time. The
-`ruamel.yaml` library parses this into a python `datetime.date` object, and
+PyYAML library parses this into a python `datetime.date` object, and
 will serialise such an object back to a YAML `timestamp`. YAtiML supports this
 as well, so all you need to do to use a timestamp or a date is to use
 `datetime.date` in your class definition.
