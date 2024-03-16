@@ -123,7 +123,7 @@ To start the release process, make a release branch
 
 .. code-block:: bash
 
-  git checkout -b release-x.y.z develop
+  git switch -c release-x.y.z develop
 
 YAtiML uses `Semantic Versioning`_, so name the new version accordingly.
 
@@ -199,7 +199,7 @@ important for GitHub and GitHub integrations.
 
 .. code-block:: bash
 
-  git checkout master
+  git switch master
   git merge --no-ff -X theirs release-x.y.z
   git tag -a x.y.z -m 'Release x.y.z'
   git push
@@ -248,9 +248,9 @@ create one if you don't have one yet, and clone it locally. Then
 
 .. code-block:: bash
 
-  git checkout main
+  git switch main
   git pull
-  git checkout -b release-x.y.z
+  git switch -c release-x.y.z
 
 This creates a branch to work on.
 
@@ -263,11 +263,11 @@ updates first. First, add the conda-forge remote if it's not there yet:
 
 
 Now that our clone is connected to both the fork (origin) and the original
-repository (conda-forge), we can synchronised them:
+repository (conda-forge), we can synchronise them:
 
 .. code-block:: bash
 
-  git checkout release-w.x.y        # previous release
+  git switch release-w.x.y          # previous release
   git pull                          # get changes made by conda in the fork
   git checkout main
   git pull conda-forge main         # get the previous merge
@@ -339,7 +339,7 @@ do it next time (see above) if we reuse this fork and/or clone.
 
 .. code-block:: bash
 
-  git checkout release-x.y.z
+  git switch release-x.y.z
   git pull                      # get changes made by conda in the fork
   git checkout main
   git pull conda-forge main     # get the merge we just made
