@@ -46,6 +46,7 @@ class Loader(yaml.SafeLoader):
         super().__init__(*args, **kwargs)
 
         self.__patch_floats()
+        self.__patch_bools()
         self.__recognizer = Recognizer(
                 self._registered_classes, self._additional_classes)
 
@@ -243,6 +244,8 @@ class Loader(yaml.SafeLoader):
                 r'|\.(?:nan|NaN|NAN)'
                 r'))', re.X)
 
+        new_implicit_resolvers = dict()
+
         for first, resolvers in self.yaml_implicit_resolvers.items():
             new_resolvers = []
             for tag, regex in resolvers:
@@ -250,7 +253,41 @@ class Loader(yaml.SafeLoader):
                     new_resolvers.append((tag, yaml12_float_regex))
                 else:
                     new_resolvers.append((tag, regex))
-            resolvers[:] = new_resolvers
+            new_implicit_resolvers[first] = new_resolvers
+
+        self.yaml_implicit_resolvers = new_implicit_resolvers
+
+    def __patch_bools(self) -> None:
+        """Make booleans be parsed as YAML 1.2 bools.
+
+        YAML 1.1 recognises a whole list of words as booleans,
+        including yes, no, y, n, on, off, false, true with
+        different capitalisations. That can get confusing
+        because who else interprets 'on' as a boolean? This got
+        fixed in YAML 1.2, which only does a few versions of
+        true and false.
+
+        This patches PyYAMLs resolvers to replace YAML 1.1 bools
+        with YAML 1.2 bools.
+        """
+        yaml12_bool_regex = re.compile(
+                r'^(?:true|True|TRUE|false|False|FALSE)', re.X)
+
+        new_implicit_resolvers = dict()
+
+        for first, resolvers in self.yaml_implicit_resolvers.items():
+            new_resolvers = []
+            for tag, regex in resolvers:
+                if tag == 'tag:yaml.org,2002:bool':
+                    if first in 'tTfF':
+                        new_resolvers.append((tag, yaml12_bool_regex))
+                else:
+                    new_resolvers.append((tag, regex))
+
+            if new_resolvers:
+                new_implicit_resolvers[first] = new_resolvers
+
+        self.yaml_implicit_resolvers = new_implicit_resolvers
 
 
 def set_document_type(loader_cls: Type, type_: Type) -> None:

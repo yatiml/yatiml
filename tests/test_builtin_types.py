@@ -87,10 +87,21 @@ def test_load_float_format() -> None:
 
 
 def test_load_bool() -> None:
+    bools11 = (
+            'y', 'Y', 'yes', 'Yes', 'YES', 'n', 'N', 'no', 'No', 'NO',
+            'on', 'On', 'ON', 'off', 'Off', 'OFF')
+    bools12 = ('true', 'True', 'TRUE', 'false', 'False', 'FALSE')
+
     load = yatiml.load_function(bool)
-    data = load('True')
-    assert isinstance(data, bool)
-    assert data is True
+
+    for b in bools11:
+        with pytest.raises(yatiml.RecognitionError):
+            load(b)
+
+    for b in bools12:
+        data = load(b)
+        assert isinstance(data, bool)
+        assert data == (b.lower() == 'true')
 
 
 def test_load_date() -> None:
