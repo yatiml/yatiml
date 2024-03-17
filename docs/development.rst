@@ -107,7 +107,7 @@ the changes, and switch to the development branch:
 .. code-block:: bash
 
   git log <your favourite options>
-  git checkout develop
+  git switch develop
 
 and then edit CHANGELOG.rst and commit.
 
@@ -244,15 +244,7 @@ bot handle it on GitHub. If that becomes an issue we'll change it, but this way
 we don't need to have conda installed locally.)
 
 First, we need a fork of https://github.com/conda-forge/yatiml-feedstock, so
-create one if you don't have one yet, and clone it locally. Then
-
-.. code-block:: bash
-
-  git switch main
-  git pull
-  git switch -c release-x.y.z
-
-This creates a branch to work on.
+create one if you don't have one yet, and clone it locally.
 
 If you are reusing an existing clone of an existing fork, then it may need some
 updates first. First, add the conda-forge remote if it's not there yet:
@@ -261,7 +253,6 @@ updates first. First, add the conda-forge remote if it's not there yet:
 
   git remote add conda-forge https://github.com/conda-forge/yatiml-feedstock.git
 
-
 Now that our clone is connected to both the fork (origin) and the original
 repository (conda-forge), we can synchronise them:
 
@@ -269,12 +260,20 @@ repository (conda-forge), we can synchronise them:
 
   git switch release-w.x.y          # previous release
   git pull                          # get changes made by conda in the fork
-  git checkout main
+  git switch main
   git pull conda-forge main         # get the previous merge
   git push origin                   # update the fork
 
 This should make it so that conda-forge, the fork, and the clone all agree on
 which commits we have.
+
+Then we can create a branch to work on:
+
+.. code-block:: bash
+
+  git switch main
+  git pull
+  git switch -c release-x.y.z
 
 Next, we need to get a checksum for the package we uploaded to PyPI. In the main
 yatiml directory, run:
@@ -341,7 +340,7 @@ do it next time (see above) if we reuse this fork and/or clone.
 
   git switch release-x.y.z
   git pull                      # get changes made by conda in the fork
-  git checkout main
+  git switch main
   git pull conda-forge main     # get the merge we just made
   git push origin               # update the fork for next time
 
@@ -391,11 +390,11 @@ To continue developing, merge the release branch back into develop
 
 .. code-block:: bash
 
-  git checkout develop
+  git switch develop
   git merge --no-commit release-x.y.z
 
 Make sure that the badges are set to develop, and that the version number is
-set to the next expected version x.y.{z+1}.dev (it's fine if x.{y+1}.0 is what
+set to the next expected version x.y.{z+1}.dev0 (it's fine if x.{y+1}.0 is what
 ends up being released eventually). Then you can commit and continue developing:
 
 .. code-block:: bash
