@@ -122,6 +122,22 @@ class Color2(enum.Enum):
         node.set_value(node.get_value().lower())  # type: ignore
 
 
+class Color3(enum.Enum):
+    NO = 1
+    ON = 2
+    FALSE = 3
+    BLACK_AND_WHITE = 4
+
+    @classmethod
+    def _yatiml_savorize(self, node: yatiml.Node) -> None:
+        if node.is_scalar(str):
+            node.set_value(node.get_value().upper())  # type: ignore
+
+    @classmethod
+    def _yatiml_sweeten(self, node: yatiml.Node) -> None:
+        node.set_value(node.get_value().lower())  # type: ignore
+
+
 class Document2:
     def __init__(
             self, cursor_at: Vector2D, shapes: Optional[List[Shape]] = None,
