@@ -2,6 +2,7 @@ import enum
 import logging
 import os
 from pathlib import Path
+import re
 from typing import (
         Any, AnyStr, Callable, cast, Dict, IO, List, overload, TypeVar, Union
         )  # noqa
@@ -43,6 +44,8 @@ class Loader(yaml.SafeLoader):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Create a Loader."""
         super().__init__(*args, **kwargs)
+
+        self.__patch_floats()
         self.__recognizer = Recognizer(
                 self._registered_classes, self._additional_classes)
 
@@ -50,7 +53,7 @@ class Loader(yaml.SafeLoader):
         """Hook used when loading a single document.
 
         This is the hook we use to hook yatiml into PyYAML. It is
-        called by the yaml libray when the user uses load() to load a
+        called by the yaml library when the user uses load() to load a
         YAML document.
 
         Returns:
@@ -210,6 +213,44 @@ class Loader(yaml.SafeLoader):
             node.tag = self.__type_to_tag(recognized_type)
         logger.debug('Finished processing node {}'.format(node))
         return node
+
+    def __patch_floats(self) -> None:
+        """Make floats be parsed as YAML 1.2 floats.
+
+        YAML 1.1 has some really weird ideas on what a float is. This
+        was fixed in YAML 1.2, which ruamel.yaml parses by default.
+        However, we switched to PyYAML, which is still on YAML 1.1, so
+        that we're now stuck with weird that weird float format. This
+        function patches PyYAMLs resolvers to replace the YAML 1.1
+        float format with the YAML 1.2 float format. That means we're
+        now accepting a mix of YAML 1.1 and YAML 1.2, but so be it.
+        The YAML mess isn't really fixable anyway.
+        """
+        yaml12_float_regex = re.compile(
+                r'^(?:'
+                # sign
+                r'[-+]?'
+                # content
+                r'(?:'
+                # float numbers
+                r'  (?:[0-9]+[eE][-+]?[0-9]+'
+                r'  |[0-9]+\.([eE][-+]?[0-9]+)?'
+                r'  |[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?'
+                r'  )'
+                # infinity
+                r'|\.(?:inf|Inf|INF)'
+                # not a number
+                r'|\.(?:nan|NaN|NAN)'
+                r'))', re.X)
+
+        for first, resolvers in self.yaml_implicit_resolvers.items():
+            new_resolvers = []
+            for tag, regex in resolvers:
+                if tag == 'tag:yaml.org,2002:float':
+                    new_resolvers.append((tag, yaml12_float_regex))
+                else:
+                    new_resolvers.append((tag, regex))
+            resolvers[:] = new_resolvers
 
 
 def set_document_type(loader_cls: Type, type_: Type) -> None:

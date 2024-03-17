@@ -1,6 +1,7 @@
 """Tests for the yatiml module."""
 import collections
 from datetime import date, datetime
+from math import isnan
 from typing import (
         Dict, List, Mapping, MutableMapping, MutableSequence, Optional,
         Sequence, Union)
@@ -34,6 +35,55 @@ def test_load_float() -> None:
     data = load('3.1415')
     assert isinstance(data, float)
     assert data == 3.1415
+
+
+def test_load_float_format() -> None:
+    # Issue #53
+    signs = ['', '-', '+']
+    numbers = ['0', '1', '12', '12345678901234']
+    expsyms = 'eE'
+    exponents = ['0', '1', '34']
+
+    load = yatiml.load_function(float)
+
+    def verify(yaml_string: str) -> None:
+        data = load(yaml_string)
+        assert isinstance(data, float)
+        assert data == float(yaml_string)
+
+    for sign in signs:
+        for decimal in numbers:
+            verify(f'{sign}.{decimal}')
+            for expsym in expsyms:
+                for exponent in exponents:
+                    verify(f'{sign}.{decimal}{expsym}{exponent}')
+
+        for cardinal in numbers:
+            verify(f'{sign}{cardinal}.')
+            for decimal in numbers:
+                verify(f'{sign}{cardinal}.{decimal}')
+            for expsym in expsyms:
+                for exponent in exponents:
+                    verify(f'{sign}{cardinal}{expsym}{exponent}')
+                    verify(f'{sign}{cardinal}.{expsym}{exponent}')
+                    for decimal in numbers:
+                        verify(f'{sign}{cardinal}.{decimal}{expsym}{exponent}')
+
+    assert load('.inf') == float('inf')
+    assert load('.Inf') == float('inf')
+    assert load('.INF') == float('inf')
+
+    assert load('-.inf') == float('-inf')
+    assert load('-.Inf') == float('-inf')
+    assert load('-.INF') == float('-inf')
+
+    assert load('+.inf') == float('+inf')
+    assert load('+.Inf') == float('+inf')
+    assert load('+.INF') == float('+inf')
+
+    assert isnan(load('.nan'))
+    assert isnan(load('.NaN'))
+    assert isnan(load('.NAN'))
 
 
 def test_load_bool() -> None:
