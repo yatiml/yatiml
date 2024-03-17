@@ -5,6 +5,24 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+
+0.11.1
+******
+
+Fixes
+-----
+
+The switch to PyYAML in the previous release also switched us back to YAML
+1.1, which has some formatting rules that are arguably just broken. The
+first two fixes here add work-arounds that get us partially back up to YAML
+1.2 and less surprising syntax rules.
+
+* Switch back to YAML 1.2 floats
+* Switch back to YAML 1.2 booleans
+* Make enum values matching boolean constants work correctly
+
+
+
 0.11.0
 ******
 
