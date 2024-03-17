@@ -238,11 +238,17 @@ class Recognizer(IRecognizer):
 
         else:
             if issubclass(expected_type, enum.Enum):
-                if (not isinstance(node, yaml.ScalarNode)
-                        or node.tag != 'tag:yaml.org,2002:str'):
+                if (
+                        not isinstance(node, yaml.ScalarNode)
+                        or node.tag not in (
+                            'tag:yaml.org,2002:str', 'tag:yaml.org,2002:bool')
+                        ):
                     message = '{}Expected a string matching {}'.format(
                         loc_str, type_to_desc(expected_type))
                     return set(), (message, [])
+                else:
+                    # don't read this as a bool but as a string
+                    node.tag = 'tag:yaml.org,2002:str'
             elif is_string_like(expected_type):
                 if (not isinstance(node, yaml.ScalarNode)
                         or node.tag != 'tag:yaml.org,2002:str'):

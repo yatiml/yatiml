@@ -2,6 +2,7 @@ import enum
 import logging
 import os
 from pathlib import Path
+import re
 from typing import (
         Any, AnyStr, Callable, cast, Dict, IO, List, overload, TypeVar, Union
         )  # noqa
@@ -43,6 +44,9 @@ class Loader(yaml.SafeLoader):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Create a Loader."""
         super().__init__(*args, **kwargs)
+
+        self.__patch_floats()
+        self.__patch_bools()
         self.__recognizer = Recognizer(
                 self._registered_classes, self._additional_classes)
 
@@ -50,7 +54,7 @@ class Loader(yaml.SafeLoader):
         """Hook used when loading a single document.
 
         This is the hook we use to hook yatiml into PyYAML. It is
-        called by the yaml libray when the user uses load() to load a
+        called by the yaml library when the user uses load() to load a
         YAML document.
 
         Returns:
@@ -210,6 +214,80 @@ class Loader(yaml.SafeLoader):
             node.tag = self.__type_to_tag(recognized_type)
         logger.debug('Finished processing node {}'.format(node))
         return node
+
+    def __patch_floats(self) -> None:
+        """Make floats be parsed as YAML 1.2 floats.
+
+        YAML 1.1 has some really weird ideas on what a float is. This
+        was fixed in YAML 1.2, which ruamel.yaml parses by default.
+        However, we switched to PyYAML, which is still on YAML 1.1, so
+        that we're now stuck with weird that weird float format. This
+        function patches PyYAMLs resolvers to replace the YAML 1.1
+        float format with the YAML 1.2 float format. That means we're
+        now accepting a mix of YAML 1.1 and YAML 1.2, but so be it.
+        The YAML mess isn't really fixable anyway.
+        """
+        yaml12_float_regex = re.compile(
+                r'^(?:'
+                # sign
+                r'[-+]?'
+                # content
+                r'(?:'
+                # float numbers
+                r'  (?:[0-9]+[eE][-+]?[0-9]+'
+                r'  |[0-9]+\.([eE][-+]?[0-9]+)?'
+                r'  |[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?'
+                r'  )'
+                # infinity
+                r'|\.(?:inf|Inf|INF)'
+                # not a number
+                r'|\.(?:nan|NaN|NAN)'
+                r'))', re.X)
+
+        new_implicit_resolvers = dict()
+
+        for first, resolvers in self.yaml_implicit_resolvers.items():
+            new_resolvers = []
+            for tag, regex in resolvers:
+                if tag == 'tag:yaml.org,2002:float':
+                    new_resolvers.append((tag, yaml12_float_regex))
+                else:
+                    new_resolvers.append((tag, regex))
+            new_implicit_resolvers[first] = new_resolvers
+
+        self.yaml_implicit_resolvers = new_implicit_resolvers
+
+    def __patch_bools(self) -> None:
+        """Make booleans be parsed as YAML 1.2 bools.
+
+        YAML 1.1 recognises a whole list of words as booleans,
+        including yes, no, y, n, on, off, false, true with
+        different capitalisations. That can get confusing
+        because who else interprets 'on' as a boolean? This got
+        fixed in YAML 1.2, which only does a few versions of
+        true and false.
+
+        This patches PyYAMLs resolvers to replace YAML 1.1 bools
+        with YAML 1.2 bools.
+        """
+        yaml12_bool_regex = re.compile(
+                r'^(?:true|True|TRUE|false|False|FALSE)', re.X)
+
+        new_implicit_resolvers = dict()
+
+        for first, resolvers in self.yaml_implicit_resolvers.items():
+            new_resolvers = []
+            for tag, regex in resolvers:
+                if tag == 'tag:yaml.org,2002:bool':
+                    if first in 'tTfF':
+                        new_resolvers.append((tag, yaml12_bool_regex))
+                else:
+                    new_resolvers.append((tag, regex))
+
+            if new_resolvers:
+                new_implicit_resolvers[first] = new_resolvers
+
+        self.yaml_implicit_resolvers = new_implicit_resolvers
 
 
 def set_document_type(loader_cls: Type, type_: Type) -> None:

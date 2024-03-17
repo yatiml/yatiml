@@ -7,7 +7,7 @@ import pytest  # type: ignore
 import yatiml
 
 from .conftest import (
-        Abstract, BrokenPrivateAttributes, Circle, Color, Color2,
+        Abstract, BrokenPrivateAttributes, Circle, Color, Color2, Color3,
         ComplexPrivateAttributes, Concrete, ConstrainedString, DashedAttribute,
         DictAttribute, Document1, Document2, Document3, Document4, Document5,
         Document6, Ellipse, Extensible, ManyAttrs, Postcode, PrivateAttributes,
@@ -155,6 +155,14 @@ def test_parent_fallback() -> None:
     load = yatiml.load_function(Super, SubA, SubB)
     data = load('subclass: x')
     assert isinstance(data, Super)
+
+
+def test_enum() -> None:
+    load = yatiml.load_function(Color3)
+    assert load('no') == Color3.NO
+    assert load('on') == Color3.ON
+    assert load('false') == Color3.FALSE
+    assert load('black_and_white') == Color3.BLACK_AND_WHITE
 
 
 def test_abstract_base_class() -> None:
