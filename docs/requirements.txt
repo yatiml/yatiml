@@ -1,4 +1,6 @@
+PyYAML
 recommonmark
 sphinx
 sphinx_rtd_theme
+typing_extensions
 
