@@ -613,7 +613,7 @@ def scalar_node() -> yatiml.Node:
 
 @pytest.fixture
 def recognizer() -> Recognizer:
-    return Recognizer({}, {})
+    return Recognizer({}, {}, {})
 
 
 @pytest.fixture

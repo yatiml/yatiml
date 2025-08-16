@@ -29,15 +29,24 @@ class Recognizer(IRecognizer):
 
     def __init__(
             self, registered_classes: Dict[str, Type],
+            reg_class_names: Dict[Type, str],
             additional_classes: Dict[Type, str]) -> None:
         """Create a Recognizer.
 
         Args:
             registered_classes: The registered tags and corresponding
                     classes.
+            reg_class_names: Names to use to describe the registered
+                    classes to the user.
+            additional_classes: Additional (non-user-defined) classes
+                    to also recognize.
         """
         self.__registered_classes = registered_classes
+        self.__reg_class_names = reg_class_names
         self.__additional_classes = additional_classes
+
+    def __ttd(self, t: Type) -> str:
+        return type_to_desc(t, self.__reg_class_names)
 
     def __recognize_scalar(self, node: yaml.Node,
                            expected_type: Type) -> RecResult:
@@ -55,7 +64,7 @@ class Recognizer(IRecognizer):
                 and node.tag == scalar_type_to_tag[expected_type]):
             return {expected_type}, REC_OK
         message = '{}\nExpected {}'.format(
-            node.start_mark, type_to_desc(expected_type))
+            node.start_mark, self.__ttd(expected_type))
         return set(), (message, [])
 
     def __recognize_additional(
@@ -77,7 +86,7 @@ class Recognizer(IRecognizer):
                 return {expected_type}, REC_OK
 
         message = '{}\nExpected {}'.format(
-            node.start_mark, type_to_desc(expected_type))
+            node.start_mark, self.__ttd(expected_type))
         return set(), (message, [])
 
     def __recognize_list(self, node: yaml.Node,
@@ -100,7 +109,7 @@ class Recognizer(IRecognizer):
             recognized_types, result = self.recognize(item, item_type)
             if len(recognized_types) == 0:
                 message = '{}\nExpected {}'.format(
-                        item.start_mark, type_to_desc(expected_type))
+                        item.start_mark, self.__ttd(expected_type))
                 return set(), (message, [result])
             if len(recognized_types) > 1:
                 recognized_types = {
@@ -191,7 +200,7 @@ class Recognizer(IRecognizer):
             message = ('{}\nCould not determine which of the following types'
                        ' this is: {}').format(
                                node.start_mark,
-                               cjoin('or', map(type_to_desc, recognized_types))
+                               cjoin('or', map(self.__ttd, recognized_types))
                                )
             return recognized_types, (message, causes)
 
@@ -233,7 +242,7 @@ class Recognizer(IRecognizer):
                     message = '{}{}'.format(loc_str, e.args[0])
                 else:
                     message = '{}Error recognizing {}'.format(
-                        loc_str, type_to_desc(expected_type))
+                        loc_str, self.__ttd(expected_type))
                 return set(), (message, [])
 
         else:
@@ -244,7 +253,7 @@ class Recognizer(IRecognizer):
                             'tag:yaml.org,2002:str', 'tag:yaml.org,2002:bool')
                         ):
                     message = '{}Expected a string matching {}'.format(
-                        loc_str, type_to_desc(expected_type))
+                        loc_str, self.__ttd(expected_type))
                     return set(), (message, [])
                 else:
                     # don't read this as a bool but as a string
@@ -253,7 +262,7 @@ class Recognizer(IRecognizer):
                 if (not isinstance(node, yaml.ScalarNode)
                         or node.tag != 'tag:yaml.org,2002:str'):
                     message = '{}Expected a string matching {}'.format(
-                        loc_str, type_to_desc(expected_type))
+                        loc_str, self.__ttd(expected_type))
                     return set(), (message, [])
             else:
                 # auto-recognize based on constructor signature
@@ -346,7 +355,7 @@ class Recognizer(IRecognizer):
 
         if len(recognized_subclasses) == 0:
             message = 'Failed to recognize {}'.format(
-                    type_to_desc(expected_type))
+                    self.__ttd(expected_type))
             if top:
                 message += '\n{}'.format(indent(str(node.start_mark), '  '))
             return set(), (message, causes)
@@ -360,23 +369,25 @@ class Recognizer(IRecognizer):
 
             message = ('Could not determine which of the following types'
                        ' this is: {}').format(cjoin(
-                           'or', map(type_to_desc, recognized_subclasses)))
+                           'or', map(self.__ttd, recognized_subclasses)))
             return recognized_subclasses, (message, causes)
 
         # Tags that don't match with what we recognized are an error,
         # because silently ignoring the conflict would get confusing.
+        # However, we accept tags with the end of the full qualified
+        # name of the class, e.g. only the class name without the module,
+        # as long as there is no ambiguity.
         if not node.tag.startswith('tag:yaml.org,2002'):
+
+            matched_tags = list()
             if node.tag in self.__registered_classes:
-                tagged_class = self.__registered_classes[node.tag]
-                if tagged_class not in recognized_subclasses:
-                    message = ('{}\nExpected a {} and found it, but there\'s'
-                               ' a tag here claiming this is a(n) {}. That'
-                               ' makes no sense.').format(
-                                       node.start_mark, expected_type.__name__,
-                                       tagged_class.__name__)
-                    logger.debug(message)
-                    return set(), (message, [])
+                matched_tags = [node.tag]
             else:
+                matched_tags = [
+                        name for name, cls in self.__registered_classes.items()
+                        if name.endswith(node.tag[1:])]
+
+            if len(matched_tags) == 0:
                 message = ('{}\nExpected a {} and found it, but there\'s'
                            ' a tag here claiming this is a(n) {}, which type'
                            ' I don\'t know.').format(
@@ -384,6 +395,36 @@ class Recognizer(IRecognizer):
                                    expected_type.__name__, node.tag[1:])
                 logger.debug(message)
                 return set(), (message, [])
+
+            else:
+                matched_classes = {
+                        self.__registered_classes[name]
+                        for name in matched_tags}
+
+                rec_matched_classes = matched_classes & recognized_subclasses
+
+                if len(rec_matched_classes) == 0:
+                    message = ('{}\nExpected a {} and found it, but there\'s'
+                               ' a tag here claiming this is a(n) {}. That'
+                               ' makes no sense.').format(
+                                       node.start_mark, expected_type.__name__,
+                                       node.tag[1:])
+                    logger.debug(message)
+                    return set(), (message, [])
+
+                elif len(rec_matched_classes) == 1:
+                    return rec_matched_classes, REC_OK
+
+                elif len(rec_matched_classes) > 1:
+                    message = (
+                            '{}\nExpected a {} and found it, but there\'s an'
+                            ' ambiguous tag {} here that matches all of the'
+                            ' following expected values: {}. Please specify'
+                            ' which one you mean.').format(
+                                    node.start_mark, expected_type.__name__,
+                                    node.tag[1:], matched_tags)
+                    logger.debug(message)
+                    return set(), (message, [])
 
         return recognized_subclasses, REC_OK
 

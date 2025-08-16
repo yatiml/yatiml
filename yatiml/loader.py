@@ -38,6 +38,7 @@ class Loader(yaml.SafeLoader):
         instead.
     """
     _registered_classes = None      # type: ClassVar[Dict[str, Type]]
+    _reg_class_names = None         # type: ClassVar[Dict[Type, str]]
     _additional_classes = None      # type: ClassVar[Dict[Type, str]]
     document_type = type(None)      # type: ClassVar[Type]
 
@@ -48,7 +49,8 @@ class Loader(yaml.SafeLoader):
         self.__patch_floats()
         self.__patch_bools()
         self.__recognizer = Recognizer(
-                self._registered_classes, self._additional_classes)
+                self._registered_classes, self._reg_class_names,
+                self._additional_classes)
 
     def get_single_node(self) -> yaml.Node:
         """Hook used when loading a single document.
@@ -99,7 +101,7 @@ class Loader(yaml.SafeLoader):
             return 'tag:yaml.org,2002:map'
 
         if type_ in self._registered_classes.values():
-            return '!{}'.format(type_.__name__)
+            return f'!{type_.__module__}.{type_.__name__}'
 
         if type_ in self._additional_classes:
             return self._additional_classes[type_]
@@ -177,7 +179,7 @@ class Loader(yaml.SafeLoader):
             if node.tag != 'tag:yaml.org,2002:seq':
                 raise RecognitionError('{}\nExpected {} here'.format(
                     node.start_mark,
-                    type_to_desc(expected_type)))
+                    type_to_desc(expected_type, self._reg_class_names)))
             node.value = [
                     self.__process_node(
                         item, generic_type_args(recognized_type)[0])
@@ -186,7 +188,8 @@ class Loader(yaml.SafeLoader):
         elif is_generic_mapping(recognized_type):
             if node.tag != 'tag:yaml.org,2002:map':
                 raise RecognitionError('{}\nExpected {} here'.format(
-                    node.start_mark, type_to_desc(expected_type)))
+                    node.start_mark, type_to_desc(
+                        expected_type, self._reg_class_names)))
             node.value = [(
                     self.__process_node(
                         key_node, generic_type_args(recognized_type)[0]),
@@ -221,7 +224,7 @@ class Loader(yaml.SafeLoader):
         YAML 1.1 has some really weird ideas on what a float is. This
         was fixed in YAML 1.2, which ruamel.yaml parses by default.
         However, we switched to PyYAML, which is still on YAML 1.1, so
-        that we're now stuck with weird that weird float format. This
+        that we're now stuck with that weird float format. This
         function patches PyYAMLs resolvers to replace the YAML 1.1
         float format with the YAML 1.2 float format. That means we're
         now accepting a mix of YAML 1.1 and YAML 1.2, but so be it.
@@ -330,18 +333,38 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
     if not isinstance(classes, list):
         classes = [classes]  # type: ignore
 
-    for class_ in classes:
-        tag = '!{}'.format(class_.__name__)
-        if issubclass(class_, enum.Enum):
-            loader_cls.add_constructor(tag, EnumConstructor(class_))
-        elif is_string_like(class_):
-            loader_cls.add_constructor(tag, UserStringConstructor(class_))
-        else:
-            loader_cls.add_constructor(tag, Constructor(class_))
+    if loader_cls._registered_classes is None:
+        loader_cls._registered_classes = dict()
 
-        if loader_cls._registered_classes is None:
-            loader_cls._registered_classes = dict()
+    if loader_cls._reg_class_names is None:
+        loader_cls._reg_class_names = dict()
+
+    for class_ in classes:
+        tag = f'!{class_.__module__}.{class_.__name__}'
+        if issubclass(class_, enum.Enum):
+            loader_cls.add_constructor(tag, EnumConstructor(
+                class_, loader_cls._reg_class_names))
+        elif is_string_like(class_):
+            loader_cls.add_constructor(tag, UserStringConstructor(
+                class_, loader_cls._reg_class_names))
+        else:
+            loader_cls.add_constructor(tag, Constructor(
+                class_, loader_cls._reg_class_names))
+
         loader_cls._registered_classes[tag] = class_
+
+        duplicates = [
+                cls for cls, name in loader_cls._reg_class_names.items()
+                if name == class_.__name__]
+
+        if duplicates:
+            for d in duplicates:
+                loader_cls._reg_class_names[d] = f'{d.__module__}.{d.__name__}'
+
+            loader_cls._reg_class_names[class_] = \
+                f'{class_.__module__}.{class_.__name__}'
+        else:
+            loader_cls._reg_class_names[class_] = class_.__name__
 
 
 class _AnyYAML:

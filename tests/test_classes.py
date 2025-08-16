@@ -15,6 +15,10 @@ from .conftest import (
         SubB3, Super, Super2, Super3, Super3Clone, Super4, Super5, Sub45,
         raises, UnionAttribute, Universal, Vector2D)
 
+from .a.module import Module as ModuleA
+from .b.module import Module as ModuleB
+from .c.module import Module as ModuleC
+
 
 def test_load_class() -> None:
     load = yatiml.load_function(Document1)
@@ -856,3 +860,42 @@ if sys.version_info >= (3, 7):
         assert text == (
                 'attr1: test\n'
                 'attr2: 42\n')
+
+
+def test_same_class_different_module() -> None:
+    # mypy flags this because Union doesn't match Type[T]. The solution
+    # is in https://github.com/python/mypy/issues/9773, but that's
+    # waiting for a sufficiently round tuit. Meanwhile, we'll have to
+    # ignore the type check.
+    load = yatiml.load_function(        # type: ignore
+            Union[ModuleA, ModuleB], ModuleA, ModuleB)
+
+    data = load('a: 1')
+    assert isinstance(data, ModuleA)
+    assert data.a == 1
+
+
+def test_same_class_different_module_tags() -> None:
+    # see above
+    load = yatiml.load_function(        # type: ignore
+            Union[ModuleA, ModuleB], ModuleA, ModuleB)
+
+    # not ambiguous, only ModuleA matches
+    ma = load(
+            '!Module\n'
+            'a: 1\n')
+    assert isinstance(ma, ModuleA)
+
+    # ambiguous, a and c have the same attributes
+    load = yatiml.load_function(        # type: ignore
+            Union[ModuleA, ModuleC], ModuleA, ModuleC)
+
+    with raises(yatiml.RecognitionError):
+        load(
+                '!Module\n'
+                'a: 1\n')
+
+    mc = load(
+            '!c.module.Module\n'
+            'a: 1\n')
+    assert isinstance(mc, ModuleC)

@@ -6,7 +6,7 @@ from inspect import isabstract, isclass
 import typing
 from typing import (
         Any, cast, Dict, Iterable, Mapping, MutableMapping, MutableSequence,
-        List, Sequence, Tuple, Union)
+        List, Sequence, Tuple, Type, Union)
 from typing_extensions import Type
 
 import yaml
@@ -191,7 +191,7 @@ def generic_type_args(type_: Type) -> List[Type]:
     return list(type_.__parameters__)
 
 
-def type_to_desc(type_: Type) -> str:
+def type_to_desc(type_: Type, reg_class_names: Dict[Type, str]) -> str:
     """Convert a type to a human-readable description.
 
     This is used for generating nice error messages. We want users
@@ -217,21 +217,29 @@ def type_to_desc(type_: Type) -> str:
         return scalar_type_to_str[type_]
 
     if is_generic_union(type_):
-        return 'any one of {}'.format(
-                [type_to_desc(t) for t in generic_type_args(type_)])
+        return 'any one of {}'.format([
+            type_to_desc(t, reg_class_names)
+            for t in generic_type_args(type_)])
 
     if is_generic_sequence(type_):
         return 'a list of ({})'.format(
-                type_to_desc(generic_type_args(type_)[0]))
+                type_to_desc(
+                    generic_type_args(type_)[0],
+                    reg_class_names))
 
     if is_generic_mapping(type_):
         return 'a dict of string to ({})'.format(
-                type_to_desc(generic_type_args(type_)[1]))
+                type_to_desc(
+                    generic_type_args(type_)[1],
+                    reg_class_names))
 
     if type_ is Any:
         return 'a string, int, float, boolean, null value, list or dict'
 
-    return 'a(n) {}'.format(type_.__name__)
+    if type_ in reg_class_names:
+        return 'a(n) {}'.format(reg_class_names[type_])
+
+    return 'a(n) {}'.format(type_.__class__)
 
 
 def is_string_like(type_: Type) -> bool:
@@ -274,8 +282,8 @@ def cjoin(conjuction: str, words: Iterable[str]) -> str:
     """Joins words together into a conjuctive clause.
 
     This makes a nice enumeration out of the list of words. For
-    example, mjoin('and', ['x', 'y', 'z']) produces the string
-    'x, y and z'.
+    example, cjoin('and', ['x', 'y', 'z']) produces the string
+    'x, y, and z'.
     """
     result = ''
     words_list = list(words)
