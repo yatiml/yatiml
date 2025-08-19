@@ -245,6 +245,12 @@ def test_empty_document() -> None:
     assert data is None
 
 
+def test_unexpected_empty_document() -> None:
+    load = yatiml.load_function(int)
+    with pytest.raises(yatiml.RecognitionError):
+        load('')
+
+
 def test_dump_str() -> None:
     dumps = yatiml.dumps_function()
     text = dumps('test')

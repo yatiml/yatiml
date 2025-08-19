@@ -4,8 +4,8 @@ import os
 from pathlib import Path
 import re
 from typing import (
-        Any, AnyStr, Callable, cast, Dict, IO, List, overload, TypeVar, Union
-        )  # noqa
+        Any, AnyStr, Callable, cast, Dict, IO, List, Optional, overload,
+        TypeVar, Union)  # noqa
 from typing_extensions import ClassVar, Type    # noqa
 
 import yaml
@@ -62,10 +62,13 @@ class Loader(yaml.SafeLoader):
         Returns:
             A processed node representing the document.
         """
-        node = cast(yaml.Node, super().get_single_node())
-        if node is not None:
-            node = self.__process_node(node, type(self).document_type)
-        return node
+        node = cast(Optional[yaml.Node], super().get_single_node())
+
+        if node is None:
+            # node is None when loading an empty input
+            node = yaml.ScalarNode('tag:yaml.org,2002:null', '')
+
+        return self.__process_node(node, type(self).document_type)
 
     def get_node(self) -> yaml.Node:
         """Hook used when reading a multi-document stream.
@@ -77,10 +80,13 @@ class Loader(yaml.SafeLoader):
         Returns:
             A processed node representing the document.
         """
-        node = cast(yaml.Node, super().get_node())
-        if node is not None:
-            node = self.__process_node(node, type(self).document_type)
-        return node
+        node = cast(Optional[yaml.Node], super().get_node())
+
+        if node is None:
+            # node is None when loading an empty input
+            node = yaml.ScalarNode('tag:yaml.org,2002:null', '')
+
+        return self.__process_node(node, type(self).document_type)
 
     def __type_to_tag(self, type_: Type) -> str:
         """Convert a type to the corresponding YAML tag.
