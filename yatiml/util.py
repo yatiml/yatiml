@@ -3,6 +3,7 @@ from collections import abc, UserString
 from difflib import get_close_matches
 from datetime import date
 from inspect import isabstract, isclass
+import types
 import typing
 from typing import (
         Any, cast, Dict, Iterable, Mapping, MutableMapping, MutableSequence,
@@ -151,6 +152,10 @@ def is_generic_union(type_: Type) -> bool:
     Returns:
         True iff it's a Union[...something...].
     """
+    if typing.get_origin(type_) in (typing.Union, types.UnionType):
+        # 3.8 and up, required from 3.14
+        return True
+
     if hasattr(typing, '_GenericAlias'):
         # 3.7
         return (isinstance(type_, typing._GenericAlias) and     # type: ignore

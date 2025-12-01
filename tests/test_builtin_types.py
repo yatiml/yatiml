@@ -230,6 +230,16 @@ def test_union_mismatch() -> None:
         load('2.71')
 
 
+def test_new_union() -> None:
+    load = yatiml.load_function(str | int)          # type: ignore
+    data = load('10')
+    assert isinstance(data, int)
+    assert data == 10
+    data = load('test')
+    assert isinstance(data, str)
+    assert data == 'test'
+
+
 def test_optional() -> None:
     load = yatiml.load_function(Optional[str])      # type: ignore
     data = load('test')
