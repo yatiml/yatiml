@@ -152,21 +152,22 @@ def is_generic_union(type_: Type) -> bool:
     Returns:
         True iff it's a Union[...something...].
     """
-    if typing.get_origin(type_) in (typing.Union, types.UnionType):
+    if hasattr(types, 'UnionType'):
         # 3.8 and up, required from 3.14
-        return True
+        return typing.get_origin(type_) in (typing.Union, types.UnionType)
 
     if hasattr(typing, '_GenericAlias'):
         # 3.7
         return (isinstance(type_, typing._GenericAlias) and     # type: ignore
                 type_.__origin__ is Union)
+
+    if hasattr(typing, '_Union'):
+        # 3.6
+        return isinstance(type_, typing._Union)             # type: ignore
     else:
-        if hasattr(typing, '_Union'):
-            # 3.6
-            return isinstance(type_, typing._Union)             # type: ignore
-        else:
-            # 3.5 and earlier (?)
-            return isinstance(type_, typing.UnionMeta)          # type: ignore
+        # 3.5 and earlier (?)
+        return isinstance(type_, typing.UnionMeta)          # type: ignore
+
     raise RuntimeError('Could not determine whether type is a Union. Is this'
                        ' a YAtiML-supported Python version?')
 
