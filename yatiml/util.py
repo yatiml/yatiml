@@ -151,6 +151,10 @@ def is_generic_union(type_: Type) -> bool:
     Returns:
         True iff it's a Union[...something...].
     """
+    if typing.get_origin(type_) is typing.Union:
+        # 3.8 and up
+        return True
+
     if hasattr(typing, '_GenericAlias'):
         # 3.7
         return (isinstance(type_, typing._GenericAlias) and     # type: ignore
