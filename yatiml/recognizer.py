@@ -184,9 +184,10 @@ class Recognizer(IRecognizer):
         logger.debug('Union types {}'.format(union_types))
         for i, possible_type in enumerate(union_types):
             recognized_type, result = self.recognize(node, possible_type)
-            if len(recognized_type) == 0:
+            if len(recognized_type) != 1:
                 causes.append(result)
-            recognized_types |= recognized_type
+            else:
+                recognized_types |= recognized_type
         if bool in recognized_types and bool_union_fix in recognized_types:
             recognized_types.remove(bool_union_fix)
 
