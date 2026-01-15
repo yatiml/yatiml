@@ -265,6 +265,45 @@ it for the class on which it is defined; derived classes will use automatic
 recognition unless they have their own ``_yatiml_recognize()``. The same goes
 for ``_yatiml_savorize()`` and `` _yatiml_sweeten()``.
 
+Custom initialisation
+---------------------
+
+YAtiML maps classes to YAML using the ``__init__`` function of the class. That
+keeps the YAML and the Python side nicely compatible, but sometimes you may want
+a bit more flexibility on the Python side. For example, if you have an attribute
+that is an enum and want to allow passing a string as well when creating an
+object in Python:
+
+.. literalinclude:: examples/ambiguous_init.py
+  :caption: ``docs/examples/ambiguous_init.py``
+  :language: python
+
+This creates a problem on the YAML side however, since enums and strings are
+both represented as strings there, and YAtiML will be unable to determine which
+type to interpret the input as. As a result, it'll declare the input ambiguous:
+
+.. code-block:: none
+
+  yatiml.exceptions.RecognitionError: An error occurred:
+    in "<unicode string>", line 1, column 8:
+      color: red
+             ^
+  Could not determine which of the following types this is: a string or a(n) Color
+
+What we'd really like to have here is for YAtiML to always try to read a
+``Color`` when loading YAML, while allowing both string and ``Color`` on the
+Python side. We can do that by adding a ``_yatiml_init`` method to the class for
+YAtiML to use instead of ``__init__``:
+
+.. literalinclude:: examples/yatiml_init_example.py
+  :caption: ``docs/examples/yatiml_init_example.py``
+  :language: python
+
+
+Note that ``_yatiml_init`` needs to be a ``@staticmethod``, as a result there is
+no ``self`` argument, and that Python requires you to use a string when naming
+the return type.
+
 Extra attributes
 ----------------
 

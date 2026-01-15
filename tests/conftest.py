@@ -445,6 +445,21 @@ class ManyAttrs:
         self.tested = tested
 
 
+class AlwaysRecognised:
+    @classmethod
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        pass
+
+
+class SeparateInit:
+    def __init__(self, arg: Union[str, AlwaysRecognised]) -> None:
+        self.arg = arg
+
+    @staticmethod
+    def _yatiml_init(arg: str) -> 'SeparateInit':
+        return SeparateInit(arg)
+
+
 if sys.version_info >= (3, 7):
     from dataclasses import dataclass
 

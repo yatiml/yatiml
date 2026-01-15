@@ -3,6 +3,17 @@ from typing import Any, Dict, Generator, Tuple
 from typing_extensions import Type
 
 
+def init_function(class_: Type) -> Any:
+    """Get the function defining the class' type.
+
+    This is the __init__ function by default, unless a _yatiml_init
+    function exists in which case we use that.
+    """
+    if hasattr(class_, '_yatiml_init'):
+        return class_._yatiml_init
+    return class_.__init__
+
+
 def class_subobjects(
         class_: Type) -> Generator[Tuple[str, Type, bool], None, None]:
     """Find the aggregated subobjects of an object.
@@ -15,7 +26,7 @@ def class_subobjects(
     Yields:
         Tuples (name, type, required) describing subobjects.
     """
-    argspec = inspect.getfullargspec(class_.__init__)
+    argspec = inspect.getfullargspec(init_function(class_))
     defaults = argspec.defaults if argspec.defaults else []
     num_optional = len(defaults)
     first_optional = len(argspec.args) - num_optional
@@ -39,7 +50,7 @@ def defaulted_attributes(class_: Type) -> Dict[str, Any]:
         A dictionary containing attribute names and their default
         values.
     """
-    argspec = inspect.getfullargspec(class_.__init__)
+    argspec = inspect.getfullargspec(init_function(class_))
     defaults = argspec.defaults if argspec.defaults else []
     num_optional = len(defaults)
     first_optional = len(argspec.args) - num_optional
