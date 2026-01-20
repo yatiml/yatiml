@@ -15,9 +15,8 @@ class Thing:
             color = Color[color]
         self.color = color
 
-    @staticmethod
-    def _yatiml_init(color: Color) -> 'Thing':
-        return Thing(color)
+    def _yatiml_init(self, color: Color) -> None:
+        self.color = color
 
 
 # Creating things with colors in two ways

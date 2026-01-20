@@ -455,9 +455,18 @@ class SeparateInit:
     def __init__(self, arg: Union[str, AlwaysRecognised]) -> None:
         self.arg = arg
 
-    @staticmethod
-    def _yatiml_init(arg: str) -> 'SeparateInit':
-        return SeparateInit(arg)
+    def _yatiml_init(self, arg: str) -> None:
+        SeparateInit.__init__(self, arg)
+
+
+class DifferentInit:
+    def __init__(self, arg: str) -> None:
+        self.str_arg = arg      # type: Optional[str]
+        self.int_arg = None     # type: Optional[int]
+
+    def _yatiml_init(self, arg: int) -> None:
+        self.str_arg = None
+        self.int_arg = arg
 
 
 if sys.version_info >= (3, 7):
