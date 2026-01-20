@@ -300,10 +300,6 @@ YAtiML to use instead of ``__init__``:
   :language: python
 
 
-Note that ``_yatiml_init`` needs to be a ``@staticmethod``, as a result there is
-no ``self`` argument, and that Python requires you to use a string when naming
-the return type.
-
 Extra attributes
 ----------------
 

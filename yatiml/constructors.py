@@ -10,7 +10,7 @@ from typing_extensions import TYPE_CHECKING, Type
 import yaml
 
 from yatiml.exceptions import RecognitionError
-from yatiml.introspection import class_subobjects
+from yatiml.introspection import class_subobjects, init_function
 from yatiml.util import (
         bool_union_fix, diagnose_extraneous_key, diagnose_missing_key,
         generic_type_args, is_generic_sequence, is_generic_mapping,
@@ -73,9 +73,11 @@ class Constructor:
 
         self.__loader = loader
 
+        initialiser = init_function(self.class_)
+
         # figure out which keys are extra and strip them of tags
         # to prevent constructing objects we haven't type checked
-        argspec = inspect.getfullargspec(self.class_.__init__)
+        argspec = inspect.getfullargspec(initialiser)
         self.__strip_extra_attributes(node, argspec.args)
 
         # create object and let yaml lib construct subobjects
@@ -96,10 +98,10 @@ class Constructor:
             if '_yatiml_extra' in argspec.args:
                 attrs = self.__split_off_extra_attributes(
                     mapping, argspec.args)
-                new_obj.__init__(**attrs)
+                initialiser(new_obj, **attrs)
 
             else:
-                new_obj.__init__(**mapping)
+                initialiser(new_obj, **mapping)
 
         except Exception as e:
             raise RecognitionError(
@@ -262,11 +264,13 @@ class Constructor:
         """
         known_keys = list(known_attrs)
         if 'self' not in known_keys:
-            raise RuntimeError('The __init__ method of {} does not have a'
-                               ' "self" attribute! Please add one, this is'
-                               ' not a valid constructor.'.format(
-                                   self.class_.__name__))
+            raise RuntimeError(
+                    'The __init__ (or _yatiml_init, if present) method of {}'
+                    ' does not have a "self" attribute! Please add one, this'
+                    ' is not a valid constructor.'.format(
+                        self.class_.__name__))
         known_keys.remove('self')
+
         if '_yatiml_extra' in known_keys:
             known_keys.remove('_yatiml_extra')
 
