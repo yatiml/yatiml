@@ -527,6 +527,14 @@ def load_function(result=_AnyYAML, *args):     # type: ignore
                     raise RecognitionError(
                             'The input is empty. This probably caused the'
                             f' following error:\n{e}')
+                elif isinstance(
+                        e,
+                        (yaml.reader.ReaderError, yaml.scanner.ScannerError)):
+                    raise RecognitionError(str(e)) from None
+                elif isinstance(e, yaml.parser.ParserError):
+                    raise RecognitionError(
+                            f'{e}\nIs the input indented incorrectly?'
+                            ) from None
                 else:
                     raise e
 
