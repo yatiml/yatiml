@@ -44,6 +44,29 @@ def test_load_from_stream(tmpdir_path: Path) -> None:
     assert data == 'testing'
 
 
+def test_load_reader_error(tmpdir_path: Path) -> None:
+    load_string_dict = yatiml.load_function(Dict[str, str])
+    # this is a Unicode control character that's not allowed in YAML
+    with pytest.raises(yatiml.RecognitionError):
+        load_string_dict('\x9F')
+
+
+def test_load_scanner_error() -> None:
+    load_string_dict = yatiml.load_function(Dict[str, str])
+    with pytest.raises(yatiml.RecognitionError):
+        load_string_dict('a: b\nc')
+
+
+def test_load_parser_error() -> None:
+    load_string_nested_dict = yatiml.load_function(Dict[str, Dict[str, str]])
+    with pytest.raises(yatiml.RecognitionError):
+        load_string_nested_dict(
+                'a:\n'
+                '  b: a\n'
+                ' c: d\n'
+                )
+
+
 def test_dump_to_string() -> None:
     dumps = yatiml.dumps_function()
     yaml_text = dumps({'x': 1})
