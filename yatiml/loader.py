@@ -25,6 +25,20 @@ from yatiml.util import (
 logger = logging.getLogger(__name__)
 
 
+def _is_empty_input(source: Union[str, Path, IO[AnyStr]]) -> bool:
+    if isinstance(source, Path):
+        try:
+            with source.open('r') as f:
+                return len(f.read(1)) == 0
+        except Exception:
+            # unreadable is not the same as empty
+            return False
+    elif isinstance(source, str):
+        return len(source) == 0
+
+    return False
+
+
 class Loader(yaml.SafeLoader):
     """The YAtiML Loader class.
 
@@ -502,10 +516,18 @@ def load_function(result=_AnyYAML, *args):     # type: ignore
                 yatiml.RecognitionError: If the input is invalid.
             """
 
-            if isinstance(source, Path):
-                with source.open('r') as f:
-                    return cast(T, yaml.load(f, Loader=self.loader))
-            else:
-                return cast(T, yaml.load(source, Loader=self.loader))
+            try:
+                if isinstance(source, Path):
+                    with source.open('r') as f:
+                        return cast(T, yaml.load(f, Loader=self.loader))
+                else:
+                    return cast(T, yaml.load(source, Loader=self.loader))
+            except Exception as e:
+                if _is_empty_input(source):
+                    raise RecognitionError(
+                            'The input is empty. This probably caused the'
+                            f' following error:\n{e}')
+                else:
+                    raise e
 
     return LoadFunction(UserLoader)

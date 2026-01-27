@@ -21,6 +21,12 @@ from .b.module import Module as ModuleB
 from .c.module import Module as ModuleC
 
 
+def test_load_empty_input() -> None:
+    load = yatiml.load_function(Super)
+    with pytest.raises(yatiml.RecognitionError):
+        load('')
+
+
 def test_load_class() -> None:
     load = yatiml.load_function(Document1)
     data = load('attr1: test_value')
