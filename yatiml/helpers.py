@@ -349,10 +349,14 @@ class Node:
                 return default is None
 
             if value_node.tag == 'tag:yaml.org,2002:int':
-                return int(value_node.value) == int(default)
+                return (
+                        isinstance(default, int) and
+                        int(value_node.value) == default)
 
             if value_node.tag == 'tag:yaml.org,2002:float':
-                return float(value_node.value) == float(default)
+                return (
+                        isinstance(default, float) and
+                        float(value_node.value) == float(default))
 
             if value_node.tag == 'tag:yaml.org,2002:bool':
                 if default is False:
