@@ -156,7 +156,8 @@ class Document3:
                  has_siblings: bool = False,
                  score: float = 7.5,
                  extra_shape: Optional[Shape] = None,
-                 another_number: int = 42
+                 another_number: int = 42,
+                 union_type: Union[int, str] = 'text',
                  ) -> None:
         self.cursor_at = cursor_at
         self.color = color
@@ -165,6 +166,7 @@ class Document3:
         self.score = score
         self.extra_shape = extra_shape
         self.another_number = another_number
+        self.union_type = union_type
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:

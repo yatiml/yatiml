@@ -473,6 +473,7 @@ def test_remove_defaulted_attribute() -> None:
     data.score = 5.5
     data.extra_shape = Circle(Vector2D(1.0, 2.0), 3.0)
     data.another_number = 42
+    data.union_type = 13
     text = dumps(data)
     assert text == (
             'cursor_at:\n'
@@ -486,7 +487,8 @@ def test_remove_defaulted_attribute() -> None:
             '  center:\n'
             '    x: 1.0\n'
             '    y: 2.0\n'
-            '  radius: 3.0\n')
+            '  radius: 3.0\n'
+            'union_type: 13\n')
 
 
 def test_yatiml_defaults() -> None:
