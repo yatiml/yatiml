@@ -321,12 +321,12 @@ def _describe_allowed_present_keys(
 
     class_desc = list()
 
-    req_msg = 'For reference, '
-    req_msg += 'keys' if len(req_keys) > 1 else 'key'
-    req_msg += ' ' + cjoin('and', req_keys)
-    req_msg += ' are' if len(req_keys) > 1 else ' is'
-    req_msg += ' required here'
-    class_desc.append(req_msg)
+    if req_keys:
+        req_msg = 'keys' if len(req_keys) > 1 else 'key'
+        req_msg += ' ' + cjoin('and', req_keys)
+        req_msg += ' are' if len(req_keys) > 1 else ' is'
+        req_msg += ' required here'
+        class_desc.append(req_msg)
 
     if opt_keys:
         opt_msg = '{}'.format(cjoin('and', opt_keys))
@@ -338,7 +338,7 @@ def _describe_allowed_present_keys(
         # if we had _yatiml_extra then we wouldn't be here
         class_desc.append('no other keys are allowed')
 
-    sug_msg = cjoin('and', class_desc)
+    sug_msg = 'For reference, ' + cjoin('and', class_desc)
 
     g = ['"{}"'.format(g) for g in got]
     sug_msg += ', but'
