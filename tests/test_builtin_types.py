@@ -2,6 +2,7 @@
 import collections
 from datetime import date, datetime
 from math import isnan
+import sys
 from typing import (
         Dict, List, Mapping, MutableMapping, MutableSequence, Optional,
         Sequence, Union)
@@ -230,6 +231,17 @@ def test_union_mismatch() -> None:
         load('2.71')
 
 
+if sys.version_info >= (3, 10):
+    def test_new_union() -> None:
+        load = yatiml.load_function(str | int)          # type: ignore
+        data = load('10')
+        assert isinstance(data, int)
+        assert data == 10
+        data = load('test')
+        assert isinstance(data, str)
+        assert data == 'test'
+
+
 def test_optional() -> None:
     load = yatiml.load_function(Optional[str])      # type: ignore
     data = load('test')
@@ -243,6 +255,12 @@ def test_empty_document() -> None:
     load = yatiml.load_function(Optional[str])      # type: ignore
     data = load('')
     assert data is None
+
+
+def test_unexpected_empty_document() -> None:
+    load = yatiml.load_function(int)
+    with pytest.raises(yatiml.RecognitionError):
+        load('')
 
 
 def test_dump_str() -> None:

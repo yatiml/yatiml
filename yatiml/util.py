@@ -3,10 +3,11 @@ from collections import abc, UserString
 from difflib import get_close_matches
 from datetime import date
 from inspect import isabstract, isclass
+import types
 import typing
 from typing import (
         Any, cast, Dict, Iterable, Mapping, MutableMapping, MutableSequence,
-        List, Sequence, Tuple, Union)
+        List, Sequence, Tuple, Type, Union)
 from typing_extensions import Type
 
 import yaml
@@ -151,17 +152,22 @@ def is_generic_union(type_: Type) -> bool:
     Returns:
         True iff it's a Union[...something...].
     """
+    if hasattr(types, 'UnionType'):
+        # 3.8 and up, required from 3.14
+        return typing.get_origin(type_) in (typing.Union, types.UnionType)
+
     if hasattr(typing, '_GenericAlias'):
         # 3.7
         return (isinstance(type_, typing._GenericAlias) and     # type: ignore
                 type_.__origin__ is Union)
+
+    if hasattr(typing, '_Union'):
+        # 3.6
+        return isinstance(type_, typing._Union)             # type: ignore
     else:
-        if hasattr(typing, '_Union'):
-            # 3.6
-            return isinstance(type_, typing._Union)             # type: ignore
-        else:
-            # 3.5 and earlier (?)
-            return isinstance(type_, typing.UnionMeta)          # type: ignore
+        # 3.5 and earlier (?)
+        return isinstance(type_, typing.UnionMeta)          # type: ignore
+
     raise RuntimeError('Could not determine whether type is a Union. Is this'
                        ' a YAtiML-supported Python version?')
 
@@ -191,7 +197,7 @@ def generic_type_args(type_: Type) -> List[Type]:
     return list(type_.__parameters__)
 
 
-def type_to_desc(type_: Type) -> str:
+def type_to_desc(type_: Type, reg_class_names: Dict[Type, str]) -> str:
     """Convert a type to a human-readable description.
 
     This is used for generating nice error messages. We want users
@@ -217,21 +223,29 @@ def type_to_desc(type_: Type) -> str:
         return scalar_type_to_str[type_]
 
     if is_generic_union(type_):
-        return 'any one of {}'.format(
-                [type_to_desc(t) for t in generic_type_args(type_)])
+        return 'any one of {}'.format([
+            type_to_desc(t, reg_class_names)
+            for t in generic_type_args(type_)])
 
     if is_generic_sequence(type_):
         return 'a list of ({})'.format(
-                type_to_desc(generic_type_args(type_)[0]))
+                type_to_desc(
+                    generic_type_args(type_)[0],
+                    reg_class_names))
 
     if is_generic_mapping(type_):
         return 'a dict of string to ({})'.format(
-                type_to_desc(generic_type_args(type_)[1]))
+                type_to_desc(
+                    generic_type_args(type_)[1],
+                    reg_class_names))
 
     if type_ is Any:
         return 'a string, int, float, boolean, null value, list or dict'
 
-    return 'a(n) {}'.format(type_.__name__)
+    if type_ in reg_class_names:
+        return 'a(n) {}'.format(reg_class_names[type_])
+
+    return 'a(n) {}'.format(type_.__class__)
 
 
 def is_string_like(type_: Type) -> bool:
@@ -274,8 +288,8 @@ def cjoin(conjuction: str, words: Iterable[str]) -> str:
     """Joins words together into a conjuctive clause.
 
     This makes a nice enumeration out of the list of words. For
-    example, mjoin('and', ['x', 'y', 'z']) produces the string
-    'x, y and z'.
+    example, cjoin('and', ['x', 'y', 'z']) produces the string
+    'x, y, and z'.
     """
     result = ''
     words_list = list(words)
@@ -307,12 +321,12 @@ def _describe_allowed_present_keys(
 
     class_desc = list()
 
-    req_msg = 'For reference, '
-    req_msg += 'keys' if len(req_keys) > 1 else 'key'
-    req_msg += ' ' + cjoin('and', req_keys)
-    req_msg += ' are' if len(req_keys) > 1 else ' is'
-    req_msg += ' required here'
-    class_desc.append(req_msg)
+    if req_keys:
+        req_msg = 'keys' if len(req_keys) > 1 else 'key'
+        req_msg += ' ' + cjoin('and', req_keys)
+        req_msg += ' are' if len(req_keys) > 1 else ' is'
+        req_msg += ' required here'
+        class_desc.append(req_msg)
 
     if opt_keys:
         opt_msg = '{}'.format(cjoin('and', opt_keys))
@@ -324,7 +338,7 @@ def _describe_allowed_present_keys(
         # if we had _yatiml_extra then we wouldn't be here
         class_desc.append('no other keys are allowed')
 
-    sug_msg = cjoin('and', class_desc)
+    sug_msg = 'For reference, ' + cjoin('and', class_desc)
 
     g = ['"{}"'.format(g) for g in got]
     sug_msg += ', but'

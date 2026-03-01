@@ -110,6 +110,7 @@ License
 *******
 
 YAtiML is Copyright 2018-2024, Netherlands eScience Center, University of
-Amsterdam, and VU University Amsterdam
+Amsterdam, and VU University Amsterdam, and copyright 2025-2026 Netherlands
+eScience Center.
 
 Distributed under the Apache Software License 2.0.

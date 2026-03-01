@@ -156,7 +156,8 @@ class Document3:
                  has_siblings: bool = False,
                  score: float = 7.5,
                  extra_shape: Optional[Shape] = None,
-                 another_number: int = 42
+                 another_number: int = 42,
+                 union_type: Union[int, str] = 'text',
                  ) -> None:
         self.cursor_at = cursor_at
         self.color = color
@@ -165,6 +166,7 @@ class Document3:
         self.score = score
         self.extra_shape = extra_shape
         self.another_number = another_number
+        self.union_type = union_type
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
@@ -445,6 +447,36 @@ class ManyAttrs:
         self.tested = tested
 
 
+class AlwaysRecognised:
+    @classmethod
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        pass
+
+
+class SeparateInit:
+    def __init__(self, arg: Union[str, AlwaysRecognised]) -> None:
+        self.arg = arg
+
+    def _yatiml_init(self, arg: str) -> None:
+        SeparateInit.__init__(self, arg)
+
+
+class DifferentInit:
+    def __init__(self, arg: str) -> None:
+        self.str_arg = arg      # type: Optional[str]
+        self.int_arg = None     # type: Optional[int]
+
+    def _yatiml_init(self, arg: int) -> None:
+        self.str_arg = None
+        self.int_arg = arg
+
+
+class NoRequiredAttributes:
+    def __init__(self, arg1: str = '', arg2: int = 10) -> None:
+        self.arg1 = arg1
+        self.arg2 = arg2
+
+
 if sys.version_info >= (3, 7):
     from dataclasses import dataclass
 
@@ -613,7 +645,7 @@ def scalar_node() -> yatiml.Node:
 
 @pytest.fixture
 def recognizer() -> Recognizer:
-    return Recognizer({}, {})
+    return Recognizer({}, {}, {})
 
 
 @pytest.fixture

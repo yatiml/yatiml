@@ -4,8 +4,8 @@ import os
 from pathlib import Path
 import re
 from typing import (
-        Any, AnyStr, Callable, cast, Dict, IO, List, overload, TypeVar, Union
-        )  # noqa
+        Any, AnyStr, Callable, cast, Dict, IO, List, Optional, overload,
+        TypeVar, Union)  # noqa
 from typing_extensions import ClassVar, Type    # noqa
 
 import yaml
@@ -25,6 +25,20 @@ from yatiml.util import (
 logger = logging.getLogger(__name__)
 
 
+def _is_empty_input(source: Union[str, Path, IO[AnyStr]]) -> bool:
+    if isinstance(source, Path):
+        try:
+            with source.open('r') as f:
+                return len(f.read(1)) == 0
+        except Exception:
+            # unreadable is not the same as empty
+            return False
+    elif isinstance(source, str):
+        return len(source) == 0
+
+    return False
+
+
 class Loader(yaml.SafeLoader):
     """The YAtiML Loader class.
 
@@ -38,6 +52,7 @@ class Loader(yaml.SafeLoader):
         instead.
     """
     _registered_classes = None      # type: ClassVar[Dict[str, Type]]
+    _reg_class_names = None         # type: ClassVar[Dict[Type, str]]
     _additional_classes = None      # type: ClassVar[Dict[Type, str]]
     document_type = type(None)      # type: ClassVar[Type]
 
@@ -48,7 +63,8 @@ class Loader(yaml.SafeLoader):
         self.__patch_floats()
         self.__patch_bools()
         self.__recognizer = Recognizer(
-                self._registered_classes, self._additional_classes)
+                self._registered_classes, self._reg_class_names,
+                self._additional_classes)
 
     def get_single_node(self) -> yaml.Node:
         """Hook used when loading a single document.
@@ -60,10 +76,13 @@ class Loader(yaml.SafeLoader):
         Returns:
             A processed node representing the document.
         """
-        node = cast(yaml.Node, super().get_single_node())
-        if node is not None:
-            node = self.__process_node(node, type(self).document_type)
-        return node
+        node = cast(Optional[yaml.Node], super().get_single_node())
+
+        if node is None:
+            # node is None when loading an empty input
+            node = yaml.ScalarNode('tag:yaml.org,2002:null', '')
+
+        return self.__process_node(node, type(self).document_type)
 
     def get_node(self) -> yaml.Node:
         """Hook used when reading a multi-document stream.
@@ -75,10 +94,13 @@ class Loader(yaml.SafeLoader):
         Returns:
             A processed node representing the document.
         """
-        node = cast(yaml.Node, super().get_node())
-        if node is not None:
-            node = self.__process_node(node, type(self).document_type)
-        return node
+        node = cast(Optional[yaml.Node], super().get_node())
+
+        if node is None:
+            # node is None when loading an empty input
+            node = yaml.ScalarNode('tag:yaml.org,2002:null', '')
+
+        return self.__process_node(node, type(self).document_type)
 
     def __type_to_tag(self, type_: Type) -> str:
         """Convert a type to the corresponding YAML tag.
@@ -99,7 +121,7 @@ class Loader(yaml.SafeLoader):
             return 'tag:yaml.org,2002:map'
 
         if type_ in self._registered_classes.values():
-            return '!{}'.format(type_.__name__)
+            return f'!{type_.__module__}.{type_.__name__}'
 
         if type_ in self._additional_classes:
             return self._additional_classes[type_]
@@ -177,7 +199,7 @@ class Loader(yaml.SafeLoader):
             if node.tag != 'tag:yaml.org,2002:seq':
                 raise RecognitionError('{}\nExpected {} here'.format(
                     node.start_mark,
-                    type_to_desc(expected_type)))
+                    type_to_desc(expected_type, self._reg_class_names)))
             node.value = [
                     self.__process_node(
                         item, generic_type_args(recognized_type)[0])
@@ -186,7 +208,8 @@ class Loader(yaml.SafeLoader):
         elif is_generic_mapping(recognized_type):
             if node.tag != 'tag:yaml.org,2002:map':
                 raise RecognitionError('{}\nExpected {} here'.format(
-                    node.start_mark, type_to_desc(expected_type)))
+                    node.start_mark, type_to_desc(
+                        expected_type, self._reg_class_names)))
             node.value = [(
                     self.__process_node(
                         key_node, generic_type_args(recognized_type)[0]),
@@ -221,7 +244,7 @@ class Loader(yaml.SafeLoader):
         YAML 1.1 has some really weird ideas on what a float is. This
         was fixed in YAML 1.2, which ruamel.yaml parses by default.
         However, we switched to PyYAML, which is still on YAML 1.1, so
-        that we're now stuck with weird that weird float format. This
+        that we're now stuck with that weird float format. This
         function patches PyYAMLs resolvers to replace the YAML 1.1
         float format with the YAML 1.2 float format. That means we're
         now accepting a mix of YAML 1.1 and YAML 1.2, but so be it.
@@ -330,18 +353,38 @@ def add_to_loader(loader_cls: Type, classes: List[Type]) -> None:
     if not isinstance(classes, list):
         classes = [classes]  # type: ignore
 
-    for class_ in classes:
-        tag = '!{}'.format(class_.__name__)
-        if issubclass(class_, enum.Enum):
-            loader_cls.add_constructor(tag, EnumConstructor(class_))
-        elif is_string_like(class_):
-            loader_cls.add_constructor(tag, UserStringConstructor(class_))
-        else:
-            loader_cls.add_constructor(tag, Constructor(class_))
+    if loader_cls._registered_classes is None:
+        loader_cls._registered_classes = dict()
 
-        if loader_cls._registered_classes is None:
-            loader_cls._registered_classes = dict()
+    if loader_cls._reg_class_names is None:
+        loader_cls._reg_class_names = dict()
+
+    for class_ in classes:
+        tag = f'!{class_.__module__}.{class_.__name__}'
+        if issubclass(class_, enum.Enum):
+            loader_cls.add_constructor(tag, EnumConstructor(
+                class_, loader_cls._reg_class_names))
+        elif is_string_like(class_):
+            loader_cls.add_constructor(tag, UserStringConstructor(
+                class_, loader_cls._reg_class_names))
+        else:
+            loader_cls.add_constructor(tag, Constructor(
+                class_, loader_cls._reg_class_names))
+
         loader_cls._registered_classes[tag] = class_
+
+        duplicates = [
+                cls for cls, name in loader_cls._reg_class_names.items()
+                if name == class_.__name__]
+
+        if duplicates:
+            for d in duplicates:
+                loader_cls._reg_class_names[d] = f'{d.__module__}.{d.__name__}'
+
+            loader_cls._reg_class_names[class_] = \
+                f'{class_.__module__}.{class_.__name__}'
+        else:
+            loader_cls._reg_class_names[class_] = class_.__name__
 
 
 class _AnyYAML:
@@ -473,10 +516,26 @@ def load_function(result=_AnyYAML, *args):     # type: ignore
                 yatiml.RecognitionError: If the input is invalid.
             """
 
-            if isinstance(source, Path):
-                with source.open('r') as f:
-                    return cast(T, yaml.load(f, Loader=self.loader))
-            else:
-                return cast(T, yaml.load(source, Loader=self.loader))
+            try:
+                if isinstance(source, Path):
+                    with source.open('r') as f:
+                        return cast(T, yaml.load(f, Loader=self.loader))
+                else:
+                    return cast(T, yaml.load(source, Loader=self.loader))
+            except Exception as e:
+                if _is_empty_input(source):
+                    raise RecognitionError(
+                            'The input is empty. This probably caused the'
+                            f' following error:\n{e}')
+                elif isinstance(
+                        e,
+                        (yaml.reader.ReaderError, yaml.scanner.ScannerError)):
+                    raise RecognitionError(str(e)) from None
+                elif isinstance(e, yaml.parser.ParserError):
+                    raise RecognitionError(
+                            f'{e}\nIs the input indented incorrectly?'
+                            ) from None
+                else:
+                    raise e
 
     return LoadFunction(UserLoader)

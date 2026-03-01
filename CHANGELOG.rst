@@ -5,6 +5,36 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.12.0
+******
+
+Incompatible changes
+--------------------
+
+* PyYAML syntax exceptions are now raised as a yatiml.RecognitionError
+
+New functionality
+-----------------
+
+* _yatiml_init() alternative init function
+
+Improvements
+------------
+
+* Various improvements to error messages
+
+Fixes
+-----
+
+* User classes with the same name in different modules now work
+* Unions in Python 3.14 now work
+* Crash with non-default values not of type int or float
+
+Removed
+-------
+
+* Support for Python 3.7
+
 
 0.11.1
 ******
@@ -20,7 +50,6 @@ first two fixes here add work-arounds that get us partially back up to YAML
 * Switch back to YAML 1.2 floats
 * Switch back to YAML 1.2 booleans
 * Make enum values matching boolean constants work correctly
-
 
 
 0.11.0

@@ -7,13 +7,24 @@ import pytest  # type: ignore
 import yatiml
 
 from .conftest import (
-        Abstract, BrokenPrivateAttributes, Circle, Color, Color2, Color3,
-        ComplexPrivateAttributes, Concrete, ConstrainedString, DashedAttribute,
-        DictAttribute, Document1, Document2, Document3, Document4, Document5,
-        Document6, Ellipse, Extensible, ManyAttrs, Postcode, PrivateAttributes,
-        Raises, Rectangle, Shape, StringLike, SubA, SubA2, SubA3, SubB, SubB2,
-        SubB3, Super, Super2, Super3, Super3Clone, Super4, Super5, Sub45,
-        raises, UnionAttribute, Universal, Vector2D)
+        Abstract, AlwaysRecognised, BrokenPrivateAttributes, Circle, Color,
+        Color2, Color3, ComplexPrivateAttributes, Concrete, ConstrainedString,
+        DashedAttribute, DictAttribute, DifferentInit, Document1, Document2,
+        Document3, Document4, Document5, Document6, Ellipse, Extensible,
+        ManyAttrs, NoRequiredAttributes, Postcode, PrivateAttributes, Raises,
+        Rectangle, SeparateInit, Shape, StringLike, SubA, SubA2, SubA3, SubB,
+        SubB2, SubB3, Super, Super2, Super3, Super3Clone, Super4, Super5,
+        Sub45, raises, UnionAttribute, Universal, Vector2D)
+
+from .a.module import Module as ModuleA
+from .b.module import Module as ModuleB
+from .c.module import Module as ModuleC
+
+
+def test_load_empty_input() -> None:
+    load = yatiml.load_function(Super)
+    with pytest.raises(yatiml.RecognitionError):
+        load('')
 
 
 def test_load_class() -> None:
@@ -36,6 +47,22 @@ def test_init_raises() -> None:
     load = yatiml.load_function(Raises)
     with raises(yatiml.RecognitionError):
         load('x: 20')
+
+
+def test_yatiml_init() -> None:
+    load = yatiml.load_function(SeparateInit, AlwaysRecognised)
+    data = load('arg: testing\n')
+    assert data.arg == 'testing'
+
+
+def test_yatiml_init_construction() -> None:
+    load = yatiml.load_function(DifferentInit)
+    with pytest.raises(yatiml.RecognitionError):
+        load('arg: testing\n')
+
+    data = load('arg: 13\n')
+    assert data.str_arg is None
+    assert data.int_arg == 13
 
 
 def test_recognize_subclass() -> None:
@@ -446,6 +473,7 @@ def test_remove_defaulted_attribute() -> None:
     data.score = 5.5
     data.extra_shape = Circle(Vector2D(1.0, 2.0), 3.0)
     data.another_number = 42
+    data.union_type = 13
     text = dumps(data)
     assert text == (
             'cursor_at:\n'
@@ -459,7 +487,8 @@ def test_remove_defaulted_attribute() -> None:
             '  center:\n'
             '    x: 1.0\n'
             '    y: 2.0\n'
-            '  radius: 3.0\n')
+            '  radius: 3.0\n'
+            'union_type: 13\n')
 
 
 def test_yatiml_defaults() -> None:
@@ -856,3 +885,49 @@ if sys.version_info >= (3, 7):
         assert text == (
                 'attr1: test\n'
                 'attr2: 42\n')
+
+
+def test_same_class_different_module() -> None:
+    # mypy flags this because Union doesn't match Type[T]. The solution
+    # is in https://github.com/python/mypy/issues/9773, but that's
+    # waiting for a sufficiently round tuit. Meanwhile, we'll have to
+    # ignore the type check.
+    load = yatiml.load_function(        # type: ignore
+            Union[ModuleA, ModuleB], ModuleA, ModuleB)
+
+    data = load('a: 1')
+    assert isinstance(data, ModuleA)
+    assert data.a == 1
+
+
+def test_same_class_different_module_tags() -> None:
+    # see above
+    load = yatiml.load_function(        # type: ignore
+            Union[ModuleA, ModuleB], ModuleA, ModuleB)
+
+    # not ambiguous, only ModuleA matches
+    ma = load(
+            '!Module\n'
+            'a: 1\n')
+    assert isinstance(ma, ModuleA)
+
+    # ambiguous, a and c have the same attributes
+    load = yatiml.load_function(        # type: ignore
+            Union[ModuleA, ModuleC], ModuleA, ModuleC)
+
+    with raises(yatiml.RecognitionError):
+        load(
+                '!Module\n'
+                'a: 1\n')
+
+    mc = load(
+            '!c.module.Module\n'
+            'a: 1\n')
+    assert isinstance(mc, ModuleC)
+
+
+def test_no_required_attributes() -> None:
+    # this gave a poorly formatted error message, see #62
+    load = yatiml.load_function(NoRequiredAttributes)
+    with raises(yatiml.RecognitionError):
+        load('broken: test')
