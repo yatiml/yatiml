@@ -11,10 +11,10 @@ from .conftest import (
         Color2, Color3, ComplexPrivateAttributes, Concrete, ConstrainedString,
         DashedAttribute, DictAttribute, DifferentInit, Document1, Document2,
         Document3, Document4, Document5, Document6, Ellipse, Extensible,
-        ManyAttrs, Postcode, PrivateAttributes, Raises, Rectangle,
-        SeparateInit, Shape, StringLike, SubA, SubA2, SubA3, SubB, SubB2,
-        SubB3, Super, Super2, Super3, Super3Clone, Super4, Super5, Sub45,
-        raises, UnionAttribute, Universal, Vector2D)
+        ManyAttrs, NoRequiredAttributes, Postcode, PrivateAttributes, Raises,
+        Rectangle, SeparateInit, Shape, StringLike, SubA, SubA2, SubA3, SubB,
+        SubB2, SubB3, Super, Super2, Super3, Super3Clone, Super4, Super5,
+        Sub45, raises, UnionAttribute, Universal, Vector2D)
 
 from .a.module import Module as ModuleA
 from .b.module import Module as ModuleB
@@ -924,3 +924,10 @@ def test_same_class_different_module_tags() -> None:
             '!c.module.Module\n'
             'a: 1\n')
     assert isinstance(mc, ModuleC)
+
+
+def test_no_required_attributes() -> None:
+    # this gave a poorly formatted error message, see #62
+    load = yatiml.load_function(NoRequiredAttributes)
+    with raises(yatiml.RecognitionError):
+        load('broken: test')

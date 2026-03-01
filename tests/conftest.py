@@ -471,6 +471,12 @@ class DifferentInit:
         self.int_arg = arg
 
 
+class NoRequiredAttributes:
+    def __init__(self, arg1: str = '', arg2: int = 10) -> None:
+        self.arg1 = arg1
+        self.arg2 = arg2
+
+
 if sys.version_info >= (3, 7):
     from dataclasses import dataclass
 
